@@ -882,5 +882,22 @@
         "incident_response": {
             "suspicious_flag": false
         }
+    },
+    {
+        "timestamp": "2026-05-30T15:19:07.558797",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Admin authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
     }
 ]

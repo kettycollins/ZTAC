@@ -272,8 +272,8 @@
                 <div class="stat-l">Заблоковано</div>
             </div>
             <div class="stat">
-                <div class="stat-n warn">{{ score }}/80</div>
-                <div class="stat-l">Ваш Trust Score</div>
+                <div class="stat-n warn" id="stat-suspicious">0</div>
+                <div class="stat-l">Аномалії (Suspicious)</div>
             </div>
         </div>
 
@@ -284,7 +284,7 @@
                     <table class="log-table">
                         <thead>
                             <tr>
-                                <th style="width: 15%;">Контекст</th>
+                                <th style="width: 15%;">Time</th>
                                 <th style="width: 25%;">User</th>
                                 <th style="width: 25%;">Role</th>
                                 <th style="width: 35%;">Decision</th>
@@ -346,6 +346,17 @@
             localStorage.setItem('theme', newTheme);
         });
 
+        // Helper для витягування часу HH:MM з ISO-рядка
+        function formatLogTime(isoString) {
+            if (!isoString) return "00:00";
+            try {
+                const date = new Date(isoString);
+                return date.toTimeString().slice(0, 5);
+            } catch (e) {
+                return "00:00";
+            }
+        }
+
         // 2. Функція динамічної підгрузки реальних логів безпеки
         async function fetchLogs() {
             const tbody = document.getElementById('logs-tbody');
@@ -366,95 +377,90 @@
 
                 // --- РОЗРАХУНОК СТАТИСТИКИ ДЛЯ ЛІЧИЛЬНИКІВ ---
                 let total = logs.length;
-                let allowed = logs.filter(l => l.decision === 'ALLOW').length;
-                let denied = logs.filter(l => l.decision === 'DENY').length;
+                let allowed = logs.filter(l => l.security_metrics.decision === 'ALLOW').length;
+                let denied = logs.filter(l => l.security_metrics.decision === 'DENY').length;
+                let suspicious = logs.filter(l => l.incident_response.suspicious_flag === true).length;
 
                 document.getElementById('stat-total').innerText = total;
                 document.getElementById('stat-allow').innerText = allowed;
                 document.getElementById('stat-deny').innerText = denied;
+                document.getElementById('stat-suspicious').innerText = suspicious;
 
                 // --- 1. ЗАПОВНЕННЯ ТАБЛИЦІ RECENT ACCESS LOG ---
-                // Беремо останні 5 запитів для компактності інтерфейсу
-                const recentLogs = logs.slice(0, 5);
+                // Відображаємо останні 6 запитів
+                const recentLogs = logs.slice(0, 6);
                 tbody.innerHTML = recentLogs.map(log => {
+                    let decision = log.security_metrics.decision;
                     let pillClass = 'pill-deny';
-                    if (log.decision === 'ALLOW') pillClass = 'pill-allow';
-                    if (log.decision === 'LIMITED') pillClass = 'pill-restricted';
-
-                    // Форматуємо відображення пристрою/мережі як короткий контекст
-                    let shortContext = 'Context';
-                    if (log.device === 'managed' && log.network === 'school') shortContext = '🔒 CORP';
-                    else if (log.device === 'unmanaged') shortContext = '📱 BYOD';
-                    else shortContext = '🌐 EXT';
+                    if (decision === 'ALLOW') pillClass = 'pill-allow';
+                    if (decision === 'LIMITED') pillClass = 'pill-restricted';
 
                     return `
                         <tr>
-                            <td>${shortContext}</td>
+                            <td>${formatLogTime(log.timestamp)}</td>
                             <td style="color:var(--text-main); font-weight:500;">${log.username}</td>
                             <td><span class="role-pill">${log.role}</span></td>
-                            <td><span class="pill ${pillClass}">${log.decision}</span></td>
+                            <td><span class="pill ${pillClass}">${decision}</span></td>
                         </tr>
                     `;
                 }).join('');
 
                 // --- 2. ЗАПОВНЕННЯ SUSPICIOUS ACTIVITY (АНАЛІЗ АНОМАЛІЙ) ---
-                // Фільтруємо події, які є підозрілими (DENY або LIMITED через пристрої/мережу)
-                const anomalies = logs.filter(l => l.decision === 'DENY' || l.decision === 'LIMITED');
+                // Фільтруємо події, марковані як suspicious_flag
+                const anomalies = logs.filter(l => l.incident_response.suspicious_flag === true);
 
                 if (anomalies.length === 0) {
                     activityContainer.innerHTML = `<div style="padding:20px; color:var(--text-muted); text-align:center; font-size:13px;">⚠️ Критичних інцидентів не зафіксовано</div>`;
                 } else {
                     activityContainer.innerHTML = anomalies.slice(0, 4).map(anom => {
-                        let isCritical = anom.decision === 'DENY';
-                        let iconClass = isCritical ? 'deny' : 'warn';
-                        let iconSymbol = isCritical ? '✕' : '⚠️';
+                        let isDeny = anom.security_metrics.decision === 'DENY';
+                        let iconClass = isDeny ? 'deny' : 'warn';
+                        let iconSymbol = isDeny ? '✕' : '⚠️';
 
                         return `
                             <div class="activity-row">
                                 <div class="activity-icon ${iconClass}">${iconSymbol}</div>
-                                <div class="activity-text"><strong>${anom.reason || 'Обмеження політики'}</strong> — ${anom.username}</div>
-                                <div class="activity-time">${anom.role}</div>
+                                <div class="activity-text"><strong>${anom.security_metrics.reason || 'Аномальний запит'}</strong> — ${anom.username}</div>
+                                <div class="activity-time">${formatLogTime(anom.timestamp)}</div>
                             </div>
                         `;
                     }).join('');
                 }
 
                 // --- 3. ДИНАМІЧНИЙ РОЗРАХУНОК DENIED BREAKDOWN ---
-                // Рахуємо унікальні причини відмов у системі
-                let reasonsCount = {
-                    'Unmanaged device usage': logs.filter(l => l.device === 'unmanaged' && l.decision === 'DENY').length,
-                    'External network restrictions': logs.filter(l => l.network !== 'school' && l.decision === 'DENY').length,
-                    'Insufficient privileges / Role Violation': logs.filter(l => l.reason && l.reason.includes('credentials') || l.reason && l.reason.includes('role')).length
-                };
+                // Розраховуємо реальну статистику причин відмов на основі полів контексту
+                let unmanagedDeviceCount = logs.filter(l => l.context.device === 'unmanaged' && l.security_metrics.decision === 'DENY').length;
+                let externalNetCount = logs.filter(l => l.context.network === 'public' && l.security_metrics.decision === 'DENY').length;
+                let invalidCredsCount = logs.filter(l => l.security_metrics.reason === 'Invalid credentials').length;
 
-                let maxDenied = Math.max(reasonsCount['Unmanaged device usage'], reasonsCount['External network restrictions'], reasonsCount['Insufficient privileges / Role Violation'], 1);
+                let maxDenied = Math.max(unmanagedDeviceCount, externalNetCount, invalidCredsCount, 1);
 
                 breakdownContainer.innerHTML = `
                     <div>
                         <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-muted);">
-                            <span>Вхід з некерованих девайсів (Unmanaged device)</span>
-                            <span style="font-family:'IBM Plex Mono',monospace;">${reasonsCount['Unmanaged device usage']} запитів</span>
+                            <span>Некерований пристрій (Unmanaged device restriction)</span>
+                            <span style="font-family:'IBM Plex Mono',monospace;">${unmanagedDeviceCount} запитів</span>
                         </div>
                         <div style="height:5px; background:var(--bg-main); border-radius:3px;">
-                            <div style="width: ${Math.min((reasonsCount['Unmanaged device usage'] / maxDenied) * 100, 100)}%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
+                            <div style="width: ${(unmanagedDeviceCount / maxDenied) * 100}%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
                         </div>
                     </div>
                     <div>
                         <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-muted);">
                             <span>Порушення периметру мережі (External network restriction)</span>
-                            <span style="font-family:'IBM Plex Mono',monospace;">${reasonsCount['External network restrictions']} запитів</span>
+                            <span style="font-family:'IBM Plex Mono',monospace;">${externalNetCount} запитів</span>
                         </div>
                         <div style="height:5px; background:var(--bg-main); border-radius:3px;">
-                            <div style="width: ${Math.min((reasonsCount['External network restrictions'] / maxDenied) * 100, 100)}%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
+                            <div style="width: ${(externalNetCount / maxDenied) * 100}%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
                         </div>
                     </div>
                     <div>
                         <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-muted);">
-                            <span>Помилки автентифікації / Невірні дані (Invalid credentials)</span>
-                            <span style="font-family:'IBM Plex Mono',monospace;">${reasonsCount['Insufficient privileges / Role Violation']} запитів</span>
+                            <span>Помилки автентифікації (Invalid credentials)</span>
+                            <span style="font-family:'IBM Plex Mono',monospace;">${invalidCredsCount} запитів</span>
                         </div>
                         <div style="height:5px; background:var(--bg-main); border-radius:3px;">
-                            <div style="width: ${Math.min((reasonsCount['Insufficient privileges / Role Violation'] / maxDenied) * 100, 100)}%; height: 100%; background:var(--color-limited); border-radius:3px;"></div>
+                            <div style="width: ${(invalidCredsCount / maxDenied) * 100}%; height: 100%; background:var(--color-limited); border-radius:3px;"></div>
                         </div>
                     </div>
                 `;

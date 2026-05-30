@@ -25,17 +25,17 @@ def login():
         device = request.form.get("device")
         network = request.form.get("network")
 
-        # 1. АВТЕНТИФІКАЦІЯ через SQLite
+        # 1. АВТЕНТИФІКАЦІЯ через SQLite базу даних
         user = authenticate_user(username, password)
 
         if user:
-            # 2. ОБЧИСЛЕННЯ рішення Zero Trust через політики
+            # 2. ОБЧИСЛЕННЯ рішення Zero Trust через PDP рушій політик
             decision, score, reason = evaluate_access(user["role"], device, network)
 
-            # 3. ЛОГУВАННЯ події
+            # 3. ЛОГУВАННЯ події у файл logs/access_logs.json
             log_event(username, user["role"], device, network, decision, score, reason)
 
-            # Записуємо дані в сесію
+            # Записуємо параметри в сесію для шаблонів
             session["user"] = user["username"]
             session["role"] = user["role"]
             session["device"] = device
@@ -44,9 +44,14 @@ def login():
             session["trust_score"] = score
             session["reason"] = reason
 
-            # ЛАНЦЮЖОК: Після логіну ЗАВЖДИ спочатку рендеримо проміжний екран вердикту denied.html
+            # Передаємо персоналізований контекст на екран рішення PDP
+            user_data = {"username": user["username"], "role": user["role"]}
             return render_template(
-                "denied.html", decision=decision, score=score, reason=reason
+                "denied.html",
+                decision=decision,
+                score=score,
+                reason=reason,
+                user=user_data,
             )
         else:
             log_event(
@@ -62,7 +67,7 @@ def login():
 @app.route("/admin/api/logs")
 def admin_api_logs():
     """API-ендпоінт для динамічного зчитування JSON-логів безпеки для SIEM консолі"""
-    # Захист контексту: доступ тільки для адміністраторів із довіреним статусом ALLOW
+    # Суворий Zero Trust захист контексту API
     if (
         "user" not in session
         or session.get("role") != "admin"
@@ -70,42 +75,41 @@ def admin_api_logs():
     ):
         return json.dumps([]), 403
 
-    # Файл логів, куди ваш logging_utils.py записує JSON-рядки
-    log_file_path = "security.log"
-    logs = []
+    # Читаємо ваш реальний файл логів із папки logs
+    log_file_path = "logs/access_logs.json"
 
     if os.path.exists(log_file_path):
         try:
             with open(log_file_path, "r", encoding="utf-8") as f:
-                for line in f:
-                    if line.strip():
-                        # Парсимо кожен рядок як окремий JSON-об'єкт
-                        logs.append(json.loads(line.strip()))
+                logs = json.load(f)
+                # Повертаємо логи перевернутими (найновіші події зверху дашборду)
+                return json.dumps(logs[::-1]), 200, {"Content-Type": "application/json"}
         except Exception as e:
             print(f"[ERROR] Помилка зчитування файлу логів: {e}")
 
-    # Повертаємо логи у зворотному порядку (найновіші події зверху)
-    return json.dumps(logs[::-1]), 200, {"Content-Type": "application/json"}
+    return json.dumps([]), 200, {"Content-Type": "application/json"}
 
 
 @app.route("/dashboard")
-def dashboard():  # <-- ТУТ МАЄ БУТИ dashboard ЗАМІСТЬ resource_page
+def dashboard():
     """Головний екран об'єктів інфраструктури (resource_page.html)"""
     if "user" not in session:
         return redirect(url_for("login"))
 
+    # Безпечний редірект на екран відмови, якщо користувач отримав статус DENY
     if session.get("access_level") not in ["ALLOW", "LIMITED"]:
+        user_data = {"username": session.get("user"), "role": session.get("role")}
         return render_template(
             "denied.html",
             decision="DENY",
             score=session.get("trust_score"),
             reason=session.get("reason"),
+            user=user_data,
         )
 
     user_role = session.get("role")
     access_level = session.get("access_level")
     score = session.get("trust_score")
-
     user_data = {"username": session["user"], "role": user_role}
 
     return render_template(
@@ -115,22 +119,29 @@ def dashboard():  # <-- ТУТ МАЄ БУТИ dashboard ЗАМІСТЬ resource
 
 @app.route("/admin/dashboard")
 def admin_dashboard():
-    """Фінальна сторінка для адміністратора — SIEM консоль"""
+    """Фінальна сторінка для адміністратора — SIEM консоль (admin_dashboard.html)"""
     if (
         "user" not in session
         or session.get("role") != "admin"
         or session.get("access_level") != "ALLOW"
     ):
+        user_data = {"username": session.get("user"), "role": session.get("role")}
         return render_template(
             "denied.html",
             decision="DENY",
             score=session.get("trust_score", 0),
             reason="Доступ до консолі SIEM дозволено виключно адміністраторам із повним рівнем довіри (ALLOW).",
+            user=user_data,
         )
 
     user_data = {"username": session["user"], "role": session["role"]}
     score = session.get("trust_score")
     return render_template("admin_dashboard.html", user=user_data, score=score)
+
+
+# =====================================================================
+# РОУТИ ДЛЯ АДАПТОВАНИХ СТОРІНОК-ЗАГЛУШОК MVP
+# =====================================================================
 
 
 @app.route("/resources/teacher")
@@ -164,5 +175,8 @@ def logout():
 
 
 if __name__ == "__main__":
+    print("[INIT] Иніціалізація бази даних SQLite...")
     init_db()
+
+    print("[SYSTEM] Запуск Zero Trust веб-сервера...")
     app.run(debug=True, port=5000)
