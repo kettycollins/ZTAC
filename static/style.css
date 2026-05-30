@@ -1,0 +1,429 @@
+/* --- 1. НАЛАШТУВАННЯ ШРИФТІВ ТА КОЛІРНИХ ПАЛІТР --- */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+    /* Світла тема (За замовчуванням) */
+    --bg-main: #faf8f5;
+    --bg-card: #ffffff;
+    --border-primary: #e2e8f0;
+    --border-secondary: #cbd5e0;
+    --text-main: #1a202c;
+    --text-muted: #718096;
+    --accent: #3182ce;
+    --accent-hover: #2b6cb0;
+    --dot-color: #48bb78;
+
+    /* Кольори статусів (Світла тема) */
+    --color-allow: #386d11;
+    --color-allow-bg: rgba(56, 109, 17, 0.12);
+    --color-limited: #dd6b20;
+    --color-limited-bg: rgba(237, 137, 54, 0.12);
+    --color-deny: #e53e3e;
+    --color-deny-bg: rgba(229, 62, 62, 0.12);
+}
+
+/* Автоматична темна тема Mac */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-main: #0f141c;
+        --bg-card: #171e29;
+        --border-primary: #2d3748;
+        --border-secondary: #4a5568;
+        --text-main: #f7fafc;
+        --text-muted: #a0aec0;
+        --accent: #4299e1;
+        --accent-hover: #63b3ed;
+
+        /* Кольори статусів (Темна тема) */
+        --color-allow: #68d391;
+        --color-allow-bg: rgba(104, 211, 145, 0.15);
+        --color-limited: #f6e05e;
+        --color-limited-bg: rgba(246, 224, 94, 0.15);
+        --color-deny: #fc8181;
+        --color-deny-bg: rgba(252, 129, 129, 0.15);
+    }
+}
+
+/* Примусова світла тема (за кнопкою) */
+html[data-theme="light"] {
+    --bg-main: #faf8f5;
+    --bg-card: #ffffff;
+    --border-primary: #e2e8f0;
+    --border-secondary: #cbd5e0;
+    --text-main: #1a202c;
+    --text-muted: #718096;
+    --accent: #3182ce;
+    --accent-hover: #2b6cb0;
+    --color-allow: #386d11;
+    --color-allow-bg: rgba(56, 109, 17, 0.12);
+    --color-limited: #dd6b20;
+    --color-limited-bg: rgba(237, 137, 54, 0.12);
+    --color-deny: #e53e3e;
+    --color-deny-bg: rgba(229, 62, 62, 0.12);
+}
+
+/* Примусова темна тема (за кнопкою) */
+html[data-theme="dark"] {
+    --bg-main: #0f141c;
+    --bg-card: #171e29;
+    --border-primary: #2d3748;
+    --border-secondary: #4a5568;
+    --text-main: #f7fafc;
+    --text-muted: #a0aec0;
+    --accent: #4299e1;
+    --accent-hover: #63b3ed;
+    --color-allow: #68d391;
+    --color-allow-bg: rgba(104, 211, 145, 0.15);
+    --color-limited: #f6e05e;
+    --color-limited-bg: rgba(246, 224, 94, 0.15);
+    --color-deny: #fc8181;
+    --color-deny-bg: rgba(252, 129, 129, 0.15);
+}
+
+/* --- 2. ЗАГАЛЬНІ СТИЛІ БАЗИ --- */
+body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    padding: 40px 20px;
+    margin: 0;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.zt-wrap,
+.ad-wrap {
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.zt-header,
+.ad-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 2rem;
+}
+
+.zt-logo,
+.ad-logo {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-main);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.ad-logo {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-muted);
+}
+
+.zt-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    background: var(--bg-main);
+    border: 1px solid var(--border-secondary);
+    padding: 3px 8px;
+    border-radius: 4px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.zt-divider {
+    flex: 1;
+    height: 1px;
+    background: var(--border-primary);
+    margin: 0 10px;
+}
+
+.theme-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: transform 0.1s;
+}
+
+.theme-btn:hover {
+    transform: scale(1.05);
+}
+
+/* --- 3. СТИЛІ ФОРМИ ВХОДУ --- */
+.zt-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.zt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.zt-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.zt-field.full {
+    grid-column: span 2;
+}
+
+.zt-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.zt-input,
+.zt-select {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-secondary);
+    border-radius: 6px;
+    color: var(--text-main);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.zt-input:focus,
+.zt-select:focus {
+    border-color: var(--accent);
+}
+
+.zt-context-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg-main);
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-primary);
+}
+
+.zt-dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--dot-color);
+    border-radius: 50%;
+}
+
+/* Елементи керування */
+.zt-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-align: center;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.zt-btn:hover {
+    background: var(--accent-hover);
+}
+
+.error-box {
+    background-color: rgba(229, 62, 62, 0.1);
+    border-left: 4px solid #e53e3e;
+    color: #e53e3e;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+/* --- 4. СТИЛІ ЕКРАНУ ACCESS DECISION --- */
+.ad-hero {
+    text-align: center;
+    padding: 2.5rem 2rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    background: var(--bg-card);
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Динамічні рамки на основі змінних */
+.ad-hero.allow {
+    border-top: 5px solid var(--color-allow);
+}
+
+.ad-hero.limited {
+    border-top: 5px solid var(--color-limited);
+}
+
+.ad-hero.deny {
+    border-top: 5px solid var(--color-deny);
+}
+
+.ad-verdict {
+    font-size: 42px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px 0;
+}
+
+/* Динамічні кольори для тексту заголовків */
+.ad-verdict.allow {
+    color: var(--color-allow);
+}
+
+.ad-verdict.limited {
+    color: var(--color-limited);
+}
+
+.ad-verdict.deny {
+    color: var(--color-deny);
+}
+
+.ad-score-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.ad-status-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Фонове розфарбовування бейджів */
+.badge-allow {
+    background-color: var(--color-allow-bg);
+    color: var(--color-allow);
+}
+
+.badge-limited {
+    background-color: var(--color-limited-bg);
+    color: var(--color-limited);
+}
+
+.badge-deny {
+    background-color: rgba(229, 62, 62, 0.15);
+    color: var(--color-deny);
+}
+
+/* Метадані запиту */
+.ad-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.ad-meta-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+}
+
+.ad-meta-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.ad-meta-val {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+/* Картка порушень / Аналізу */
+.ad-violations-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.ad-violations-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-primary);
+    padding-bottom: 6px;
+}
+
+.ad-violations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-main);
+}
+
+.ad-violation-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+}
+
+.ad-bullet {
+    width: 5px;
+    height: 5px;
+    background-color: var(--text-muted);
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+}
+
+/* --- СТИЛІ КАРТОК НАВЧАЛЬНИХ РЕСУРСІВ --- */
+.zt-resource-card {
+    border: 1px solid var(--border-primary);
+    padding: 14px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-card);
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+/* Стан, коли ресурс обмежено політикою безпеки (LIMITED) */
+.zt-resource-card.is-limited {
+    opacity: 0.6;
+    background-color: var(--bg-main);
+}
+
+.zt-resource-title.text-muted {
+    color: var(--text-muted);
+}

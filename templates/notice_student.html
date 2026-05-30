@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="auto">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZTAC — Student Portal</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            /* Прив'язуємо кольори до вашого глобального style.css */
+            --bg: var(--bg-main);
+            --surface: var(--bg-card);
+            --surface2: var(--bg-main);
+            --border: var(--border-primary);
+            --text: var(--text-main);
+            --text2: var(--text-muted);
+            --mono: 'IBM Plex Mono', monospace;
+            --sans: 'IBM Plex Sans', sans-serif;
+
+            /* Студентські сині акценти адаптуємо через змінні акценту */
+            --acc-fill: rgba(49, 130, 206, 0.12);
+            --acc-text: var(--accent);
+            --acc-border: var(--accent);
+            --red-fill: var(--color-deny-bg);
+            --red-text: var(--color-deny);
+            --red-border: var(--color-deny);
+        }
+
+        body {
+            background: var(--bg);
+            font-family: var(--sans);
+            color: var(--text);
+            padding: 2rem 1rem;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            position: relative;
+            /* Для позиціонування кнопки теми */
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            padding-right: 40px;
+            /* Захист від налізання на кнопку */
+        }
+
+        .icon {
+            font-size: 28px;
+            background: var(--acc-fill);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        /* Академічний банер-повідомлення */
+        .prototype-warning {
+            background: var(--red-fill);
+            border: 1px solid var(--red-border);
+            color: var(--red-text);
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .scope-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 1.5rem 0;
+        }
+
+        .scope-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .scope-label {
+            font-family: var(--mono);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .scope-label.yes {
+            background: var(--acc-fill);
+            color: var(--acc-text);
+            border: 1px solid var(--acc-border);
+        }
+
+        .scope-label.no {
+            background: var(--red-fill);
+            color: var(--red-text);
+            border: 1px solid var(--red-border);
+        }
+
+        .scope-list {
+            list-style: none;
+            font-size: 13px;
+            color: var(--text2);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .scope-list li::before {
+            content: "• ";
+            color: var(--text2);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1.5rem 0;
+        }
+
+        .session-row {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text2);
+            text-align: center;
+            background: var(--surface2);
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .sep {
+            margin: 0 6px;
+            color: var(--border);
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+
+        .btn {
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .btn-back {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-back:hover {
+            background: var(--surface2);
+        }
+
+        .footer-note {
+            text-align: center;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text2);
+            margin-top: 1.5rem;
+        }
+
+        /* Стиль для кнопки теми у верхньому правому кутку картки */
+        .card-theme-btn {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: transparent;
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text);
+            transition: background 0.2s;
+        }
+
+        .card-theme-btn:hover {
+            background: var(--surface2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+
+            <button id="theme-toggle" class="card-theme-btn" type="button" title="Змінити тему">🌓</button>
+
+            <div class="header">
+                <span class="icon">🎓</span>
+                <div>
+                    <h1>Student Portal</h1>
+                </div>
+            </div>
+
+            <div class="prototype-warning">
+                <strong>Увага:</strong> Ця сторінка є демонстраційною заглушкою інфраструктурного об'єкта. Даний
+                веб-додаток розроблено виключно як <strong>академічний прототип (MVP) для ознайомлювальних
+                    цілей</strong> з метою демонстрації роботи Zero Trust архітектури та перевірки політик доступу.
+                Подальший функціонал учнівського порталу (перегляд оцінок, завантаження завдань) на цьому етапі розробки
+                <strong>недоступний</strong>.
+            </div>
+
+            <p style="font-size: 14px; color: var(--text2); line-height: 1.5;">
+                У фінальній системі тут розгортається персональний електронний кабінет учня. Оскільки ваша роль дозволяє
+                перегляд цього ресурсу, Policy Engine надав вам доступ до сторінки.
+            </p>
+
+            <div class="scope-grid">
+                <div class="scope-item">
+                    <span class="scope-label yes">Симулюється (In Scope)</span>
+                    <ul class="scope-list">
+                        <li>Автентифікація користувача</li>
+                        <li>Перевірка відповідності ролі</li>
+                        <li>Оцінка контексту підключення</li>
+                        <li>Відображення статусу (ALLOW/READ-ONLY)</li>
+                    </ul>
+                </div>
+                <div class="scope-item">
+                    <span class="scope-label no">Недоступно (Out of Scope)</span>
+                    <ul class="scope-list">
+                        <li>Відображення розкладу та уроків</li>
+                        <li>Перегляд оцінок та щоденника</li>
+                        <li>Завантаження файлів домашніх завдань</li>
+                        <li>Сповіщення від вчителів</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="session-row">
+                <strong>{{ user.username }}</strong><span class="sep">·</span>
+                <span>{{ user.role }}</span><span class="sep">·</span>
+                <span>Device: Any</span><span class="sep">·</span>
+                <span>Network: Any</span>
+            </div>
+
+            <div class="actions">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-back">← Назад до ресурсів</a>
+            </div>
+        </div>
+        <p class="footer-note">ZTAC · Lightweight Zero Trust Access Control System · v0.1 MVP</p>
+    </div>
+
+    <script>
+        const toggleBtn = document.getElementById('theme-toggle');
+        const htmlEl = document.documentElement;
+
+        // Зчитуємо глобальну тему
+        const savedTheme = localStorage.getItem('theme') || 'auto';
+        htmlEl.setAttribute('data-theme', savedTheme);
+
+        // Обробник кліку для динамічної зміни
+        toggleBtn.addEventListener('click', () => {
+            const currentTheme = htmlEl.getAttribute('data-theme');
+            let newTheme = 'light';
+
+            if (currentTheme === 'light') newTheme = 'dark';
+            else if (currentTheme === 'dark') newTheme = 'light';
+            else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                newTheme = prefersDark ? 'light' : 'dark';
+            }
+
+            htmlEl.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+    </script>
+</body>
+
+</html>

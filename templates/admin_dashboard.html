@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="auto">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель адміністратора | Zero Trust Admin SIEM</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="zt-wrap dash">
+        <div class="dash-hdr"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem;">
+            <div>
+                <div class="dash-title"
+                    style="font-size: 16px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">
+                    ztac · security monitoring dashboard
+                </div>
+                <div class="dash-now"
+                    style="font-size: 11px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; margin-top: 2px;">
+                    Користувач: <strong>{{ user.username }}</strong> | Роль: <span class="zt-badge"
+                        style="padding: 1px 4px; font-size: 10px;">{{ user.role }}</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button id="theme-toggle" class="theme-btn" type="button">🌓</button>
+                <a href="{{ url_for('logout') }}" class="zt-badge"
+                    style="text-decoration: none; border-color: var(--color-deny); color: var(--color-deny);">Вихід</a>
+            </div>
+        </div>
+
+        <div class="zt-divider" style="margin: 0 0 1.5rem 0; width: 100%;"></div>
+
+        <div class="stat-row"
+            style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem;">
+            <div class="stat"
+                style="background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px 16px;">
+                <div class="stat-n" style="font-size: 26px; font-weight: 500; line-height: 1;">142</div>
+                <div class="stat-l"
+                    style="font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em;">
+                    Всього запитів</div>
+            </div>
+            <div class="stat"
+                style="background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px 16px;">
+                <div class="stat-n"
+                    style="font-size: 26px; font-weight: 500; line-height: 1; color: var(--color-allow);">101</div>
+                <div class="stat-l"
+                    style="font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em;">
+                    Дозволено</div>
+            </div>
+            <div class="stat"
+                style="background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px 16px;">
+                <div class="stat-n"
+                    style="font-size: 26px; font-weight: 500; line-height: 1; color: var(--color-deny);">41</div>
+                <div class="stat-l"
+                    style="font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em;">
+                    Заблоковано</div>
+            </div>
+            <div class="stat"
+                style="background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px 16px;">
+                <div class="stat-n"
+                    style="font-size: 26px; font-weight: 500; line-height: 1; color: var(--color-limited);">{{ score
+                    }}/80</div>
+                <div class="stat-l"
+                    style="font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em;">
+                    Ваш Trust Score</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px;">
+
+            <div class="zt-card" style="padding: 20px;">
+                <div
+                    style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 12px; font-family: 'IBM Plex Mono', monospace;">
+                    ⚡ Live Security Events (SIEM-Лог)
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 8px; border-bottom: 1px solid var(--border-primary); font-family: 'IBM Plex Mono', monospace;">
+                        <span><span style="color: var(--color-deny);">[DENY]</span> user: admin1</span>
+                        <span style="color: var(--text-muted);">External Net · 14:41</span>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 8px; border-bottom: 1px solid var(--border-primary); font-family: 'IBM Plex Mono', monospace;">
+                        <span><span style="color: var(--color-allow);">[ALLOW]</span> user: teacher1</span>
+                        <span style="color: var(--text-muted);">School Net · 14:38</span>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 8px; border-bottom: 1px solid var(--border-primary); font-family: 'IBM Plex Mono', monospace;">
+                        <span><span style="color: var(--color-limited);">[LIMITED]</span> user: teacher2</span>
+                        <span style="color: var(--text-muted);">External Net · 14:30</span>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 8px; border-bottom: 1px solid var(--border-primary); font-family: 'IBM Plex Mono', monospace;">
+                        <span><span style="color: var(--color-allow);">[ALLOW]</span> user: student1</span>
+                        <span style="color: var(--text-muted);">School Net · 14:15</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="zt-card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                <div
+                    style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace;">
+                    📊 Top Deny Reasons
+                </div>
+
+                <div>
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text-muted);">
+                        <span>Unmanaged device</span>
+                        <span style="font-family: 'IBM Plex Mono', monospace;">18 запитів</span>
+                    </div>
+                    <div style="height: 5px; background: var(--bg-main); border-radius: 3px;">
+                        <div style="width: 44%; height: 100%; background: var(--color-deny); border-radius: 3px;"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text-muted);">
+                        <span>Insufficient privileges</span>
+                        <span style="font-family: 'IBM Plex Mono', monospace;">13 запитів</span>
+                    </div>
+                    <div style="height: 5px; background: var(--bg-main); border-radius: 3px;">
+                        <div style="width: 32%; height: 100%; background: var(--color-deny); border-radius: 3px;"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text-muted);">
+                        <span>External net restriction</span>
+                        <span style="font-family: 'IBM Plex Mono', monospace;">10 запитів</span>
+                    </div>
+                    <div style="height: 5px; background: var(--bg-main); border-radius: 3px;">
+                        <div style="width: 24%; height: 100%; background: var(--color-deny); border-radius: 3px;"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div style="margin-top: 1.5rem; text-align: center;">
+            <a href="{{ url_for('login') }}" class="zt-btn"
+                style="background: transparent; border: 1px solid var(--border-secondary); color: var(--text-main);">Повернутися
+                до авторизації</a>
+        </div>
+    </div>
+
+    <script>
+        const toggleBtn = document.getElementById('theme-toggle');
+        const htmlEl = document.documentElement;
+
+        const savedTheme = localStorage.getItem('theme') || 'auto';
+        htmlEl.setAttribute('data-theme', savedTheme);
+
+        toggleBtn.addEventListener('click', () => {
+            const currentTheme = htmlEl.getAttribute('data-theme');
+            let newTheme = 'light';
+            if (currentTheme === 'light') newTheme = 'dark';
+            else if (currentTheme === 'dark') newTheme = 'light';
+            else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                newTheme = prefersDark ? 'light' : 'dark';
+            }
+            htmlEl.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+    </script>
+</body>
+
+</html>

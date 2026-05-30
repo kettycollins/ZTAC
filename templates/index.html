@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="auto">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZTAC — Zero Trust Access Control</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Додаткові специфічні стилі для інтерактивних елементів головної сторінки */
+        .sc-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 1.5rem;
+        }
+
+        .scenario {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 18px;
+            transition: transform 0.2s;
+        }
+
+        .scenario:hover {
+            transform: translateY(-2px);
+        }
+
+        .sc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .sc-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .sc-verdict {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .sc-verdict.allow {
+            background: var(--color-allow-bg);
+            color: var(--color-allow);
+        }
+
+        .sc-verdict.limited {
+            background: var(--color-limited-bg);
+            color: var(--color-limited);
+        }
+
+        .sc-verdict.deny {
+            background: var(--color-deny-bg);
+            color: var(--color-deny);
+        }
+
+        .sc-tags {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .sc-reason {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Блок заклику до дії (CTA) */
+        .cta-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .cta-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav
+        style="position: sticky; top: 0; z-index: 100; background: var(--bg-card); border-bottom: 1px solid var(--border-primary); display: flex; align-items: center; padding: 0 20px; height: 56px; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <span class="ad-logo" style="font-size: 14px; font-weight: 600; letter-spacing: 0.1em;">ZTAC</span>
+            <div style="display: flex; gap: 4px;">
+                <a href="{{ url_for('index') }}" class="zt-badge"
+                    style="text-decoration: none; border-color: var(--accent); color: var(--accent);">Головна</a>
+                <a href="{{ url_for('login') }}" class="zt-badge" style="text-decoration: none;">Авторизація</a>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button id="theme-toggle" class="theme-btn" type="button" style="padding: 4px 8px;">🌓</button>
+            <span class="zt-badge"
+                style="border-color: var(--color-allow); color: var(--color-allow); text-transform: none; font-size: 11px;">●
+                Система онлайн</span>
+        </div>
+    </nav>
+
+    <div class="zt-wrap" style="max-width: 900px; padding-top: 2rem;">
+
+        <section class="hero"
+            style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; align-items: start; margin-bottom: 4rem;">
+            <div class="hero-left">
+                <div class="zt-badge" style="margin-bottom: 1rem; font-size: 11px;">Educational IT security prototype
+                </div>
+                <h1 style="font-size: 38px; font-weight: 300; line-height: 1.15; margin-bottom: 1.25rem;">
+                    Архітектура <br /><strong style="font-weight: 600; color: var(--accent);">Zero
+                        Trust</strong><br />Контролю Доступу
+                </h1>
+                <p style="font-size: 14px; color: var(--text-muted); line-height: 1.7; margin-bottom: 2rem;">
+                    Полегшений прототип системи контекстно-залежного керування доступом (Context-Aware Access Control),
+                    побудований для шкільної IT-інфраструктури ліцею. Кожен запит динамічно перевіряється за роллю,
+                    автентичністю пристрою та контекстом мережі — без жодної неявної довіри.
+                </p>
+                <div style="display: flex; gap: 12px;">
+                    <a href="{{ url_for('login') }}" class="zt-btn"
+                        style="text-decoration: none; width: auto; padding: 12px 24px;">Запустити прототип →</a>
+                </div>
+            </div>
+
+            <div class="zt-card"
+                style="padding: 20px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--bg-main);">
+                <div
+                    style="display: flex; gap: 6px; margin-bottom: 14px; border-bottom: 1px solid var(--border-primary); padding-bottom: 8px; color: var(--text-muted);">
+                    <span>● policy-engine</span><span>·</span><span>v2.5</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px; line-height: 1.6;">
+                    <div style="color: var(--text-muted);"># Evaluating real-time access request...</div>
+                    <div><span style="color: var(--text-muted);">$</span> ztac.evaluate_context()</div>
+                    <div style="padding-left: 12px; color: var(--text-muted);">
+                        identity: "teacher1",<br />
+                        device: "managed",<br />
+                        network: "school"
+                    </div>
+                    <div style="color: var(--color-allow); font-weight: 600;">→ VERDICT: ALLOW (Full Access)</div>
+                    <div style="border-top: 1px dashed var(--border-primary); margin: 6px 0;"></div>
+                    <div><span style="color: var(--text-muted);">$</span> ztac.evaluate_context()</div>
+                    <div style="padding-left: 12px; color: var(--text-muted);">
+                        identity: "admin1",<br />
+                        device: "unmanaged",<br />
+                        network: "public"
+                    </div>
+                    <div style="color: var(--color-deny); font-weight: 600;">→ VERDICT: DENY (Critical Risk)</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="zt-divider" style="width: 100%; margin-bottom: 3rem;"></div>
+
+        <section class="principles" style="margin-bottom: 4rem;">
+            <div class="ad-logo" style="margin-bottom: 1.5rem;">Core Principles · Базові принципи</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
+                <div class="zt-card" style="padding: 20px;">
+                    <div
+                        style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+                        01 · РУШІЙ</div>
+                    <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px;">Ніколи не довіряй</h3>
+                    <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">Жоден користувач, пристрій
+                        чи сесія не володіють неявною або постійною довірою, навіть у внутрішній мережі ліцею.</p>
+                </div>
+                <div class="zt-card" style="padding: 20px;">
+                    <div
+                        style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+                        02 · КОНТЕКСТ</div>
+                    <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px;">Завжди перевіряй</h3>
+                    <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">Автентичність користувача,
+                        тип девайсу (BYOD/Corporate) та контекст мережі суворо перевіряються при кожному запиті.</p>
+                </div>
+                <div class="zt-card" style="padding: 20px;">
+                    <div
+                        style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+                        03 · ПРИВІЛЕЇ</div>
+                    <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 8px;">Найменші привілеї</h3>
+                    <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">Доступ обмежується
+                        мінімально необхідним рівнем (Least Privilege) для захисту критичних персональних даних.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="workflow" style="margin-bottom: 4rem;">
+            <div class="ad-logo" style="margin-bottom: 1.5rem;">Request Workflow · Логіка обробки запиту</div>
+            <div class="zt-card" style="padding: 24px;">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; position: relative;">
+                    <div style="font-size: 13px;">
+                        <span
+                            style="font-family: 'IBM Plex Mono', monospace; color: var(--accent); font-weight: 600; display:block; margin-bottom: 4px;">Step
+                            1</span>
+                        <strong>Access Request</strong><br />
+                        <span style="font-size:12px; color:var(--text-muted);">Користувач ініціює запит до
+                            ресурсу.</span>
+                    </div>
+                    <div style="font-size: 13px;">
+                        <span
+                            style="font-family: 'IBM Plex Mono', monospace; color: var(--accent); font-weight: 600; display:block; margin-bottom: 4px;">Step
+                            2</span>
+                        <strong>Context Collection</strong><br />
+                        <span style="font-size:12px; color:var(--text-muted);">Збір телеметрії пристрою та параметрів
+                            мережі.</span>
+                    </div>
+                    <div style="font-size: 13px;">
+                        <span
+                            style="font-family: 'IBM Plex Mono', monospace; color: var(--accent); font-weight: 600; display:block; margin-bottom: 4px;">Step
+                            3</span>
+                        <strong>Policy Evaluation</strong><br />
+                        <span style="font-size:12px; color:var(--text-muted);">Розрахунок Trust Score рушієм політик
+                            (PDP).</span>
+                    </div>
+                    <div style="font-size: 13px;">
+                        <span
+                            style="font-family: 'IBM Plex Mono', monospace; color: var(--accent); font-weight: 600; display:block; margin-bottom: 4px;">Step
+                            4</span>
+                        <strong>Dynamic Verdict</strong><br />
+                        <span style="font-size:12px; color:var(--text-muted);">Надання прав (ALLOW, LIMITED або
+                            DENY).</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="scenarios" style="margin-bottom: 4rem;">
+            <div class="ad-logo" style="margin-bottom: 0.5rem;">Example Scenarios · Сценарії верифікації моделі</div>
+            <div class="sc-grid">
+
+                <div class="scenario">
+                    <div class="sc-header">
+                        <div class="sc-title">Teacher with trusted corporate device</div>
+                        <span class="sc-verdict allow">ALLOW</span>
+                    </div>
+                    <div class="sc-tags">
+                        <span class="zt-badge" style="font-size:10px; padding:2px 6px;">role: teacher</span>
+                        <span class="zt-badge" style="font-size:10px; padding:2px 6px;">device: managed</span>
+                        <span class="zt-badge" style="font-size:10px; padding:2px 6px;">net: school</span>
+                    </div>
+                    <div class="sc-reason">Максимальний рівень довіри. Надається повний доступ до Навчальних планів та
+                        Електронного журналу оцінок (Gradebook).</div>
+                </div>
+
+                <div class="scenario">
+                    <div class="sc-header">
+                        <div class="sc-title">Teacher from unmanaged personal device (Remote)</div>
+                        <span class="sc-verdict limited">LIMITED ACCESS</span>
+                    </div>
+                    <div class="sc-tags">
+                        <span class="zt-badge" style="font-size:10px; padding:2px 6px;">role: teacher</span>
+                        <span class="zt-badge" style="font-size:10px; padding:2px 6px;">device: unmanaged</span>
+                        <span class="zt-badge" style="font-size:10px; padding:2px 6px;">net: home</span>
+                    </div>
+                    <div class="sc-reason">Середній рівень ризику (BYOD-контекст). Доступ до планів дозволено, але
+                        критичне редагування оцінок в журналі повністю блокується.</div>
+                </div>
+
+                <div class="scenario">
+                    <div class="sc-header">
+                        <div class="sc-title">Admin from unmanaged device in public network</div>
+                        <span class="sc-verdict deny">DENY</span>
+                    </div>
+                    <div class="sc-tags">
+                        <span class="zt-badge" style="font-size:10px; padding:2px 6px;">role: admin</span>
+                        <span class="zt-badge" style="font-size:10px; padding:2px 6px;">device: unmanaged</span>
+                        <span class="zt-badge" style="font-size:10px; padding:2px 6px;">net: public</span>
+                    </div>
+                    <div class="sc-reason">Критична аномалія. Адміністраторам суворо заборонено доступ до SIEM-панелі з
+                        публічних мереж. Запит відхилено, подія маркується як підозріла.</div>
+                </div>
+
+                <div class="scenario">
+                    <div class="sc-header">
+                        <div class="sc-title">Student requesting admin resource</div>
+                        <span class="sc-verdict deny">DENY</span>
+                    </div>
+                    <div class="sc-tags">
+                        <span class="zt-badge" style="font-size:10px; padding:2px 6px;">role: student</span>
+                        <span class="zt-badge" style="font-size:10px; padding:2px 6px;">resource: Admin Panel</span>
+                    </div>
+                    <div class="sc-reason">Порушення принципу найменших привілеїв. Студентам тотально закритий доступ до
+                        адміністративних логів та панелей конфігурації.</div>
+                </div>
+
+            </div>
+        </section>
+
+        <div class="zt-divider" style="width: 100%; margin-bottom: 2rem;"></div>
+
+        <section class="cta" style="margin-bottom: 3rem;">
+            <div class="cta-card">
+                <div class="cta-left" style="max-width: 500px; text-align: left;">
+                    <h2 style="font-size: 22px; font-weight: 500; margin-top:0; margin-bottom: 8px;">Готові протестувати
+                        систему?</h2>
+                    <p style="font-size: 14px; color: var(--text-muted); margin: 0; line-height: 1.5;">Спробуйте різні
+                        ролі користувачів, комбінуйте безпечні та небезпечні типи пристроїв та мережеві контексти для
+                        перевірки реакції PDP.</p>
+                </div>
+                <div class="cta-actions" style="display: flex; gap: 12px; flex-shrink: 0;">
+                    <a href="{{ url_for('login') }}" class="zt-btn"
+                        style="text-decoration: none; padding: 12px 20px;">Запустити прототип →</a>
+                </div>
+            </div>
+        </section>
+
+        <footer
+            style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted);">
+            <span>ZTAC · Магістерський дипломний прототип</span>
+            <span>never trust · always verify</span>
+        </footer>
+
+    </div>
+
+    <script>
+        const toggleBtn = document.getElementById('theme-toggle');
+        const htmlEl = document.documentElement;
+
+        const savedTheme = localStorage.getItem('theme') || 'auto';
+        htmlEl.setAttribute('data-theme', savedTheme);
+
+        toggleBtn.addEventListener('click', () => {
+            const currentTheme = htmlEl.getAttribute('data-theme');
+            let newTheme = 'light';
+            if (currentTheme === 'light') newTheme = 'dark';
+            else if (currentTheme === 'dark') newTheme = 'light';
+            else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                newTheme = prefersDark ? 'light' : 'dark';
+            }
+            htmlEl.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+    </script>
+</body>
+
+</html>
