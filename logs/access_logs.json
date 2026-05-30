@@ -1018,5 +1018,39 @@
         "incident_response": {
             "suspicious_flag": false
         }
+    },
+    {
+        "timestamp": "2026-05-31T00:14:01.153512",
+        "username": "admin1",
+        "role": "UNKNOWN",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Invalid credentials"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-31T00:14:07.062025",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Admin authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
     }
 ]

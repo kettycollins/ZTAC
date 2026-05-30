@@ -40,37 +40,26 @@
                     </div>
 
                     <div class="zt-field">
-                        <label class="zt-label">User Role</label>
-                        <select name="role" class="zt-select">
-                            <option value="student">Student</option>
-                            <option value="teacher" selected>Teacher</option>
-                            <option value="admin">Admin</option>
-                            <option value="guest">Guest</option>
+                        <label class="zt-label">Device Trust</label>
+                        <select name="device" class="zt-select">
+                            <option value="managed" selected>Managed Device (Керований)</option>
+                            <option value="unmanaged">BYOD Device (Власний пристрій)</option>
                         </select>
                     </div>
 
                     <div class="zt-field">
-                        <label class="zt-label">Device Type</label>
-                        <select name="device" class="zt-select">
-                            <option value="managed" selected>Managed device</option>
-                            <option value="unmanaged">Unmanaged device</option>
-                            <option value="guest_device">Guest device</option>
-                        </select>
-                    </div>
-
-                    <div class="zt-field full">
-                        <label class="zt-label">Network Context</label>
+                        <label class="zt-label">Network Trust</label>
                         <select name="network" class="zt-select">
-                            <option value="school" selected>School network (Internal)</option>
-                            <option value="home">Home network (VPN/Remote)</option>
-                            <option value="public">Public network (Unsecure Wi-Fi)</option>
+                            <option value="school" selected>School Network (Внутрішня ліцею)</option>
+                            <option value="home">Home Network (Домашня/VPN)</option>
+                            <option value="public">Public Network (Публічна Wi-Fi)</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="zt-context-bar">
                     <span class="zt-dot"></span>
-                    <span>policy-engine · v2.5 · context-verification · tls-1.3</span>
+                    <span>policy-engine · v2.5 · context-verification · identity-provider</span>
                 </div>
 
                 <button type="submit" class="zt-btn">Надіслати запит (Request Access)</button>
@@ -82,7 +71,6 @@
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
 
-        // Перевіряємо локальне сховище або системну тему
         const savedTheme = localStorage.getItem('theme') || 'auto';
         htmlEl.setAttribute('data-theme', savedTheme);
 
@@ -95,7 +83,6 @@
             } else if (currentTheme === 'dark') {
                 newTheme = 'light';
             } else {
-                // Якщо було 'auto', перевіряємо системну
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 newTheme = prefersDark ? 'light' : 'dark';
             }
