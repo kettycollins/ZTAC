@@ -6,152 +6,330 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Панель адміністратора | Zero Trust Admin SIEM</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+        body {
+            padding: 0;
+            margin: 0;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+
+        .dash {
+            font-family: 'IBM Plex Sans', sans-serif;
+            padding: 2rem 0;
+        }
+
+        .dash-hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.75rem;
+        }
+
+        .dash-title {
+            font-size: 16px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .dash-now {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+            margin-top: 4px;
+        }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 14px 16px;
+        }
+
+        .stat-n {
+            font-size: 26px;
+            font-weight: 500;
+            color: var(--text-main);
+            line-height: 1;
+        }
+
+        .stat-l {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .stat-n.deny {
+            color: var(--color-deny);
+        }
+
+        .stat-n.warn {
+            color: var(--color-limited);
+        }
+
+        .stat-n.ok {
+            color: var(--color-allow);
+        }
+
+        .section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-primary);
+            padding-bottom: 6px;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .log-table th {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 0 12px 8px 0;
+            text-align: left;
+            font-family: 'IBM Plex Mono', monospace;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .log-table td {
+            font-size: 13px;
+            padding: 9px 12px 9px 0;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-primary);
+            vertical-align: middle;
+        }
+
+        .log-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .log-table td:first-child {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .pill {
+            display: inline-block;
+            font-size: 10px;
+            font-family: 'IBM Plex Mono', monospace;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .pill-allow {
+            background: var(--color-allow-bg);
+            color: var(--color-allow);
+        }
+
+        .pill-deny {
+            background: var(--color-deny-bg);
+            color: var(--color-deny);
+        }
+
+        .pill-restricted {
+            background: var(--color-limited-bg);
+            color: var(--color-limited);
+        }
+
+        .role-pill {
+            font-size: 11px;
+            background: var(--bg-main);
+            border: 1px solid var(--border-primary);
+            border-radius: 3px;
+            padding: 2px 6px;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .activity-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 230px;
+            overflow-y: auto;
+        }
+
+        .activity-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .activity-row:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+
+        .activity-icon.deny {
+            background: var(--color-deny-bg);
+            color: var(--color-deny);
+        }
+
+        .activity-icon.warn {
+            background: var(--color-limited-bg);
+            color: var(--color-limited);
+        }
+
+        .activity-text {
+            font-size: 13px;
+            color: var(--text-main);
+            flex: 1;
+            line-height: 1.4;
+        }
+
+        .activity-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .dash-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="zt-wrap dash">
-        <div class="dash-hdr"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem;">
+    <div class="zt-wrap dash" style="max-width: 1150px; margin: 0 auto; padding: 0 20px;">
+
+        <div class="dash-hdr">
             <div>
-                <div class="dash-title"
-                    style="font-size: 16px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">
-                    ztac · security monitoring dashboard
-                </div>
-                <div class="dash-now"
-                    style="font-size: 11px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; margin-top: 2px;">
-                    Користувач: <strong>{{ user.username }}</strong> | Роль: <span class="zt-badge"
-                        style="padding: 1px 4px; font-size: 10px;">{{ user.role }}</span>
+                <div class="dash-title">Security Monitoring Dashboard (SIEM)</div>
+                <div class="dash-now">
+                    Оператор: <strong>{{ user.username }}</strong> <span class="sep">·</span> Контекст сесії: <span
+                        class="pill pill-allow" style="font-size: 9px;">ALLOW</span>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
                 <button id="theme-toggle" class="theme-btn" type="button">🌓</button>
-                <a href="{{ url_for('logout') }}" class="zt-badge"
-                    style="text-decoration: none; border-color: var(--color-deny); color: var(--color-deny);">Вихід</a>
+                <button onclick="fetchLogs()" class="zt-badge"
+                    style="cursor: pointer; background: transparent; padding: 4px 10px; border-color: var(--accent); color: var(--accent);">🔄
+                    Оновити дані</button>
+                <a href="{{ url_for('dashboard') }}" class="zt-badge" style="text-decoration: none;">← До ресурсів</a>
             </div>
         </div>
 
         <div class="zt-divider" style="margin: 0 0 1.5rem 0; width: 100%;"></div>
 
-        <div class="stat-row"
-            style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem;">
-            <div class="stat"
-                style="background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px 16px;">
-                <div class="stat-n" style="font-size: 26px; font-weight: 500; line-height: 1;">142</div>
-                <div class="stat-l"
-                    style="font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em;">
-                    Всього запитів</div>
+        <div class="stat-row">
+            <div class="stat">
+                <div class="stat-n" id="stat-total">0</div>
+                <div class="stat-l">Всього запитів</div>
             </div>
-            <div class="stat"
-                style="background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px 16px;">
-                <div class="stat-n"
-                    style="font-size: 26px; font-weight: 500; line-height: 1; color: var(--color-allow);">101</div>
-                <div class="stat-l"
-                    style="font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em;">
-                    Дозволено</div>
+            <div class="stat">
+                <div class="stat-n ok" id="stat-allow">0</div>
+                <div class="stat-l">Дозволено</div>
             </div>
-            <div class="stat"
-                style="background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px 16px;">
-                <div class="stat-n"
-                    style="font-size: 26px; font-weight: 500; line-height: 1; color: var(--color-deny);">41</div>
-                <div class="stat-l"
-                    style="font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em;">
-                    Заблоковано</div>
+            <div class="stat">
+                <div class="stat-n deny" id="stat-deny">0</div>
+                <div class="stat-l">Заблоковано</div>
             </div>
-            <div class="stat"
-                style="background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px 16px;">
-                <div class="stat-n"
-                    style="font-size: 26px; font-weight: 500; line-height: 1; color: var(--color-limited);">{{ score
-                    }}/80</div>
-                <div class="stat-l"
-                    style="font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em;">
-                    Ваш Trust Score</div>
+            <div class="stat">
+                <div class="stat-n warn">{{ score }}/80</div>
+                <div class="stat-l">Ваш Trust Score</div>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px;">
-
-            <div class="zt-card" style="padding: 20px;">
-                <div
-                    style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 12px; font-family: 'IBM Plex Mono', monospace;">
-                    ⚡ Live Security Events (SIEM-Лог)
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 8px; border-bottom: 1px solid var(--border-primary); font-family: 'IBM Plex Mono', monospace;">
-                        <span><span style="color: var(--color-deny);">[DENY]</span> user: admin1</span>
-                        <span style="color: var(--text-muted);">External Net · 14:41</span>
-                    </div>
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 8px; border-bottom: 1px solid var(--border-primary); font-family: 'IBM Plex Mono', monospace;">
-                        <span><span style="color: var(--color-allow);">[ALLOW]</span> user: teacher1</span>
-                        <span style="color: var(--text-muted);">School Net · 14:38</span>
-                    </div>
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 8px; border-bottom: 1px solid var(--border-primary); font-family: 'IBM Plex Mono', monospace;">
-                        <span><span style="color: var(--color-limited);">[LIMITED]</span> user: teacher2</span>
-                        <span style="color: var(--text-muted);">External Net · 14:30</span>
-                    </div>
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 8px; border-bottom: 1px solid var(--border-primary); font-family: 'IBM Plex Mono', monospace;">
-                        <span><span style="color: var(--color-allow);">[ALLOW]</span> user: student1</span>
-                        <span style="color: var(--text-muted);">School Net · 14:15</span>
-                    </div>
+        <div class="two-col">
+            <div class="dash-card">
+                <div class="section-label">Recent access log (Журнал авторизацій)</div>
+                <div style="overflow-x: auto;">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%;">Контекст</th>
+                                <th style="width: 25%;">User</th>
+                                <th style="width: 25%;">Role</th>
+                                <th style="width: 35%;">Decision</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-tbody">
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                                    Завантаження логів безпеки...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="zt-card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
-                <div
-                    style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace;">
-                    📊 Top Deny Reasons
-                </div>
-
-                <div>
-                    <div
-                        style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text-muted);">
-                        <span>Unmanaged device</span>
-                        <span style="font-family: 'IBM Plex Mono', monospace;">18 запитів</span>
-                    </div>
-                    <div style="height: 5px; background: var(--bg-main); border-radius: 3px;">
-                        <div style="width: 44%; height: 100%; background: var(--color-deny); border-radius: 3px;"></div>
-                    </div>
-                </div>
-
-                <div>
-                    <div
-                        style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text-muted);">
-                        <span>Insufficient privileges</span>
-                        <span style="font-family: 'IBM Plex Mono', monospace;">13 запитів</span>
-                    </div>
-                    <div style="height: 5px; background: var(--bg-main); border-radius: 3px;">
-                        <div style="width: 32%; height: 100%; background: var(--color-deny); border-radius: 3px;"></div>
-                    </div>
-                </div>
-
-                <div>
-                    <div
-                        style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text-muted);">
-                        <span>External net restriction</span>
-                        <span style="font-family: 'IBM Plex Mono', monospace;">10 запитів</span>
-                    </div>
-                    <div style="height: 5px; background: var(--bg-main); border-radius: 3px;">
-                        <div style="width: 24%; height: 100%; background: var(--color-deny); border-radius: 3px;"></div>
+            <div class="dash-card">
+                <div class="section-label">Suspicious activity (Критичні інциденти)</div>
+                <div class="activity-box" id="activity-container">
+                    <div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 13px;">
+                        Аналіз аномалій...
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <div style="margin-top: 1.5rem; text-align: center;">
-            <a href="{{ url_for('login') }}" class="zt-btn"
-                style="background: transparent; border: 1px solid var(--border-secondary); color: var(--text-main);">Повернутися
-                до авторизації</a>
+        <div class="dash-card">
+            <div class="section-label" style="margin-bottom:12px;">Denied requests breakdown (Аналітика причин
+                блокувань)</div>
+            <div style="display:flex; flex-direction:column; gap:12px;" id="breakdown-container">
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; text-align: center;">
+            <a href="{{ url_for('logout') }}" class="zt-btn"
+                style="background: transparent; border: 1px solid var(--border-secondary); color: var(--color-deny); text-decoration: none; display: inline-block; width: auto; padding: 10px 24px;">
+                Завершити адміністративну сесію (Logout)
+            </a>
         </div>
     </div>
 
     <script>
+        // 1. Скрипт перемикання кольорових тем
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
-
         const savedTheme = localStorage.getItem('theme') || 'auto';
         htmlEl.setAttribute('data-theme', savedTheme);
 
@@ -167,6 +345,127 @@
             htmlEl.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
         });
+
+        // 2. Функція динамічної підгрузки реальних логів безпеки
+        async function fetchLogs() {
+            const tbody = document.getElementById('logs-tbody');
+            const activityContainer = document.getElementById('activity-container');
+            const breakdownContainer = document.getElementById('breakdown-container');
+
+            try {
+                const response = await fetch('/admin/api/logs');
+                if (!response.ok) throw new Error('Помилка читання даних SIEM API');
+
+                const logs = await response.json();
+
+                if (logs.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Події відсутні.</td></tr>`;
+                    activityContainer.innerHTML = `<div style="padding:10px; color:var(--text-muted); text-align:center; font-size:13px;">Аномалій не виявлено</div>`;
+                    return;
+                }
+
+                // --- РОЗРАХУНОК СТАТИСТИКИ ДЛЯ ЛІЧИЛЬНИКІВ ---
+                let total = logs.length;
+                let allowed = logs.filter(l => l.decision === 'ALLOW').length;
+                let denied = logs.filter(l => l.decision === 'DENY').length;
+
+                document.getElementById('stat-total').innerText = total;
+                document.getElementById('stat-allow').innerText = allowed;
+                document.getElementById('stat-deny').innerText = denied;
+
+                // --- 1. ЗАПОВНЕННЯ ТАБЛИЦІ RECENT ACCESS LOG ---
+                // Беремо останні 5 запитів для компактності інтерфейсу
+                const recentLogs = logs.slice(0, 5);
+                tbody.innerHTML = recentLogs.map(log => {
+                    let pillClass = 'pill-deny';
+                    if (log.decision === 'ALLOW') pillClass = 'pill-allow';
+                    if (log.decision === 'LIMITED') pillClass = 'pill-restricted';
+
+                    // Форматуємо відображення пристрою/мережі як короткий контекст
+                    let shortContext = 'Context';
+                    if (log.device === 'managed' && log.network === 'school') shortContext = '🔒 CORP';
+                    else if (log.device === 'unmanaged') shortContext = '📱 BYOD';
+                    else shortContext = '🌐 EXT';
+
+                    return `
+                        <tr>
+                            <td>${shortContext}</td>
+                            <td style="color:var(--text-main); font-weight:500;">${log.username}</td>
+                            <td><span class="role-pill">${log.role}</span></td>
+                            <td><span class="pill ${pillClass}">${log.decision}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // --- 2. ЗАПОВНЕННЯ SUSPICIOUS ACTIVITY (АНАЛІЗ АНОМАЛІЙ) ---
+                // Фільтруємо події, які є підозрілими (DENY або LIMITED через пристрої/мережу)
+                const anomalies = logs.filter(l => l.decision === 'DENY' || l.decision === 'LIMITED');
+
+                if (anomalies.length === 0) {
+                    activityContainer.innerHTML = `<div style="padding:20px; color:var(--text-muted); text-align:center; font-size:13px;">⚠️ Критичних інцидентів не зафіксовано</div>`;
+                } else {
+                    activityContainer.innerHTML = anomalies.slice(0, 4).map(anom => {
+                        let isCritical = anom.decision === 'DENY';
+                        let iconClass = isCritical ? 'deny' : 'warn';
+                        let iconSymbol = isCritical ? '✕' : '⚠️';
+
+                        return `
+                            <div class="activity-row">
+                                <div class="activity-icon ${iconClass}">${iconSymbol}</div>
+                                <div class="activity-text"><strong>${anom.reason || 'Обмеження політики'}</strong> — ${anom.username}</div>
+                                <div class="activity-time">${anom.role}</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // --- 3. ДИНАМІЧНИЙ РОЗРАХУНОК DENIED BREAKDOWN ---
+                // Рахуємо унікальні причини відмов у системі
+                let reasonsCount = {
+                    'Unmanaged device usage': logs.filter(l => l.device === 'unmanaged' && l.decision === 'DENY').length,
+                    'External network restrictions': logs.filter(l => l.network !== 'school' && l.decision === 'DENY').length,
+                    'Insufficient privileges / Role Violation': logs.filter(l => l.reason && l.reason.includes('credentials') || l.reason && l.reason.includes('role')).length
+                };
+
+                let maxDenied = Math.max(reasonsCount['Unmanaged device usage'], reasonsCount['External network restrictions'], reasonsCount['Insufficient privileges / Role Violation'], 1);
+
+                breakdownContainer.innerHTML = `
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-muted);">
+                            <span>Вхід з некерованих девайсів (Unmanaged device)</span>
+                            <span style="font-family:'IBM Plex Mono',monospace;">${reasonsCount['Unmanaged device usage']} запитів</span>
+                        </div>
+                        <div style="height:5px; background:var(--bg-main); border-radius:3px;">
+                            <div style="width: ${Math.min((reasonsCount['Unmanaged device usage'] / maxDenied) * 100, 100)}%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-muted);">
+                            <span>Порушення периметру мережі (External network restriction)</span>
+                            <span style="font-family:'IBM Plex Mono',monospace;">${reasonsCount['External network restrictions']} запитів</span>
+                        </div>
+                        <div style="height:5px; background:var(--bg-main); border-radius:3px;">
+                            <div style="width: ${Math.min((reasonsCount['External network restrictions'] / maxDenied) * 100, 100)}%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-muted);">
+                            <span>Помилки автентифікації / Невірні дані (Invalid credentials)</span>
+                            <span style="font-family:'IBM Plex Mono',monospace;">${reasonsCount['Insufficient privileges / Role Violation']} запитів</span>
+                        </div>
+                        <div style="height:5px; background:var(--bg-main); border-radius:3px;">
+                            <div style="width: ${Math.min((reasonsCount['Insufficient privileges / Role Violation'] / maxDenied) * 100, 100)}%; height: 100%; background:var(--color-limited); border-radius:3px;"></div>
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--color-deny);">❌ Помилка SIEM: ${error.message}</td></tr>`;
+            }
+        }
+
+        // Автоматичне зчитування логів при завантаженні сторінки
+        document.addEventListener('DOMContentLoaded', fetchLogs);
     </script>
 </body>
 

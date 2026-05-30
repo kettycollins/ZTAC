@@ -1,4 +1,5 @@
 import os
+import json
 from flask import Flask, render_template, request, redirect, url_for, session
 from config import Config
 from database import init_db
@@ -7,7 +8,6 @@ from policies import evaluate_access
 from logging_utils import log_event
 
 app = Flask(__name__)
-# Додаємо ваш оригінальний фільтр uppercase та конфігурацію
 app.jinja_env.filters["uppercase"] = lambda s: s.upper() if s else ""
 app.config.from_object(Config)
 
@@ -25,17 +25,17 @@ def login():
         device = request.form.get("device")
         network = request.form.get("network")
 
-        # 1. АВТЕНТИФІКАЦІЯ через ваш оригінальний модуль SQLite
+        # 1. АВТЕНТИФІКАЦІЯ через SQLite
         user = authenticate_user(username, password)
 
         if user:
-            # 2. ОБЧИСЛЕННЯ рішення Zero Trust через ваші існуючі політики
+            # 2. ОБЧИСЛЕННЯ рішення Zero Trust через політики
             decision, score, reason = evaluate_access(user["role"], device, network)
 
-            # 3. ЛОГУВАННЯ події через вашу утиліту логів
+            # 3. ЛОГУВАННЯ події
             log_event(username, user["role"], device, network, decision, score, reason)
 
-            # Записуємо дані в сесію (синхронізовано для використання в шаблонах)
+            # Записуємо дані в сесію
             session["user"] = user["username"]
             session["role"] = user["role"]
             session["device"] = device
@@ -59,17 +59,41 @@ def login():
     return render_template("login.html")
 
 
+@app.route("/admin/api/logs")
+def admin_api_logs():
+    """API-ендпоінт для динамічного зчитування JSON-логів безпеки для SIEM консолі"""
+    # Захист контексту: доступ тільки для адміністраторів із довіреним статусом ALLOW
+    if (
+        "user" not in session
+        or session.get("role") != "admin"
+        or session.get("access_level") != "ALLOW"
+    ):
+        return json.dumps([]), 403
+
+    # Файл логів, куди ваш logging_utils.py записує JSON-рядки
+    log_file_path = "security.log"
+    logs = []
+
+    if os.path.exists(log_file_path):
+        try:
+            with open(log_file_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        # Парсимо кожен рядок як окремий JSON-об'єкт
+                        logs.append(json.loads(line.strip()))
+        except Exception as e:
+            print(f"[ERROR] Помилка зчитування файлу логів: {e}")
+
+    # Повертаємо логи у зворотному порядку (найновіші події зверху)
+    return json.dumps(logs[::-1]), 200, {"Content-Type": "application/json"}
+
+
 @app.route("/dashboard")
-def dashboard():
-    """
-    Головний екран об'єктів інфраструктури (resource_page.html).
-    Повернено назву функції 'dashboard', щоб усунути помилки BuildError під час авторизації.
-    """
-    # Захист від прямого переходу (якщо сесія відсутня)
+def dashboard():  # <-- ТУТ МАЄ БУТИ dashboard ЗАМІСТЬ resource_page
+    """Головний екран об'єктів інфраструктури (resource_page.html)"""
     if "user" not in session:
         return redirect(url_for("login"))
 
-    # Захист: якщо вердикт системи безпеки був DENY — показуємо екран відмови
     if session.get("access_level") not in ["ALLOW", "LIMITED"]:
         return render_template(
             "denied.html",
@@ -84,7 +108,6 @@ def dashboard():
 
     user_data = {"username": session["user"], "role": user_role}
 
-    # Усі ролі (admin, teacher, student, guest) переходять на спільну карту 2x2
     return render_template(
         "resource_page.html", user=user_data, access_level=access_level, score=score
     )
@@ -92,8 +115,7 @@ def dashboard():
 
 @app.route("/admin/dashboard")
 def admin_dashboard():
-    """Фінальна сторінка для адміністратора — SIEM консоль (admin_dashboard.html)"""
-    # Додатковий фільтр захисту контексту
+    """Фінальна сторінка для адміністратора — SIEM консоль"""
     if (
         "user" not in session
         or session.get("role") != "admin"
@@ -111,14 +133,8 @@ def admin_dashboard():
     return render_template("admin_dashboard.html", user=user_data, score=score)
 
 
-# =====================================================================
-# РОУТИ ДЛЯ АДАПТОВАНИХ СТОРІНОК-ЗАГЛУШОК MVP
-# =====================================================================
-
-
 @app.route("/resources/teacher")
 def notice_teacher():
-    """Фінальна сторінка-заглушка вчителя (notice_teacher.html)"""
     if "user" not in session:
         return redirect(url_for("login"))
     user_data = {"username": session.get("user"), "role": session.get("role")}
@@ -127,7 +143,6 @@ def notice_teacher():
 
 @app.route("/resources/student")
 def notice_student():
-    """Фінальна сторінка-заглушка студента (notice_student.html)"""
     if "user" not in session:
         return redirect(url_for("login"))
     user_data = {"username": session.get("user"), "role": session.get("role")}
@@ -136,14 +151,10 @@ def notice_student():
 
 @app.route("/resources/guest")
 def notice_guest():
-    """Фінальна сторінка-заглушка гостя (notice_guest.html)"""
     if "user" not in session:
         return redirect(url_for("login"))
     user_data = {"username": session.get("user"), "role": session.get("role")}
     return render_template("notice_guest.html", user=user_data)
-
-
-# =====================================================================
 
 
 @app.route("/logout")
@@ -153,9 +164,5 @@ def logout():
 
 
 if __name__ == "__main__":
-    print("[INIT] Створення конфігураційних файлів логів...")
-    print("[INIT] Иніціалізація бази даних SQLite...")
     init_db()
-
-    print("[SYSTEM] Запуск Zero Trust веб-сервера...")
     app.run(debug=True, port=5000)
