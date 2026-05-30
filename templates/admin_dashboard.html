@@ -7,7 +7,7 @@
     <title>Панель адміністратора | Zero Trust Admin SIEM</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
         body {
             padding: 0;
@@ -114,7 +114,7 @@
 
         .log-table td {
             font-size: 13px;
-            padding: 9px 12px 9px 0;
+            padding: 10px 12px 10px 0;
             color: var(--text-main);
             border-bottom: 1px solid var(--border-primary);
             vertical-align: middle;
@@ -144,16 +144,19 @@
         .pill-allow {
             background: var(--color-allow-bg);
             color: var(--color-allow);
+            border: 1px solid rgba(56, 109, 17, 0.3);
         }
 
         .pill-deny {
             background: var(--color-deny-bg);
             color: var(--color-deny);
+            border: 1px solid rgba(229, 62, 62, 0.3);
         }
 
         .pill-restricted {
             background: var(--color-limited-bg);
             color: var(--color-limited);
+            border: 1px solid rgba(237, 137, 54, 0.3);
         }
 
         .role-pill {
@@ -170,7 +173,7 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            max-height: 230px;
+            max-height: 290px;
             overflow-y: auto;
         }
 
@@ -187,14 +190,15 @@
         }
 
         .activity-icon {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            font-size: 14px;
+            font-size: 11px;
+            font-weight: bold;
         }
 
         .activity-icon.deny {
@@ -208,7 +212,7 @@
         }
 
         .activity-text {
-            font-size: 13px;
+            font-size: 12.5px;
             color: var(--text-main);
             flex: 1;
             line-height: 1.4;
@@ -222,7 +226,7 @@
 
         .two-col {
             display: grid;
-            grid-template-columns: 1.4fr 1fr;
+            grid-template-columns: 1.5fr 1fr;
             gap: 16px;
             margin-bottom: 1.5rem;
         }
@@ -232,6 +236,11 @@
             border: 1px solid var(--border-primary);
             border-radius: 8px;
             padding: 1.25rem;
+        }
+
+        .sep {
+            margin: 0 4px;
+            color: var(--border-secondary);
         }
     </style>
 </head>
@@ -244,14 +253,14 @@
                 <div class="dash-title">Security Monitoring Dashboard (SIEM)</div>
                 <div class="dash-now">
                     Оператор: <strong>{{ user.username }}</strong> <span class="sep">·</span> Контекст сесії: <span
-                        class="pill pill-allow" style="font-size: 9px;">ALLOW</span>
+                        class="pill pill-allow" style="font-size: 9px; padding: 1px 6px;">ALLOW</span>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
-                <button id="theme-toggle" class="theme-btn" type="button">🌓</button>
-                <button onclick="fetchLogs()" class="zt-badge"
-                    style="cursor: pointer; background: transparent; padding: 4px 10px; border-color: var(--accent); color: var(--accent);">🔄
-                    Оновити дані</button>
+                <button id="theme-toggle" class="theme-btn" type="button" style="padding: 6px 10px;">🌓</button>
+                <button onclick="window.location.reload();" class="zt-badge"
+                    style="cursor: pointer; background: transparent; padding: 4px 12px; border-color: var(--accent); color: var(--accent);">🔄
+                    Оновити сторінку</button>
                 <a href="{{ url_for('dashboard') }}" class="zt-badge" style="text-decoration: none;">← До ресурсів</a>
             </div>
         </div>
@@ -260,19 +269,24 @@
 
         <div class="stat-row">
             <div class="stat">
-                <div class="stat-n" id="stat-total">0</div>
+                <div class="stat-n">{{ logs|length }}</div>
                 <div class="stat-l">Всього запитів</div>
             </div>
             <div class="stat">
-                <div class="stat-n ok" id="stat-allow">0</div>
+                {% set allow_count = logs | selectattr('security_metrics.decision', 'equalto', 'ALLOW') | list | length
+                %}
+                <div class="stat-n ok">{{ allow_count }}</div>
                 <div class="stat-l">Дозволено</div>
             </div>
             <div class="stat">
-                <div class="stat-n deny" id="stat-deny">0</div>
+                {% set deny_count = logs | selectattr('security_metrics.decision', 'equalto', 'DENY') | list | length %}
+                <div class="stat-n deny">{{ deny_count }}</div>
                 <div class="stat-l">Заблоковано</div>
             </div>
             <div class="stat">
-                <div class="stat-n warn" id="stat-suspicious">0</div>
+                {% set susp_count = logs | selectattr('incident_response.suspicious_flag', 'equalto', true) | list |
+                length %}
+                <div class="stat-n warn">{{ susp_count }}</div>
                 <div class="stat-l">Аномалії (Suspicious)</div>
             </div>
         </div>
@@ -284,18 +298,64 @@
                     <table class="log-table">
                         <thead>
                             <tr>
-                                <th style="width: 15%;">Time</th>
-                                <th style="width: 25%;">User</th>
-                                <th style="width: 25%;">Role</th>
-                                <th style="width: 35%;">Decision</th>
+                                <th style="width: 18%;">Time / Date</th>
+                                <th style="width: 15%;">User</th>
+                                <th style="width: 14%;">Role</th>
+                                <th style="width: 20%;">Device Trust</th>
+                                <th style="width: 18%;">Network Trust</th>
+                                <th style="width: 15%;">Decision</th>
                             </tr>
                         </thead>
                         <tbody id="logs-tbody">
-                            <tr>
-                                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">
-                                    Завантаження логів безпеки...
+                            {% if logs %}
+                            {% for log in logs[:8] %}
+                            <tr {% if log.incident_response.suspicious_flag
+                                %}style="background: rgba(225, 110, 110, 0.05); font-weight: 500;" {% endif %}>
+                                <td>{{ log.timestamp[:19].replace('T', ' ') }}</td>
+                                <td><strong>{{ log.username }}</strong></td>
+                                <td><span class="role-pill">{{ log.role | uppercase }}</span></td>
+
+                                <td>
+                                    {% if log.context.device == 'managed' %}
+                                    ⚙️ Managed
+                                    {% elif log.context.device == 'unmanaged' %}
+                                    📱 BYOD Device
+                                    {% else %}
+                                    ❓ {{ log.context.device }}
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if log.context.network == 'school' %}
+                                    🏫 School Net
+                                    {% elif log.context.network == 'home' %}
+                                    🏠 Home Net
+                                    {% elif log.context.network == 'public' %}
+                                    🌐 Public Net
+                                    {% else %}
+                                    ❓ {{ log.context.network }}
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if log.security_metrics.decision == 'ALLOW' %}
+                                    <span class="pill pill-allow">ALLOW</span>
+                                    {% elif log.security_metrics.decision == 'LIMITED' %}
+                                    <span class="pill pill-restricted">LIMITED</span>
+                                    {% else %}
+                                    <span class="pill pill-deny">DENY</span>
+                                    {% endif %}
                                 </td>
                             </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="6"
+                                    style="text-align: center; color: var(--text-muted); padding: 30px; font-style: italic;">
+                                    Журнал автентифікацій порожній (Події відсутні)
+                                </td>
+                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -304,17 +364,99 @@
             <div class="dash-card">
                 <div class="section-label">Suspicious activity (Критичні інциденти)</div>
                 <div class="activity-box" id="activity-container">
-                    <div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 13px;">
-                        Аналіз аномалій...
+                    {% set anomalies = logs | selectattr('incident_response.suspicious_flag', 'equalto', true) | list %}
+                    {% if anomalies %}
+                    {% for anom in anomalies[:5] %}
+                    <div class="activity-row">
+                        {% set is_deny = anom.security_metrics.decision == 'DENY' %}
+                        <div class="activity-icon {% if is_deny %}deny{% else %}warn{% endif %}">
+                            {% if is_deny %}✕{% else %}⚠️{% endif %}
+                        </div>
+                        <div class="activity-text">
+                            <strong>{{ anom.security_metrics.reason }}</strong> <span class="sep">·</span> суб'єкт:
+                            <strong>{{ anom.username }}</strong>
+                        </div>
+                        <div class="activity-time">{{ anom.timestamp[11:16] }}</div>
                     </div>
+                    {% endfor %}
+                    {% else %}
+                    <div
+                        style="text-align: center; color: var(--text-muted); padding: 40px; font-size: 13px; font-style: italic;">
+                        ✅ Критичних відхилень чи аномалій в інфраструктурі не виявлено
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
         <div class="dash-card">
-            <div class="section-label" style="margin-bottom:12px;">Denied requests breakdown (Аналітика причин
+            <div class="section-label" style="margin-bottom:16px;">Denied requests breakdown (Аналітика причин
                 блокувань)</div>
-            <div style="display:flex; flex-direction:column; gap:12px;" id="breakdown-container">
+            <div style="display:flex; flex-direction:column; gap:14px;" id="breakdown-container">
+
+                {% set dev_denied = logs | selectattr('context.device', 'equalto', 'unmanaged') |
+                selectattr('security_metrics.decision', 'equalto', 'DENY') | list | length %}
+                <div>
+                    <div
+                        style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; color:var(--text-muted);">
+                        <span>Вхід з некерованих/власних пристроїв (BYOD Restriction)</span>
+                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ dev_denied }}
+                            запитів</span>
+                    </div>
+                    <div
+                        style="height:6px; background:var(--bg-main); border-radius:3px; border: 1px solid var(--border-primary);">
+                        {% if logs|length > 0 %}
+                        <div
+                            style="width: {{ (dev_denied / logs|length) * 100 }}%; height: 100%; background:var(--color-deny); border-radius:3px;">
+                        </div>
+                        {% else %}
+                        <div style="width: 0%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% set net_denied = logs | selectattr('context.network', 'equalto', 'public') |
+                selectattr('security_metrics.decision', 'equalto', 'DENY') | list | length %}
+                <div>
+                    <div
+                        style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; color:var(--text-muted);">
+                        <span>Порушення довіри до мережевого середовища (External Public Network)</span>
+                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ net_denied }}
+                            запитів</span>
+                    </div>
+                    <div
+                        style="height:6px; background:var(--bg-main); border-radius:3px; border: 1px solid var(--border-primary);">
+                        {% if logs|length > 0 %}
+                        <div
+                            style="width: {{ (net_denied / logs|length) * 100 }}%; height: 100%; background:var(--color-deny); border-radius:3px;">
+                        </div>
+                        {% else %}
+                        <div style="width: 0%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% set cred_denied = logs | selectattr('security_metrics.reason', 'equalto', 'Invalid credentials') |
+                list | length %}
+                <div>
+                    <div
+                        style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; color:var(--text-muted);">
+                        <span>Критичні помилки автентифікації сесії (Invalid Credentials)</span>
+                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ cred_denied }}
+                            запитів</span>
+                    </div>
+                    <div
+                        style="height:6px; background:var(--bg-main); border-radius:3px; border: 1px solid var(--border-primary);">
+                        {% if logs|length > 0 %}
+                        <div
+                            style="width: {{ (cred_denied / logs|length) * 100 }}%; height: 100%; background:var(--color-limited); border-radius:3px;">
+                        </div>
+                        {% else %}
+                        <div style="width: 0%; height: 100%; background:var(--color-limited); border-radius:3px;"></div>
+                        {% endif %}
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -327,7 +469,7 @@
     </div>
 
     <script>
-        // 1. Скрипт перемикання кольорових тем
+        // Скрипт перемикання кольорових тем (Збережено вашу робочу логіку)
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
         const savedTheme = localStorage.getItem('theme') || 'auto';
@@ -345,133 +487,6 @@
             htmlEl.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
         });
-
-        // Helper для витягування часу HH:MM з ISO-рядка
-        function formatLogTime(isoString) {
-            if (!isoString) return "00:00";
-            try {
-                const date = new Date(isoString);
-                return date.toTimeString().slice(0, 5);
-            } catch (e) {
-                return "00:00";
-            }
-        }
-
-        // 2. Функція динамічної підгрузки реальних логів безпеки
-        async function fetchLogs() {
-            const tbody = document.getElementById('logs-tbody');
-            const activityContainer = document.getElementById('activity-container');
-            const breakdownContainer = document.getElementById('breakdown-container');
-
-            try {
-                const response = await fetch('/admin/api/logs');
-                if (!response.ok) throw new Error('Помилка читання даних SIEM API');
-
-                const logs = await response.json();
-
-                if (logs.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Події відсутні.</td></tr>`;
-                    activityContainer.innerHTML = `<div style="padding:10px; color:var(--text-muted); text-align:center; font-size:13px;">Аномалій не виявлено</div>`;
-                    return;
-                }
-
-                // --- РОЗРАХУНОК СТАТИСТИКИ ДЛЯ ЛІЧИЛЬНИКІВ ---
-                let total = logs.length;
-                let allowed = logs.filter(l => l.security_metrics.decision === 'ALLOW').length;
-                let denied = logs.filter(l => l.security_metrics.decision === 'DENY').length;
-                let suspicious = logs.filter(l => l.incident_response.suspicious_flag === true).length;
-
-                document.getElementById('stat-total').innerText = total;
-                document.getElementById('stat-allow').innerText = allowed;
-                document.getElementById('stat-deny').innerText = denied;
-                document.getElementById('stat-suspicious').innerText = suspicious;
-
-                // --- 1. ЗАПОВНЕННЯ ТАБЛИЦІ RECENT ACCESS LOG ---
-                // Відображаємо останні 6 запитів
-                const recentLogs = logs.slice(0, 6);
-                tbody.innerHTML = recentLogs.map(log => {
-                    let decision = log.security_metrics.decision;
-                    let pillClass = 'pill-deny';
-                    if (decision === 'ALLOW') pillClass = 'pill-allow';
-                    if (decision === 'LIMITED') pillClass = 'pill-restricted';
-
-                    return `
-                        <tr>
-                            <td>${formatLogTime(log.timestamp)}</td>
-                            <td style="color:var(--text-main); font-weight:500;">${log.username}</td>
-                            <td><span class="role-pill">${log.role}</span></td>
-                            <td><span class="pill ${pillClass}">${decision}</span></td>
-                        </tr>
-                    `;
-                }).join('');
-
-                // --- 2. ЗАПОВНЕННЯ SUSPICIOUS ACTIVITY (АНАЛІЗ АНОМАЛІЙ) ---
-                // Фільтруємо події, марковані як suspicious_flag
-                const anomalies = logs.filter(l => l.incident_response.suspicious_flag === true);
-
-                if (anomalies.length === 0) {
-                    activityContainer.innerHTML = `<div style="padding:20px; color:var(--text-muted); text-align:center; font-size:13px;">⚠️ Критичних інцидентів не зафіксовано</div>`;
-                } else {
-                    activityContainer.innerHTML = anomalies.slice(0, 4).map(anom => {
-                        let isDeny = anom.security_metrics.decision === 'DENY';
-                        let iconClass = isDeny ? 'deny' : 'warn';
-                        let iconSymbol = isDeny ? '✕' : '⚠️';
-
-                        return `
-                            <div class="activity-row">
-                                <div class="activity-icon ${iconClass}">${iconSymbol}</div>
-                                <div class="activity-text"><strong>${anom.security_metrics.reason || 'Аномальний запит'}</strong> — ${anom.username}</div>
-                                <div class="activity-time">${formatLogTime(anom.timestamp)}</div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-
-                // --- 3. ДИНАМІЧНИЙ РОЗРАХУНОК DENIED BREAKDOWN ---
-                // Розраховуємо реальну статистику причин відмов на основі полів контексту
-                let unmanagedDeviceCount = logs.filter(l => l.context.device === 'unmanaged' && l.security_metrics.decision === 'DENY').length;
-                let externalNetCount = logs.filter(l => l.context.network === 'public' && l.security_metrics.decision === 'DENY').length;
-                let invalidCredsCount = logs.filter(l => l.security_metrics.reason === 'Invalid credentials').length;
-
-                let maxDenied = Math.max(unmanagedDeviceCount, externalNetCount, invalidCredsCount, 1);
-
-                breakdownContainer.innerHTML = `
-                    <div>
-                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-muted);">
-                            <span>Некерований пристрій (Unmanaged device restriction)</span>
-                            <span style="font-family:'IBM Plex Mono',monospace;">${unmanagedDeviceCount} запитів</span>
-                        </div>
-                        <div style="height:5px; background:var(--bg-main); border-radius:3px;">
-                            <div style="width: ${(unmanagedDeviceCount / maxDenied) * 100}%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-muted);">
-                            <span>Порушення периметру мережі (External network restriction)</span>
-                            <span style="font-family:'IBM Plex Mono',monospace;">${externalNetCount} запитів</span>
-                        </div>
-                        <div style="height:5px; background:var(--bg-main); border-radius:3px;">
-                            <div style="width: ${(externalNetCount / maxDenied) * 100}%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; color:var(--text-muted);">
-                            <span>Помилки автентифікації (Invalid credentials)</span>
-                            <span style="font-family:'IBM Plex Mono',monospace;">${invalidCredsCount} запитів</span>
-                        </div>
-                        <div style="height:5px; background:var(--bg-main); border-radius:3px;">
-                            <div style="width: ${(invalidCredsCount / maxDenied) * 100}%; height: 100%; background:var(--color-limited); border-radius:3px;"></div>
-                        </div>
-                    </div>
-                `;
-
-            } catch (error) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--color-deny);">❌ Помилка SIEM: ${error.message}</td></tr>`;
-            }
-        }
-
-        // Автоматичне зчитування логів при завантаженні сторінки
-        document.addEventListener('DOMContentLoaded', fetchLogs);
     </script>
 </body>
 

@@ -134,9 +134,27 @@ def admin_dashboard():
             user=user_data,
         )
 
+    # --- НОВИЙ БЛОК: ЗЧИТУВАННЯ ЛОГІВ ДЛЯ ЖУРНАЛУ АВТЕНТИФІКАЦІЙ ---
+    log_file_path = "logs/access_logs.json"
+    logs_data = []
+
+    try:
+        with open(log_file_path, "r", encoding="utf-8") as file:
+            logs_data = json.load(file)
+            # Розгортаємо список, щоб найсвіжіші події були зверху таблиці
+            logs_data.reverse()
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Якщо файлу немає або він пошкоджений, панель не впаде, а покаже порожню таблицю
+        logs_data = []
+    # -------------------------------------------------------------
+
     user_data = {"username": session["user"], "role": session["role"]}
     score = session.get("trust_score")
-    return render_template("admin_dashboard.html", user=user_data, score=score)
+
+    # Передаємо logs_data у шаблон під назвою logs
+    return render_template(
+        "admin_dashboard.html", user=user_data, score=score, logs=logs_data
+    )
 
 
 # =====================================================================
