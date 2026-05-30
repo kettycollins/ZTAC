@@ -899,5 +899,124 @@
         "incident_response": {
             "suspicious_flag": false
         }
+    },
+    {
+        "timestamp": "2026-05-30T23:49:09.408244",
+        "username": "teacher1",
+        "role": "UNKNOWN",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Invalid credentials"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-30T23:49:22.389935",
+        "username": "teacher1",
+        "role": "teacher",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Teacher full access"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-30T23:51:11.521098",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Admin authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-30T23:52:09.852493",
+        "username": "student1",
+        "role": "student",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Student full access within school"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-30T23:52:32.440256",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role or unauthenticated access"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-30T23:53:17.640368",
+        "username": "student1",
+        "role": "student",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Student full access within school"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-30T23:53:28.504376",
+        "username": "student1",
+        "role": "student",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Student full access within school"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
     }
 ]
