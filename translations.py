@@ -202,17 +202,20 @@ TRANSLATIONS = {
         "teacher_scope_out_2": "Конструктор навчальних планів та занять",
         "teacher_scope_out_3": "Управління профілями учнів та класів",
         "teacher_scope_out_4": "Розсилка внутрішніх сповіщень",
+        # =====================================================================
+        # СИСТЕМА ДИНАМІЧНИХ ВЕРДИКТІВ ДЛЯ БЛОКУ "uk"
+        # =====================================================================
         "reasons": {
-            "Admin authorized": "Адміністратора авторизовано.",
-            "Admin restriction: Managed device and secure network required": "Обмеження для Admin: необхідні корпоративний пристрій та захищена мережа.",
-            "Teacher full access": "Вчителю надано повний доступ.",
-            "Teacher limited access (Remote/BYOD context)": "Обмежений доступ для вчителя (віддалений робочий стіл / особистий пристрій).",
-            "Insufficient trust level for Teacher": "Недостатній рівень довіри для ролі Вчителя.",
-            "Student full access within school": "Студенту надано повний доступ у межах закладу.",
-            "Student limited access (BYOD in school or home access)": "Обмежений доступ для студента (власний пристрій або доступ з дому).",
-            "Student restriction: Public networks are blocked": "Обмеження для студентів: доступ з публічних мереж заблоковано.",
-            "Insufficient trust level for Student": "Недостатній рівень довіри для ролі Студента.",
-            "Guest role or unauthenticated access": "Роль гостя або неавторизований запит доступу.",
+            "Admin authorized": "Адміністратора авторизовано. Надано повний доступ до всіх контурів.",
+            "Admin limited access: Medium Trust Level restriction": "Частковий доступ: Середній рівень довіри. Доступ до адмін-ресурсів обмежено.",
+            "Admin limited access: Low Trust Level restriction": "Частковий доступ: Низький рівень довіри. Доступ до адмін та вчительських ресурсів обмежено.",
+            "Teacher authorized": "Вчителю надано повний доступ до навчального контуру.",
+            "Teacher limited access: Medium Trust Level restriction": "Частковий доступ: Середній рівень довіри. Робота в режимі захисту BYOD.",
+            "Teacher limited access: Low Trust Level restriction": "Частковий доступ: Низький рівень довіри. Доступ до оцінювання заблоковано.",
+            "Student authorized": "Студента авторизовано. Надано повний доступ до учнівського порталу.",
+            "Student limited access: Medium Trust Level restriction": "Частковий доступ для студента: Середній рівень довіри.",
+            "Student limited access: Low Trust Level restriction": "Частковий доступ для студента: Низький рівень довіри.",
+            "Guest role restriction": "Запит відхилено: Гостьові акаунти не мають доступу до приватного контуру системи.",
             "Invalid credentials": "Невірні облікові дані (Помилка входу).",
         },
     },
@@ -417,6 +420,21 @@ TRANSLATIONS = {
         "guest_ctx_net": "external network",
         "guest_ctx_dev": "guest device",
         "guest_btn_back": "← Back to Resources",
-        "reasons": {},
+        # =====================================================================
+        # СИСТЕМА ДИНАМІЧНИХ ВЕРДИКТІВ ДЛЯ БЛОКУ "en"
+        # =====================================================================
+        "reasons": {
+            "Admin authorized": "Administrator has been successfully authorized. Full perimeter access granted.",
+            "Admin limited access: Medium Trust Level restriction": "Partial access: Medium Trust Level. Administrative resources are restricted.",
+            "Admin limited access: Low Trust Level restriction": "Partial access: Low Trust Level. Admin and teacher resources are restricted.",
+            "Teacher authorized": "Teacher has been successfully authorized for core resource layers.",
+            "Teacher limited access: Medium Trust Level restriction": "Partial access: Medium Trust Level. Running under BYOD policy protection.",
+            "Teacher limited access: Low Trust Level restriction": "Partial access: Low Trust Level. Grading module system access is disabled.",
+            "Student authorized": "Student identity context successfully validated.",
+            "Student limited access: Medium Trust Level restriction": "Partial access for student: Medium Trust Level validated.",
+            "Student limited access: Low Trust Level restriction": "Partial access for student: Low Trust Level context.",
+            "Guest role restriction": "Request rejected: Guest accounts are restricted from private infrastructure.",
+            "Invalid credentials": "Invalid credentials provided (Authentication failure).",
+        },
     },
 }

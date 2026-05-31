@@ -1647,5 +1647,481 @@
         "incident_response": {
             "suspicious_flag": false
         }
+    },
+    {
+        "timestamp": "2026-05-31T13:57:40.480599",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 100,
+            "decision": "ALLOW",
+            "reason": "Admin authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T14:05:40.726792",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "home"
+        },
+        "security_metrics": {
+            "trust_score": 70,
+            "decision": "DENY",
+            "reason": "Admin restriction: High trust level required"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T14:38:51.586514",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 100,
+            "decision": "ALLOW",
+            "reason": "Admin authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T15:04:06.025769",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 100,
+            "decision": "ALLOW",
+            "reason": "Admin authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T15:15:20.672809",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "home"
+        },
+        "security_metrics": {
+            "trust_score": 70,
+            "decision": "LIMITED",
+            "reason": "Admin limited access: Medium Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T15:37:17.983898",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 100,
+            "decision": "ALLOW",
+            "reason": "Admin authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T15:37:46.988405",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "public"
+        },
+        "security_metrics": {
+            "trust_score": 50,
+            "decision": "LIMITED",
+            "reason": "Admin limited access: Medium Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-31T15:44:39.320007",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "unmanaged",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 70,
+            "decision": "LIMITED",
+            "reason": "Admin limited access: Medium Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-31T15:48:11.100632",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "unmanaged",
+            "network": "home"
+        },
+        "security_metrics": {
+            "trust_score": 40,
+            "decision": "LIMITED",
+            "reason": "Admin limited access: Low Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-31T15:51:14.121824",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "unmanaged",
+            "network": "public"
+        },
+        "security_metrics": {
+            "trust_score": 20,
+            "decision": "LIMITED",
+            "reason": "Admin limited access: Low Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-31T15:58:35.001015",
+        "username": "teacher1",
+        "role": "teacher",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 100,
+            "decision": "ALLOW",
+            "reason": "Teacher authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T16:01:11.667500",
+        "username": "teacher1",
+        "role": "teacher",
+        "context": {
+            "device": "managed",
+            "network": "home"
+        },
+        "security_metrics": {
+            "trust_score": 70,
+            "decision": "LIMITED",
+            "reason": "Teacher limited access: Medium Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T16:06:34.782522",
+        "username": "teacher1",
+        "role": "teacher",
+        "context": {
+            "device": "managed",
+            "network": "public"
+        },
+        "security_metrics": {
+            "trust_score": 50,
+            "decision": "LIMITED",
+            "reason": "Teacher limited access: Medium Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:05:56.238696",
+        "username": "teacher1",
+        "role": "teacher",
+        "context": {
+            "device": "unmanaged",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 70,
+            "decision": "LIMITED",
+            "reason": "Teacher limited access: Medium Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:09:05.163219",
+        "username": "teacher1",
+        "role": "teacher",
+        "context": {
+            "device": "unmanaged",
+            "network": "home"
+        },
+        "security_metrics": {
+            "trust_score": 40,
+            "decision": "LIMITED",
+            "reason": "Teacher limited access: Low Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:11:34.583532",
+        "username": "teacher1",
+        "role": "teacher",
+        "context": {
+            "device": "unmanaged",
+            "network": "public"
+        },
+        "security_metrics": {
+            "trust_score": 20,
+            "decision": "LIMITED",
+            "reason": "Teacher limited access: Low Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:13:01.673074",
+        "username": "student1",
+        "role": "student",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 100,
+            "decision": "ALLOW",
+            "reason": "Student authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:14:23.631932",
+        "username": "student1",
+        "role": "student",
+        "context": {
+            "device": "managed",
+            "network": "home"
+        },
+        "security_metrics": {
+            "trust_score": 70,
+            "decision": "LIMITED",
+            "reason": "Student limited access: Medium Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:18:10.046657",
+        "username": "student1",
+        "role": "student",
+        "context": {
+            "device": "managed",
+            "network": "public"
+        },
+        "security_metrics": {
+            "trust_score": 50,
+            "decision": "LIMITED",
+            "reason": "Student limited access: Medium Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:20:02.458250",
+        "username": "student1",
+        "role": "student",
+        "context": {
+            "device": "unmanaged",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 70,
+            "decision": "LIMITED",
+            "reason": "Student limited access: Medium Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:21:15.519102",
+        "username": "student1",
+        "role": "student",
+        "context": {
+            "device": "unmanaged",
+            "network": "home"
+        },
+        "security_metrics": {
+            "trust_score": 40,
+            "decision": "LIMITED",
+            "reason": "Student limited access: Low Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:22:36.889772",
+        "username": "student1",
+        "role": "student",
+        "context": {
+            "device": "unmanaged",
+            "network": "public"
+        },
+        "security_metrics": {
+            "trust_score": 20,
+            "decision": "LIMITED",
+            "reason": "Student limited access: Low Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:24:52.391711",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:27:02.275197",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "home"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:27:43.622727",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "public"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:30:17.844850",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "unmanaged",
+            "network": "school"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:30:56.283264",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "unmanaged",
+            "network": "home"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-31T17:32:19.710167",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "unmanaged",
+            "network": "public"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
     }
 ]

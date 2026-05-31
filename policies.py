@@ -1,75 +1,80 @@
 def evaluate_access(role, device, network):
     """
-    Динамічний рушій політик Zero Trust (Policy Decision Point).
-    Вираховує Trust Score на основі контексту запиту.
+    Динамічний рушій політик Zero Trust (Policy Decision Point) v3.0.
+    Повністю інтегрований з матрицею доступу магістерського дослідження.
     """
-    # Захист за замовчуванням (Deny by Default)
+    # 1. Захист за замовчуванням (Гість або неавторизований)
     if role == "guest" or not role:
-        return "DENY", 0, "Guest role or unauthenticated access"
+        return "DENY", 0, "Guest role restriction"
 
-    # 1. Нарахування базових балів за пристрій (Device Trust)
-    device_score = 0
-    if device == "managed":
-        device_score = 40
-    elif device == "unmanaged":
-        device_score = 10
-
-    # 2. Нарахування базових балів за мережу (Network Trust)
-    network_score = 0
-    if network == "school":
-        network_score = 40
-    elif network == "home":
-        network_score = 30
-    elif network == "public":
-        network_score = 0
-
-    # Розрахунок фінального Trust Score
+    # 2. Розрахунок Trust Score
+    device_score = 50 if device == "managed" else 20
+    network_score = 50 if network == "school" else (20 if network == "home" else 0)
     trust_score = device_score + network_score
 
-    # 3. Перевірка рольових обмежень та прийняття рішення (Context-Aware Logic)
+    # 3. Визначення Trust Level
+    if 80 <= trust_score <= 100:
+        trust_level = "High"
+    elif 50 <= trust_score <= 79:
+        trust_level = "Medium"
+    else:
+        trust_level = "Low"
 
-    # Адміністратори мають дуже суворі критерії безпеки
+    # =========================================================================
+    # 4. АДАПТИВНИЙ КОНТРОЛЬ ДОСТУПУ ЗГІДНО З ТАБЛИЦЕЮ КОРИСТУВАЧА
+    # =========================================================================
+
+    # СУВОРІ ПОЛІТИКИ ДЛЯ АДМІНІСТРАТОРА
     if role == "admin":
-        if device != "managed" or network == "public":
+        if trust_level == "High":  # (Managed + School = 100)
+            return "ALLOW", trust_score, "Admin authorized"
+        elif (
+            trust_level == "Medium"
+        ):  # (Managed+Home=70, BYOD+School=70, Managed+Public=50)
             return (
-                "DENY",
+                "LIMITED",
                 trust_score,
-                "Admin restriction: Managed device and secure network required",
+                "Admin limited access: Medium Trust Level restriction",
             )
-        return "ALLOW", trust_score, "Admin authorized"
+        elif trust_level == "Low":  # (BYOD+Home=40, BYOD+Public=20)
+            return (
+                "LIMITED",
+                trust_score,
+                "Admin limited access: Low Trust Level restriction",
+            )
 
-    # Логіка для вчителів (Teachers)
+    # ПОЛІТИКИ ДЛЯ ВЧИТЕЛІВ
     if role == "teacher":
-        if trust_score >= 70:
-            return "ALLOW", trust_score, "Teacher full access"
-        elif 40 <= trust_score < 70:
+        if trust_level == "High":  # (100)
+            return "ALLOW", trust_score, "Teacher authorized"
+        elif trust_level == "Medium":  # (70, 50)
             return (
                 "LIMITED",
                 trust_score,
-                "Teacher limited access (Remote/BYOD context)",
+                "Teacher limited access: Medium Trust Level restriction",
             )
-        else:
-            return "DENY", trust_score, "Insufficient trust level for Teacher"
+        elif trust_level == "Low":  # (40, 20)
+            return (
+                "LIMITED",
+                trust_score,
+                "Teacher limited access: Low Trust Level restriction",
+            )
 
-    # Логіка для студентів (Students)
+    # ПОЛІТИКИ ДЛЯ СТУДЕНТІВ
     if role == "student":
-        # Студентам заборонено доступ з публічних мереж у будь-якому випадку
-        if network == "public":
-            return (
-                "DENY",
-                trust_score,
-                "Student restriction: Public networks are blocked",
-            )
-
-        if trust_score >= 70:
-            return "ALLOW", trust_score, "Student full access within school"
-        elif 40 <= trust_score < 70:
+        if trust_level == "High":  # (100)
+            return "ALLOW", trust_score, "Student authorized"
+        elif trust_level == "Medium":  # (70, 50)
             return (
                 "LIMITED",
                 trust_score,
-                "Student limited access (BYOD in school or home access)",
+                "Student limited access: Medium Trust Level restriction",
             )
-        else:
-            return "DENY", trust_score, "Insufficient trust level for Student"
+        elif trust_level == "Low":  # (40, 20)
+            return (
+                "LIMITED",
+                trust_score,
+                "Student limited access: Low Trust Level restriction",
+            )
 
     return "DENY", 0, "Unknown security policy state"

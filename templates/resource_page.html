@@ -218,13 +218,13 @@
         {% if access_level == "ALLOW" %}
         <div class="zt-context-bar" style="border-left: 4px solid var(--color-allow); background: var(--bg-card);">
             <span class="zt-dot" style="background-color: var(--color-allow);"></span>
-            <span><strong>{{ t.res_context_allow }}</strong> Trust Score: {{ score }}/80.</span>
+            <span><strong>{{ t.res_context_allow }}</strong> Trust Score: {{ score }}/100.</span>
         </div>
         {% elif access_level == "LIMITED" %}
         <div class="zt-context-bar"
             style="border-left: 4px solid var(--color-limited); background: var(--bg-card); color: var(--color-limited);">
             <span class="zt-dot" style="background-color: var(--color-limited);"></span>
-            <span><strong>{{ t.res_context_limited }}</strong> Trust Score: {{ score }}/80.</span>
+            <span><strong>{{ t.res_context_limited }}</strong> Trust Score: {{ score }}/100.</span>
         </div>
         {% endif %}
 

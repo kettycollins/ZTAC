@@ -83,14 +83,14 @@ def set_language(lang_code):
     return redirect(request.referrer or url_for("index"))
 
 
-# --- НОВИЙ ЧИСТИЙ МАРШРУТ ДЛЯ КАРТИ РЕСУРСІВ ДЛЯ ВСІХ РОЛЕЙ ---
+# --- НОВИЙ МАРШРУТ ДЛЯ КАРТИ РЕСУРСІВ ДЛЯ ВСІХ РОЛЕЙ ---
 @app.route("/resources")
 def resource_page():
     """Головний екран об'єктів інфраструктури для всіх авторизованих користувачів"""
     if "user" not in session:
         return redirect(url_for("login"))
 
-    # Якщо рівень доступу загалом заблокований рушієм політик (DENY)
+    # Дозволяємо вхід усім, у кого вердикт ALLOW або LIMITED
     if session.get("access_level") not in ["ALLOW", "LIMITED"]:
         user_data = {"username": session.get("user"), "role": session.get("role")}
         return render_template(
