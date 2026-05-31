@@ -6,10 +6,17 @@ from database import init_db
 from authenticate import authenticate_user
 from policies import evaluate_access
 from logging_utils import log_event
+from translations import TRANSLATIONS
 
 app = Flask(__name__)
 app.jinja_env.filters["uppercase"] = lambda s: s.upper() if s else ""
 app.config.from_object(Config)
+
+
+@app.context_processor
+def inject_translations():
+    lang = session.get("lang", "uk")
+    return dict(lang=lang, t=TRANSLATIONS.get(lang, TRANSLATIONS["uk"]))
 
 
 @app.route("/")
@@ -25,17 +32,12 @@ def login():
         device = request.form.get("device")
         network = request.form.get("network")
 
-        # 1. АВТЕНТИФІКАЦІЯ через SQLite базу даних
         user = authenticate_user(username, password)
 
         if user:
-            # 2. ОБЧИСЛЕННЯ рішення Zero Trust через PDP рушій політик
             decision, score, reason = evaluate_access(user["role"], device, network)
-
-            # 3. ЛОГУВАННЯ події у файл logs/access_logs.json
             log_event(username, user["role"], device, network, decision, score, reason)
 
-            # Записуємо параметри в сесію для шаблонів
             session["user"] = user["username"]
             session["role"] = user["role"]
             session["device"] = device
@@ -44,59 +46,51 @@ def login():
             session["trust_score"] = score
             session["reason"] = reason
 
-            # Передаємо персоналізований контекст на екран рішення PDP
-            user_data = {"username": user["username"], "role": user["role"]}
-            return render_template(
-                "denied.html",
-                decision=decision,
-                score=score,
-                reason=reason,
-                user=user_data,
-            )
+            return redirect(url_for("decision_page"))
         else:
-            log_event(
-                username, "UNKNOWN", device, network, "DENY", 0, "Invalid credentials"
-            )
+            lang = session.get("lang", "uk")
             return render_template(
-                "login.html", error="Невірне ім'я користувача або пароль."
+                "login.html", error=TRANSLATIONS[lang]["login_error"]
             )
 
     return render_template("login.html")
 
 
-@app.route("/admin/api/logs")
-def admin_api_logs():
-    """API-ендпоінт для динамічного зчитування JSON-логів безпеки для SIEM консолі"""
-    # Суворий Zero Trust захист контексту API
-    if (
-        "user" not in session
-        or session.get("role") != "admin"
-        or session.get("access_level") != "ALLOW"
-    ):
-        return json.dumps([]), 403
+@app.route("/decision")
+def decision_page():
+    if "user" not in session or "access_level" not in session:
+        return redirect(url_for("login"))
 
-    # Читаємо ваш реальний файл логів із папки logs
-    log_file_path = "logs/access_logs.json"
+    raw_reason = session.get("reason", "")
+    lang = session.get("lang", "uk")
 
-    if os.path.exists(log_file_path):
-        try:
-            with open(log_file_path, "r", encoding="utf-8") as f:
-                logs = json.load(f)
-                # Повертаємо логи перевернутими (найновіші події зверху дашборду)
-                return json.dumps(logs[::-1]), 200, {"Content-Type": "application/json"}
-        except Exception as e:
-            print(f"[ERROR] Помилка зчитування файлу логів: {e}")
+    translated_reason = raw_reason
+    if lang == "uk" and raw_reason in TRANSLATIONS["uk"]["reasons"]:
+        translated_reason = TRANSLATIONS["uk"]["reasons"][raw_reason]
 
-    return json.dumps([]), 200, {"Content-Type": "application/json"}
+    return render_template(
+        "denied.html",
+        decision=session.get("access_level"),
+        score=session.get("trust_score", 0),
+        reason=translated_reason,
+    )
 
 
-@app.route("/dashboard")
-def dashboard():
-    """Головний екран об'єктів інфраструктури (resource_page.html)"""
+@app.route("/set_language/<lang_code>")
+def set_language(lang_code):
+    if lang_code in ["uk", "en"]:
+        session["lang"] = lang_code
+    return redirect(request.referrer or url_for("index"))
+
+
+# --- НОВИЙ ЧИСТИЙ МАРШРУТ ДЛЯ КАРТИ РЕСУРСІВ ДЛЯ ВСІХ РОЛЕЙ ---
+@app.route("/resources")
+def resource_page():
+    """Головний екран об'єктів інфраструктури для всіх авторизованих користувачів"""
     if "user" not in session:
         return redirect(url_for("login"))
 
-    # Безпечний редірект на екран відмови, якщо користувач отримав статус DENY
+    # Якщо рівень доступу загалом заблокований рушієм політик (DENY)
     if session.get("access_level") not in ["ALLOW", "LIMITED"]:
         user_data = {"username": session.get("user"), "role": session.get("role")}
         return render_template(
@@ -117,49 +111,65 @@ def dashboard():
     )
 
 
+# --- ЗАКРИТИЙ МАРШРУТ СУТО ДЛЯ SIEM-ПАНЕЛІ АДМІНІСТРАТОРА ---
 @app.route("/admin/dashboard")
 def admin_dashboard():
-    """Фінальна сторінка для адміністратора — SIEM консоль (admin_dashboard.html)"""
+    """Фінальна сторінка суто для адміністратора — SIEM консоль"""
     if (
         "user" not in session
         or session.get("role") != "admin"
         or session.get("access_level") != "ALLOW"
     ):
         user_data = {"username": session.get("user"), "role": session.get("role")}
+
+        reason_text = "Доступ до консолі SIEM дозволено виключно адміністраторам із повним рівнем довіри (ALLOW)."
+        if session.get("lang") == "en":
+            reason_text = "Access to the SIEM console is restricted to administrators with full trust level (ALLOW)."
+
         return render_template(
             "denied.html",
             decision="DENY",
             score=session.get("trust_score", 0),
-            reason="Доступ до консолі SIEM дозволено виключно адміністраторам із повним рівнем довіри (ALLOW).",
+            reason=reason_text,
             user=user_data,
         )
 
-    # --- НОВИЙ БЛОК: ЗЧИТУВАННЯ ЛОГІВ ДЛЯ ЖУРНАЛУ АВТЕНТИФІКАЦІЙ ---
-    log_file_path = "logs/access_logs.json"
     logs_data = []
-
-    try:
-        with open(log_file_path, "r", encoding="utf-8") as file:
-            logs_data = json.load(file)
-            # Розгортаємо список, щоб найсвіжіші події були зверху таблиці
-            logs_data.reverse()
-    except (FileNotFoundError, json.JSONDecodeError):
-        # Якщо файлу немає або він пошкоджений, панель не впаде, а покаже порожню таблицю
-        logs_data = []
-    # -------------------------------------------------------------
+    log_file_path = "logs/access_logs.json"
+    if os.path.exists(log_file_path):
+        try:
+            with open(log_file_path, "r", encoding="utf-8") as f:
+                logs_data = json.load(f)
+                logs_data.reverse()
+        except Exception:
+            logs_data = []
 
     user_data = {"username": session["user"], "role": session["role"]}
     score = session.get("trust_score")
 
-    # Передаємо logs_data у шаблон під назвою logs
     return render_template(
         "admin_dashboard.html", user=user_data, score=score, logs=logs_data
     )
 
 
-# =====================================================================
-# РОУТИ ДЛЯ АДАПТОВАНИХ СТОРІНОК-ЗАГЛУШОК MVP
-# =====================================================================
+@app.route("/admin/api/logs")
+def admin_api_logs():
+    if (
+        "user" not in session
+        or session.get("role") != "admin"
+        or session.get("access_level") != "ALLOW"
+    ):
+        return json.dumps([]), 403
+
+    log_file_path = "logs/access_logs.json"
+    if os.path.exists(log_file_path):
+        try:
+            with open(log_file_path, "r", encoding="utf-8") as f:
+                logs = json.load(f)
+                return json.dumps(logs[::-1]), 200, {"Content-Type": "application/json"}
+        except Exception:
+            pass
+    return json.dumps([]), 200, {"Content-Type": "application/json"}
 
 
 @app.route("/resources/teacher")
@@ -193,8 +203,5 @@ def logout():
 
 
 if __name__ == "__main__":
-    print("[INIT] Иніціалізація бази даних SQLite...")
     init_db()
-
-    print("[SYSTEM] Запуск Zero Trust веб-сервера...")
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)

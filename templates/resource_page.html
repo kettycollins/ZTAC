@@ -1,12 +1,31 @@
 <!DOCTYPE html>
-<html lang="uk" data-theme="auto">
+<html lang="{{ lang }}" data-theme="auto">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ZTAC — Resources</title>
+    <title>{{ t.res_title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
+        .lang-btn {
+            background: transparent;
+            border: 1px solid var(--border-primary);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .lang-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--border-secondary);
+        }
+
         /* Стилізація таблиці метрик доступу */
         .metrics-table {
             width: 100%;
@@ -169,14 +188,20 @@
         <div style="display: flex; align-items: center; gap: 20px;">
             <span class="ad-logo" style="font-size: 14px; font-weight: 600; letter-spacing: 0.1em;">ZTAC</span>
             <div style="display: flex; gap: 4px;">
-                <a href="{{ url_for('index') }}" class="zt-badge" style="text-decoration: none;">Головна</a>
-                <a href="{{ url_for('login') }}" class="zt-badge" style="text-decoration: none;">Авторизація</a>
+                <a href="{{ url_for('index') }}" class="zt-badge" style="text-decoration: none;">{{ t.nav_home }}</a>
+                <a href="{{ url_for('login') }}" class="zt-badge" style="text-decoration: none;">{{ t.nav_auth }}</a>
             </div>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
+            {% if lang == 'uk' %}
+            <a href="{{ url_for('set_language', lang_code='en') }}" class="lang-btn">🇬🇧 EN</a>
+            {% else %}
+            <a href="{{ url_for('set_language', lang_code='uk') }}" class="lang-btn">🇺🇦 UA</a>
+            {% endif %}
             <button id="theme-toggle" class="theme-btn" type="button" style="padding: 4px 8px;">🌓</button>
             <a href="{{ url_for('logout') }}" class="zt-badge"
-                style="text-decoration: none; border-color: var(--color-deny); color: var(--color-deny);">Вихід</a>
+                style="text-decoration: none; border-color: var(--color-deny); color: var(--color-deny);">{{ t.nav_exit
+                }}</a>
         </div>
     </nav>
 
@@ -184,24 +209,22 @@
 
         <div
             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted);">
-            <div>Користувач: <strong style="color: var(--text-main);">{{ user.username }}</strong></div>
-            <div>Роль сесії: <span class="zt-badge"
+            <div>{{ t.res_user }}: <strong style="color: var(--text-main);">{{ user.username }}</strong></div>
+            <div>{{ t.res_session_role }}: <span class="zt-badge"
                     style="padding: 1px 6px; font-size: 11px; border-color: var(--accent); color: var(--accent);">{{
-                    user.role }}</span></div>
+                    user.role | uppercase }}</span></div>
         </div>
 
         {% if access_level == "ALLOW" %}
         <div class="zt-context-bar" style="border-left: 4px solid var(--color-allow); background: var(--bg-card);">
             <span class="zt-dot" style="background-color: var(--color-allow);"></span>
-            <span><strong>КОНТЕКСТ ДОВІРЕНИЙ (ALLOW):</strong> Параметри пристрою та мережі безпечні. Доступ дозволено
-                згідно з роллю. Trust Score: {{ score }}/80.</span>
+            <span><strong>{{ t.res_context_allow }}</strong> Trust Score: {{ score }}/80.</span>
         </div>
         {% elif access_level == "LIMITED" %}
         <div class="zt-context-bar"
             style="border-left: 4px solid var(--color-limited); background: var(--bg-card); color: var(--color-limited);">
             <span class="zt-dot" style="background-color: var(--color-limited);"></span>
-            <span><strong>ОБМЕЖЕНИЙ КОНТЕКСТ (LIMITED):</strong> Виявлено некерований девайс або зовнішню мережу. Режим
-                обмеженого використання. Trust Score: {{ score }}/80.</span>
+            <span><strong>{{ t.res_context_limited }}</strong> Trust Score: {{ score }}/80.</span>
         </div>
         {% endif %}
 
@@ -209,14 +232,14 @@
 
         <h3
             style="font-weight: 500; font-size: 15px; margin-bottom: 0.5rem; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; color: var(--text-main);">
-            Access Metrics Summary · Звіт доступності об'єктів
+            {{ t.res_metrics_hdr }}
         </h3>
         <table class="metrics-table">
             <thead>
                 <tr>
-                    <th>Статус доступу</th>
-                    <th>Кількість об'єктів</th>
-                    <th>Поточний режим інфраструктури</th>
+                    <th>{{ t.res_th_status }}</th>
+                    <th>{{ t.res_th_count }}</th>
+                    <th>{{ t.res_th_mode }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -240,38 +263,32 @@
                 {% endif %}
 
                 <tr>
-                    <td><span class="zt-badge" style="border-color: var(--color-allow); color: var(--color-allow);">🟢
-                            Повний доступ (ALLOW)</span></td>
-                    <td><strong>{{ allowed_count }}</strong> ресурсів</td>
-                    <td><span style="color: var(--text-muted);">Безперешкодне виконання бізнес-логіки</span></td>
+                    <td><span class="zt-badge" style="border-color: var(--color-allow); color: var(--color-allow);">{{
+                            t.res_badge_allow }}</span></td>
+                    <td><strong>{{ allowed_count }}</strong> {{ t.res_text_resources }}</td>
+                    <td><span style="color: var(--text-muted);">{{ t.res_mode_allow }}</span></td>
                 </tr>
                 <tr>
                     <td><span class="zt-badge"
-                            style="border-color: var(--color-limited); color: var(--color-limited);">🟡 Обмежено
-                            контекстом (LIMITED)</span></td>
-                    <td><strong>{{ limited_count }}</strong> ресурсів</td>
-                    <td><span style="color: var(--text-muted);">Режим ізоляції сесії (Тільки читання / BYOD
-                            захист)</span></td>
+                            style="border-color: var(--color-limited); color: var(--color-limited);">{{
+                            t.res_badge_limited }}</span></td>
+                    <td><strong>{{ limited_count }}</strong> {{ t.res_text_resources }}</td>
+                    <td><span style="color: var(--text-muted);">{{ t.res_mode_limited }}</span></td>
                 </tr>
                 <tr>
-                    <td><span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny);">🔴
-                            Доступ заборонено (DENY)</span></td>
-                    <td><strong>{{ denied_count }}</strong> ресурсів</td>
-                    <td><span style="color: var(--text-muted);">Блокування за принципом Zero Trust (Default Deny)</span>
-                    </td>
+                    <td><span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny);">{{
+                            t.res_badge_deny }}</span></td>
+                    <td><strong>{{ denied_count }}</strong> {{ t.res_text_resources }}</td>
+                    <td><span style="color: var(--text-muted);">{{ t.res_mode_deny }}</span></td>
                 </tr>
             </tbody>
         </table>
 
-        <h2 style="font-weight: 400; font-size: 22px; margin-bottom: 0.5rem;">Infrastructure Resources · Об'єкти системи
-        </h2>
-        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 2rem;">
-            Розподілена авторизація об'єктів відфільтрована за категоріями призначення на основі критеріїв контексту
-            безпеки.
-        </p>
+        <h2 style="font-weight: 400; font-size: 22px; margin-bottom: 0.5rem;">{{ t.res_main_hdr }}</h2>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 2rem;">{{ t.res_main_desc }}</p>
 
         <div class="category-section">
-            <div class="category-title">1. Administration & Core Infrastructure</div>
+            <div class="category-title">{{ t.cat_admin }}</div>
             <div class="res-grid">
 
                 <div class="res-card {% if not r_admin or access_level == 'LIMITED' %}locked{% endif %}">
@@ -288,17 +305,16 @@
                                     Access</span>{% endif %}
                             </div>
                         </div>
-                        <div class="res-name">Admin Panel</div>
-                        <div class="res-desc">Консоль керування політиками безпеки Zero Trust PDP/PEP, моніторинг
-                            аномальних сесій та SIEM логування інфраструктури.</div>
+                        <div class="res-name">{{ t.res_an_name }}</div>
+                        <div class="res-desc">{{ t.res_an_desc }}</div>
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Secure Node</span><span>🌐 Internal Net</span></div>
                         <div class="res-action {% if not r_admin or access_level == 'LIMITED' %}locked-btn{% endif %}">
-                            {% if r_admin and access_level == 'ALLOW' %}<a
-                                href="{{ url_for('admin_dashboard') }}">Консоль SIEM →</a>
-                            {% elif r_admin and access_level == 'LIMITED' %}🔒 Блокування контекстом
-                            {% else %}🔒 Доступ заборонено{% endif %}
+                            {% if r_admin and access_level == 'ALLOW' %}<a href="{{ url_for('admin_dashboard') }}">{{
+                                t.res_an_action }}</a>
+                            {% elif r_admin and access_level == 'LIMITED' %}{{ t.lock_context }}
+                            {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
                 </div>
@@ -317,17 +333,16 @@
                                     Access</span>{% endif %}
                             </div>
                         </div>
-                        <div class="res-name">IT Configuration</div>
-                        <div class="res-desc">Керування мережевими шлюзами, конфігурація баз даних SQLite/Identity
-                            Providers та налаштування параметрів TLS логування.</div>
+                        <div class="res-name">{{ t.res_it_name }}</div>
+                        <div class="res-desc">{{ t.res_it_desc }}</div>
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Core Infrastructure</span><span>🌐 Internal Net</span></div>
                         <div class="res-action {% if not r_admin or access_level == 'LIMITED' %}locked-btn{% endif %}">
-                            {% if r_admin and access_level == 'ALLOW' %}<a
-                                href="{{ url_for('admin_dashboard') }}">Конфігурація систем →</a>
-                            {% elif r_admin and access_level == 'LIMITED' %}🔒 Блокування контекстом
-                            {% else %}🔒 Доступ заборонено{% endif %}
+                            {% if r_admin and access_level == 'ALLOW' %}<a href="{{ url_for('admin_dashboard') }}">{{
+                                t.res_it_action }}</a>
+                            {% elif r_admin and access_level == 'LIMITED' %}{{ t.lock_context }}
+                            {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
                 </div>
@@ -336,7 +351,7 @@
         </div>
 
         <div class="category-section">
-            <div class="category-title">2. Teaching Tools & Educational Management</div>
+            <div class="category-title">{{ t.cat_teaching }}</div>
             <div class="res-grid">
 
                 <div class="res-card {% if not r_teacher or access_level == 'LIMITED' %}locked{% endif %}">
@@ -353,18 +368,17 @@
                                     Access</span>{% endif %}
                             </div>
                         </div>
-                        <div class="res-name">Teaching Dashboard</div>
-                        <div class="res-desc">Панель викладача для управління навчальним процесом, розробки планів
-                            занять та публікації завдань для студентів.</div>
+                        <div class="res-name">{{ t.res_td_name }}</div>
+                        <div class="res-desc">{{ t.res_td_desc }}</div>
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Corporate</span><span>🌐 School Net</span></div>
                         <div
                             class="res-action {% if not r_teacher or access_level == 'LIMITED' %}locked-btn{% endif %}">
-                            {% if r_teacher and access_level == 'ALLOW' %}<a
-                                href="{{ url_for('notice_teacher') }}">Управління навчанням →</a>
-                            {% elif r_teacher and access_level == 'LIMITED' %}🔒 Блокування (Захист BYOD)
-                            {% else %}🔒 Доступ заборонено{% endif %}
+                            {% if r_teacher and access_level == 'ALLOW' %}<a href="{{ url_for('notice_teacher') }}">{{
+                                t.res_td_action }}</a>
+                            {% elif r_teacher and access_level == 'LIMITED' %}{{ t.lock_byod }}
+                            {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
                 </div>
@@ -383,18 +397,17 @@
                                     Access</span>{% endif %}
                             </div>
                         </div>
-                        <div class="res-name">Gradebook System</div>
-                        <div class="res-desc">Модуль виставлення підсумкових оцінок ліцею, семестрових атестацій та
-                            ведення електронного журналу успішності.</div>
+                        <div class="res-name">{{ t.res_gs_name }}</div>
+                        <div class="res-desc">{{ t.res_gs_desc }}</div>
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Confidential Ledger</span><span>🌐 School Net</span></div>
                         <div
                             class="res-action {% if not r_teacher or access_level == 'LIMITED' %}locked-btn{% endif %}">
-                            {% if r_teacher and access_level == 'ALLOW' %}<a
-                                href="{{ url_for('notice_teacher') }}">Редагувати журнал →</a>
-                            {% elif r_teacher and access_level == 'LIMITED' %}🔒 Блокування (Захист BYOD)
-                            {% else %}🔒 Доступ заборонено{% endif %}
+                            {% if r_teacher and access_level == 'ALLOW' %}<a href="{{ url_for('notice_teacher') }}">{{
+                                t.res_gs_action }}</a>
+                            {% elif r_teacher and access_level == 'LIMITED' %}{{ t.lock_byod }}
+                            {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
                 </div>
@@ -403,7 +416,7 @@
         </div>
 
         <div class="category-section">
-            <div class="category-title">3. Learning & Content Services</div>
+            <div class="category-title">{{ t.cat_learning }}</div>
             <div class="res-grid">
 
                 <div class="res-card {% if not r_student %}locked{% endif %}">
@@ -412,16 +425,18 @@
                             <div class="res-icon" style="background: #EAF3DE; color: #27500a;">📖</div>
                             <span class="zt-badge" style="font-size: 9px; padding: 1px 4px;">Student Hub</span>
                         </div>
-                        <div class="res-name">Student Portal</div>
-                        <div class="res-desc">Персональний кабінет учня: перегляд розкладу уроків, щоденника, аналітики
-                            успішності та завантаження домашніх робіт.</div>
+                        <div class="res-name">{{ t.res_sp_name }}</div>
+                        <div class="res-desc">{{ t.res_sp_desc }}</div>
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Device: Any</span><span>🌐 Net: Any</span></div>
                         <div class="res-action {% if not r_student %}locked-btn{% endif %}">
-                            {% if r_student %}<a href="{{ url_for('notice_student') }}">{% if access_level == 'LIMITED'
-                                %}Відкрити (Тільки читання) →{% else %}Відкрити кабінет →{% endif %}</a>
-                            {% else %}🔒 Доступ заборонено{% endif %}
+                            {% if r_student %}
+                            <a href="{{ url_for('notice_student') }}">
+                                {% if access_level == 'LIMITED' %}{{ t.action_read_only }} →{% else %}{{ t.res_sp_action
+                                }}{% endif %}
+                            </a>
+                            {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
                 </div>
@@ -432,16 +447,18 @@
                             <div class="res-icon" style="background: #EAF3DE; color: #27500a;">📚</div>
                             <span class="zt-badge" style="font-size: 9px; padding: 1px 4px;">E-Library</span>
                         </div>
-                        <div class="res-name">Digital Library</div>
-                        <div class="res-desc">Доступ до цифрових підручників, наукових матеріалів ліцею, методичних
-                            посібників та закритих освітніх публікацій.</div>
+                        <div class="res-name">{{ t.res_dl_name }}</div>
+                        <div class="res-desc">{{ t.res_dl_desc }}</div>
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Device: Any</span><span>🌐 Net: Any</span></div>
                         <div class="res-action {% if not r_student %}locked-btn{% endif %}">
-                            {% if r_student %}<a href="{{ url_for('notice_student') }}">{% if access_level == 'LIMITED'
-                                %}Читати (Тільки читання) →{% else %}Увійти до бібліотеки →{% endif %}</a>
-                            {% else %}🔒 Доступ заборонено{% endif %}
+                            {% if r_student %}
+                            <a href="{{ url_for('notice_student') }}">
+                                {% if access_level == 'LIMITED' %}{{ t.action_read_only }} →{% else %}{{ t.res_dl_action
+                                }}{% endif %}
+                            </a>
+                            {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
                 </div>
@@ -450,7 +467,7 @@
         </div>
 
         <div class="category-section">
-            <div class="category-title">4. Public Information Access</div>
+            <div class="category-title">{{ t.cat_public }}</div>
             <div class="res-grid">
 
                 <div class="res-card">
@@ -459,13 +476,12 @@
                             <div class="res-icon" style="background: #FFF3E0; color: #E65100;">📢</div>
                             <span class="zt-badge" style="font-size: 9px; padding: 1px 4px;">Public</span>
                         </div>
-                        <div class="res-name">Announcements</div>
-                        <div class="res-desc">Публічна дошка оголошень ліцею, розклад святкових заходів, відкриті анонси
-                            та новини для батьків і гостей ліцею.</div>
+                        <div class="res-name">{{ t.res_am_name }}</div>
+                        <div class="res-desc">{{ t.res_am_desc }}</div>
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Device: Any</span><span>🌐 Net: Any</span></div>
-                        <div class="res-action"><a href="{{ url_for('notice_guest') }}">Переглянути новини →</a></div>
+                        <div class="res-action"><a href="{{ url_for('notice_guest') }}">{{ t.res_am_action }}</a></div>
                     </div>
                 </div>
 
@@ -475,13 +491,12 @@
                             <div class="res-icon" style="background: #FFF3E0; color: #E65100;">🌐</div>
                             <span class="zt-badge" style="font-size: 9px; padding: 1px 4px;">Public</span>
                         </div>
-                        <div class="res-name">Public Resources</div>
-                        <div class="res-desc">Загальнодоступний контур: публічний каталог медіатеки, шкільний календар,
-                            контакти адміністрації та форми зворотного зв'язку.</div>
+                        <div class="res-name">{{ t.res_pr_name }}</div>
+                        <div class="res-desc">{{ t.res_pr_desc }}</div>
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Device: Any</span><span>🌐 Net: Any</span></div>
-                        <div class="res-action"><a href="{{ url_for('notice_guest') }}">Читати документи →</a></div>
+                        <div class="res-action"><a href="{{ url_for('notice_guest') }}">{{ t.res_pr_action }}</a></div>
                     </div>
                 </div>
 
@@ -490,8 +505,8 @@
 
         <div style="margin-top: 2.5rem; text-align: center;">
             <a href="{{ url_for('login') }}" class="zt-btn"
-                style="background: transparent; border: 1px solid var(--border-secondary); color: var(--text-main); text-decoration: none; padding: 10px 20px;">Повернутися
-                до авторизації</a>
+                style="background: transparent; border: 1px solid var(--border-secondary); color: var(--text-main); text-decoration: none; padding: 10px 20px;">{{
+                t.res_btn_back }}</a>
         </div>
     </div>
 

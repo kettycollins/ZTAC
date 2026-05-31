@@ -1,25 +1,54 @@
 <!DOCTYPE html>
-<html lang="uk" data-theme="auto">
+<html lang="{{ lang }}" data-theme="auto">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вхід до системи | Zero Trust Access</title>
+    <title>{{ t.login_title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .lang-btn {
+            background: transparent;
+            border: 1px solid var(--border-primary);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .lang-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--border-secondary);
+        }
+    </style>
 </head>
 
 <body>
     <div class="zt-wrap">
-        <div class="zt-header">
-            <span class="zt-badge">pdp-v2.5</span>
-            <span class="zt-logo">Zero Trust Access Control</span>
-            <div class="zt-divider"></div>
-            <button id="theme-toggle" class="theme-btn" type="button" title="Змінити тему">🌓</button>
+        <div class="zt-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1;">
+                <span class="zt-badge">pdp-v2.5</span>
+                <span class="zt-logo">Zero Trust Access Control</span>
+                <div class="zt-divider" style="flex-grow: 1;"></div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; margin-left: 15px;">
+                {% if lang == 'uk' %}
+                <a href="{{ url_for('set_language', lang_code='en') }}" class="lang-btn">🇬🇧 EN</a>
+                {% else %}
+                <a href="{{ url_for('set_language', lang_code='uk') }}" class="lang-btn">🇺🇦 UA</a>
+                {% endif %}
+                <button id="theme-toggle" class="theme-btn" type="button" title="Змінити тему">🌓</button>
+            </div>
         </div>
 
         <div class="zt-card">
-            <h2 style="margin-top: 0; margin-bottom: 20px; font-weight: 400; font-size: 20px;">Автентифікація контексту
-            </h2>
+            <h2 style="margin-top: 0; margin-bottom: 20px; font-weight: 400; font-size: 20px;">{{ t.login_header }}</h2>
 
             {% if error %}
             <div class="error-box" style="margin-bottom: 15px; padding: 10px; font-size: 14px;">
@@ -30,29 +59,30 @@
             <form action="{{ url_for('login') }}" method="POST">
                 <div class="zt-grid">
                     <div class="zt-field">
-                        <label class="zt-label">Username</label>
-                        <input type="text" name="username" class="zt-input" placeholder="Наприклад, admin1" required>
+                        <label class="zt-label">{{ t.lbl_username }}</label>
+                        <input type="text" name="username" class="zt-input" placeholder="e.g. admin1, teacher1..."
+                            required>
                     </div>
 
                     <div class="zt-field">
-                        <label class="zt-label">Password</label>
+                        <label class="zt-label">{{ t.lbl_password }}</label>
                         <input type="password" name="password" class="zt-input" placeholder="••••••••" required>
                     </div>
 
                     <div class="zt-field">
-                        <label class="zt-label">Device Trust</label>
+                        <label class="zt-label">{{ t.lbl_device }}</label>
                         <select name="device" class="zt-select">
-                            <option value="managed" selected>Managed Device (Керований)</option>
-                            <option value="unmanaged">BYOD Device (Власний пристрій)</option>
+                            <option value="managed">{{ t.opt_managed }}</option>
+                            <option value="unmanaged">{{ t.opt_unmanaged }}</option>
                         </select>
                     </div>
 
                     <div class="zt-field">
-                        <label class="zt-label">Network Trust</label>
+                        <label class="zt-label">{{ t.lbl_network }}</label>
                         <select name="network" class="zt-select">
-                            <option value="school" selected>School Network (Внутрішня ліцею)</option>
-                            <option value="home">Home Network (Домашня/VPN)</option>
-                            <option value="public">Public Network (Публічна Wi-Fi)</option>
+                            <option value="school">{{ t.opt_net_school }}</option>
+                            <option value="home">{{ t.opt_net_home }}</option>
+                            <option value="public">{{ t.opt_net_public }}</option>
                         </select>
                     </div>
                 </div>
@@ -62,7 +92,7 @@
                     <span>policy-engine · v2.5 · context-verification · identity-provider</span>
                 </div>
 
-                <button type="submit" class="zt-btn">Надіслати запит (Request Access)</button>
+                <button type="submit" class="zt-btn">{{ t.btn_submit_login }}</button>
             </form>
         </div>
     </div>

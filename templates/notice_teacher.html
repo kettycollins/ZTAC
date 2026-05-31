@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="uk" data-theme="auto">
+<html lang="{{ lang }}" data-theme="auto">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ZTAC — Teaching Dashboard</title>
+    <title>{{ t.teacher_title }}</title>
     <link
         href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap"
         rel="stylesheet" />
@@ -19,7 +19,6 @@
         }
 
         :root {
-            /* Прив'язуємо кольори до вашого глобального style.css */
             --bg: var(--bg-main);
             --surface: var(--bg-card);
             --surface2: var(--bg-main);
@@ -29,10 +28,9 @@
             --mono: 'IBM Plex Mono', monospace;
             --sans: 'IBM Plex Sans', sans-serif;
 
-            /* Зберігаємо автентичні статуси акцентів, але адаптуємо під темну тему */
-            --acc-fill: var(--color-allow-bg);
-            --acc-text: var(--color-allow);
-            --acc-border: var(--color-allow);
+            --acc-fill: rgba(2, 136, 209, 0.1);
+            --acc-text: var(--accent);
+            --acc-border: var(--accent);
             --red-fill: var(--color-deny-bg);
             --red-text: var(--color-deny);
             --red-border: var(--color-deny);
@@ -58,7 +56,6 @@
             padding: 2.5rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
             position: relative;
-            /* Для позиціонування кнопки теми */
         }
 
         .header {
@@ -66,8 +63,7 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 1.5rem;
-            padding-right: 40px;
-            /* Захист від налізання на кнопку */
+            padding-right: 120px;
         }
 
         .icon {
@@ -82,7 +78,6 @@
             font-weight: 500;
         }
 
-        /* Академічний банер-повідомлення */
         .prototype-warning {
             background: var(--red-fill);
             border: 1px solid var(--red-border);
@@ -200,11 +195,34 @@
             margin-top: 1.5rem;
         }
 
-        /* Стиль для кнопки теми у верхньому правому кутку картки */
-        .card-theme-btn {
+        .card-controls {
             position: absolute;
             top: 24px;
             right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-family: var(--mono);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .lang-btn:hover {
+            background: var(--surface2);
+        }
+
+        .card-theme-btn {
             background: transparent;
             border: 1px solid var(--border);
             padding: 6px 10px;
@@ -225,45 +243,47 @@
     <div class="container">
         <div class="card">
 
-            <button id="theme-toggle" class="card-theme-btn" type="button" title="Змінити тему">🌓</button>
+            <div class="card-controls">
+                {% if lang == 'uk' %}
+                <a href="{{ url_for('set_language', lang_code='en') }}" class="lang-btn">🇬🇧 EN</a>
+                {% else %}
+                <a href="{{ url_for('set_language', lang_code='uk') }}" class="lang-btn">🇺🇦 UA</a>
+                {% endif %}
+                <button id="theme-toggle" class="card-theme-btn" type="button" title="Змінити тему">🌓</button>
+            </div>
 
             <div class="header">
                 <span class="icon">📝</span>
                 <div>
-                    <h1>Teaching Dashboard & Gradebook</h1>
+                    <h1>{{ t.teacher_header }}</h1>
                 </div>
             </div>
 
             <div class="prototype-warning">
-                <strong>Увага:</strong> Ця сторінка є демонстраційною заглушкою інфраструктурного об'єкта. Даний
-                веб-додаток розроблено виключно як <strong>академічний прототип (MVP) для ознайомлювальних
-                    цілей</strong> з метою демонстрації роботи Zero Trust архітектури та перевірки політик доступу.
-                Подальший функціонал електронного журналу (внесення оцінок, редагування даних) на цьому етапі розробки
-                <strong>недоступний</strong>.
+                <strong>{{ t.guest_warn_title }}</strong> {{ t.teacher_warn_text }}
             </div>
 
             <p style="font-size: 14px; color: var(--text2); line-height: 1.5;">
-                У реальній системі цей модуль відповідає за збереження конфіденційних даних ліцею. Рушій Zero Trust
-                успішно проаналізував ваші параметри та схвалив доступ до цього сегменту мережі.
+                {{ t.teacher_desc }}
             </p>
 
             <div class="scope-grid">
                 <div class="scope-item">
-                    <span class="scope-label yes">Симулюється (In Scope)</span>
+                    <span class="scope-label yes">{{ t.guest_in_scope }}</span>
                     <ul class="scope-list">
-                        <li>Автентифікація та аналіз ролі</li>
-                        <li>Контекстна перевірка пристрою</li>
-                        <li>Рішення Policy Engine (ALLOW)</li>
-                        <li>Логування безпекових подій</li>
+                        <li>{{ t.teacher_scope_in_1 }}</li>
+                        <li>{{ t.teacher_scope_in_2 }}</li>
+                        <li>{{ t.teacher_scope_in_3 }}</li>
+                        <li>{{ t.teacher_scope_in_4 }}</li>
                     </ul>
                 </div>
                 <div class="scope-item">
-                    <span class="scope-label no">Недоступно (Out of Scope)</span>
+                    <span class="scope-label no">{{ t.guest_out_scope }}</span>
                     <ul class="scope-list">
-                        <li>Виставлення та редагування оцінок</li>
-                        <li>База даних учнів ліцею</li>
-                        <li>Календарні плани вчителів</li>
-                        <li>Аналітичні звіти успішності</li>
+                        <li>{{ t.teacher_scope_out_1 }}</li>
+                        <li>{{ t.teacher_scope_out_2 }}</li>
+                        <li>{{ t.teacher_scope_out_3 }}</li>
+                        <li>{{ t.teacher_scope_out_4 }}</li>
                     </ul>
                 </div>
             </div>
@@ -272,13 +292,13 @@
 
             <div class="session-row">
                 <strong>{{ user.username }}</strong><span class="sep">·</span>
-                <span>{{ user.role }}</span><span class="sep">·</span>
-                <span>managed device</span><span class="sep">·</span>
-                <span>school network</span>
+                <span>{{ user.role | uppercase }}</span><span class="sep">·</span>
+                <span>{{ t.student_ctx_dev }}: {{ t.student_ctx_any }}</span><span class="sep">·</span>
+                <span>{{ t.student_ctx_net }}: {{ t.student_ctx_any }}</span>
             </div>
 
             <div class="actions">
-                <a href="{{ url_for('dashboard') }}" class="btn btn-back">← Назад до ресурсів</a>
+                <a href="{{ url_for('resource_page') }}" class="btn btn-back">{{ t.guest_btn_back }}</a>
             </div>
         </div>
         <p class="footer-note">ZTAC · Lightweight Zero Trust Access Control System · v0.1 MVP</p>
@@ -288,11 +308,9 @@
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
 
-        // Ініціалізація теми при завантаженні
         const savedTheme = localStorage.getItem('theme') || 'auto';
         htmlEl.setAttribute('data-theme', savedTheme);
 
-        // Обробник натискання на кнопку теми
         toggleBtn.addEventListener('click', () => {
             const currentTheme = htmlEl.getAttribute('data-theme');
             let newTheme = 'light';
@@ -308,7 +326,6 @@
             localStorage.setItem('theme', newTheme);
         });
     </script>
-
 </body>
 
 </html>

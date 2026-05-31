@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="uk" data-theme="auto">
+<html lang="{{ lang }}" data-theme="auto">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ZTAC — Student Portal</title>
+    <title>{{ t.student_title }}</title>
     <link
         href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap"
         rel="stylesheet" />
@@ -19,7 +19,6 @@
         }
 
         :root {
-            /* Прив'язуємо кольори до вашого глобального style.css */
             --bg: var(--bg-main);
             --surface: var(--bg-card);
             --surface2: var(--bg-main);
@@ -29,7 +28,6 @@
             --mono: 'IBM Plex Mono', monospace;
             --sans: 'IBM Plex Sans', sans-serif;
 
-            /* Студентські сині акценти адаптуємо через змінні акценту */
             --acc-fill: rgba(49, 130, 206, 0.12);
             --acc-text: var(--accent);
             --acc-border: var(--accent);
@@ -58,7 +56,6 @@
             padding: 2.5rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
             position: relative;
-            /* Для позиціонування кнопки теми */
         }
 
         .header {
@@ -66,8 +63,8 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 1.5rem;
-            padding-right: 40px;
-            /* Захист від налізання на кнопку */
+            padding-right: 120px;
+            /* Захист від налізання елементів */
         }
 
         .icon {
@@ -82,7 +79,6 @@
             font-weight: 500;
         }
 
-        /* Академічний банер-повідомлення */
         .prototype-warning {
             background: var(--red-fill);
             border: 1px solid var(--red-border);
@@ -200,11 +196,34 @@
             margin-top: 1.5rem;
         }
 
-        /* Стиль для кнопки теми у верхньому правому кутку картки */
-        .card-theme-btn {
+        .card-controls {
             position: absolute;
             top: 24px;
             right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-family: var(--mono);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .lang-btn:hover {
+            background: var(--surface2);
+        }
+
+        .card-theme-btn {
             background: transparent;
             border: 1px solid var(--border);
             padding: 6px 10px;
@@ -225,45 +244,47 @@
     <div class="container">
         <div class="card">
 
-            <button id="theme-toggle" class="card-theme-btn" type="button" title="Змінити тему">🌓</button>
+            <div class="card-controls">
+                {% if lang == 'uk' %}
+                <a href="{{ url_for('set_language', lang_code='en') }}" class="lang-btn">🇬🇧 EN</a>
+                {% else %}
+                <a href="{{ url_for('set_language', lang_code='uk') }}" class="lang-btn">🇺🇦 UA</a>
+                {% endif %}
+                <button id="theme-toggle" class="card-theme-btn" type="button" title="Змінити тему">🌓</button>
+            </div>
 
             <div class="header">
                 <span class="icon">🎓</span>
                 <div>
-                    <h1>Student Portal</h1>
+                    <h1>{{ t.student_header }}</h1>
                 </div>
             </div>
 
             <div class="prototype-warning">
-                <strong>Увага:</strong> Ця сторінка є демонстраційною заглушкою інфраструктурного об'єкта. Даний
-                веб-додаток розроблено виключно як <strong>академічний прототип (MVP) для ознайомлювальних
-                    цілей</strong> з метою демонстрації роботи Zero Trust архітектури та перевірки політик доступу.
-                Подальший функціонал учнівського порталу (перегляд оцінок, завантаження завдань) на цьому етапі розробки
-                <strong>недоступний</strong>.
+                <strong>{{ t.guest_warn_title }}</strong> {{ t.student_warn_text }}
             </div>
 
             <p style="font-size: 14px; color: var(--text2); line-height: 1.5;">
-                У фінальній системі тут розгортається персональний електронний кабінет учня. Оскільки ваша роль дозволяє
-                перегляд цього ресурсу, Policy Engine надав вам доступ до сторінки.
+                {{ t.student_desc }}
             </p>
 
             <div class="scope-grid">
                 <div class="scope-item">
-                    <span class="scope-label yes">Симулюється (In Scope)</span>
+                    <span class="scope-label yes">{{ t.guest_in_scope }}</span>
                     <ul class="scope-list">
-                        <li>Автентифікація користувача</li>
-                        <li>Перевірка відповідності ролі</li>
-                        <li>Оцінка контексту підключення</li>
-                        <li>Відображення статусу (ALLOW/READ-ONLY)</li>
+                        <li>{{ t.student_scope_in_1 }}</li>
+                        <li>{{ t.student_scope_in_2 }}</li>
+                        <li>{{ t.student_scope_in_3 }}</li>
+                        <li>{{ t.student_scope_in_4 }}</li>
                     </ul>
                 </div>
                 <div class="scope-item">
-                    <span class="scope-label no">Недоступно (Out of Scope)</span>
+                    <span class="scope-label no">{{ t.guest_out_scope }}</span>
                     <ul class="scope-list">
-                        <li>Відображення розкладу та уроків</li>
-                        <li>Перегляд оцінок та щоденника</li>
-                        <li>Завантаження файлів домашніх завдань</li>
-                        <li>Сповіщення від вчителів</li>
+                        <li>{{ t.student_scope_out_1 }}</li>
+                        <li>{{ t.student_scope_out_2 }}</li>
+                        <li>{{ t.student_scope_out_3 }}</li>
+                        <li>{{ t.student_scope_out_4 }}</li>
                     </ul>
                 </div>
             </div>
@@ -272,13 +293,13 @@
 
             <div class="session-row">
                 <strong>{{ user.username }}</strong><span class="sep">·</span>
-                <span>{{ user.role }}</span><span class="sep">·</span>
-                <span>Device: Any</span><span class="sep">·</span>
-                <span>Network: Any</span>
+                <span>{{ user.role | uppercase }}</span><span class="sep">·</span>
+                <span>{{ t.student_ctx_dev }}: {{ t.student_ctx_any }}</span><span class="sep">·</span>
+                <span>{{ t.student_ctx_net }}: {{ t.student_ctx_any }}</span>
             </div>
 
             <div class="actions">
-                <a href="{{ url_for('dashboard') }}" class="btn btn-back">← Назад до ресурсів</a>
+                <a href="{{ url_for('resource_page') }}" class="btn btn-back">{{ t.guest_btn_back }}</a>
             </div>
         </div>
         <p class="footer-note">ZTAC · Lightweight Zero Trust Access Control System · v0.1 MVP</p>
@@ -288,11 +309,9 @@
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
 
-        // Зчитуємо глобальну тему
         const savedTheme = localStorage.getItem('theme') || 'auto';
         htmlEl.setAttribute('data-theme', savedTheme);
 
-        // Обробник кліку для динамічної зміни
         toggleBtn.addEventListener('click', () => {
             const currentTheme = htmlEl.getAttribute('data-theme');
             let newTheme = 'light';

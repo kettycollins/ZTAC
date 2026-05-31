@@ -1,11 +1,31 @@
 <!DOCTYPE html>
-<html lang="uk" data-theme="auto">
+<html lang="{{ lang }}" data-theme="auto">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Рішення доступу | Zero Trust Access Decision</title>
+    <title>{{ t.title_pdp }} | Zero Trust Access Decision</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .lang-btn {
+            background: transparent;
+            border: 1px solid var(--border-primary);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .lang-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--border-secondary);
+        }
+    </style>
 </head>
 
 <body>
@@ -15,7 +35,15 @@
             <span class="ad-logo"
                 style="font-weight: 600; font-family: 'IBM Plex Mono', monospace; font-size: 13px;">ztac · policy
                 decision point</span>
-            <button id="theme-toggle" class="theme-btn" type="button">🌓</button>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                {% if lang == 'uk' %}
+                <a href="{{ url_for('set_language', lang_code='en') }}" class="lang-btn">🇬🇧 EN</a>
+                {% else %}
+                <a href="{{ url_for('set_language', lang_code='uk') }}" class="lang-btn">🇺🇦 UA</a>
+                {% endif %}
+                <button id="theme-toggle" class="theme-btn" type="button">🌓</button>
+            </div>
         </div>
 
         <div class="zt-divider" style="margin-bottom: 1.5rem; width: 100%;"></div>
@@ -24,8 +52,8 @@
         <div class="ad-hero allow"
             style="border-left: 4px solid var(--color-allow); background: var(--bg-card); padding: 20px; border-radius: 6px; margin-bottom: 1.5rem;">
             <h1 class="ad-verdict allow"
-                style="color: var(--color-allow); font-size: 24px; font-weight: 600; margin-bottom: 8px;">ACCESS GRANTED
-            </h1>
+                style="color: var(--color-allow); font-size: 24px; font-weight: 600; margin-bottom: 8px;">{{
+                t.verdict_allow }}</h1>
             <div class="ad-score-bar" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px;">
                 <span>TRUST SCORE: <strong>{{ score }}/80</strong></span> ·
                 <span class="ad-status-badge badge-allow" style="color: var(--color-allow);">TRUSTED CONTEXT</span>
@@ -35,8 +63,8 @@
         <div class="ad-hero limited"
             style="border-left: 4px solid var(--color-limited); background: var(--bg-card); padding: 20px; border-radius: 6px; margin-bottom: 1.5rem;">
             <h1 class="ad-verdict limited"
-                style="color: var(--color-limited); font-size: 24px; font-weight: 600; margin-bottom: 8px;">LIMITED
-                ACCESS</h1>
+                style="color: var(--color-limited); font-size: 24px; font-weight: 600; margin-bottom: 8px;">{{
+                t.verdict_limited }}</h1>
             <div class="ad-score-bar" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px;">
                 <span>TRUST SCORE: <strong>{{ score }}/80</strong></span> ·
                 <span class="ad-status-badge badge-limited" style="color: var(--color-limited);">MEDIUM RISK</span>
@@ -46,8 +74,8 @@
         <div class="ad-hero deny"
             style="border-left: 4px solid var(--color-deny); background: var(--bg-card); padding: 20px; border-radius: 6px; margin-bottom: 1.5rem;">
             <h1 class="ad-verdict deny"
-                style="color: var(--color-deny); font-size: 24px; font-weight: 600; margin-bottom: 8px;">ACCESS DENIED
-            </h1>
+                style="color: var(--color-deny); font-size: 24px; font-weight: 600; margin-bottom: 8px;">{{
+                t.verdict_deny }}</h1>
             <div class="ad-score-bar" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px;">
                 <span>TRUST SCORE: <strong>{{ score }}/80</strong></span> ·
                 <span class="ad-status-badge badge-deny" style="color: var(--color-deny); font-weight: 600;">CRITICAL
@@ -61,59 +89,63 @@
             <div class="ad-meta-item"
                 style="background: var(--bg-card); border: 1px solid var(--border-primary); padding: 12px; border-radius: 6px;">
                 <div class="ad-meta-label"
-                    style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Поточна роль</div>
+                    style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">{{ t.meta_role }}
+                </div>
                 <div class="ad-meta-val" style="font-size: 14px; font-weight: 500; margin-top: 4px;">{{
                     session.get('role', 'UNKNOWN') | uppercase }}</div>
             </div>
             <div class="ad-meta-item"
                 style="background: var(--bg-card); border: 1px solid var(--border-primary); padding: 12px; border-radius: 6px;">
                 <div class="ad-meta-label"
-                    style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Тип пристрою</div>
+                    style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">{{ t.meta_device }}
+                </div>
                 <div class="ad-meta-val" style="font-size: 14px; font-weight: 500; margin-top: 4px;">{{
-                    session.get('device', 'Context Verified') | uppercase }}</div>
+                    session.get('device', 'CALCULATED') | uppercase }}</div>
             </div>
             <div class="ad-meta-item"
                 style="background: var(--bg-card); border: 1px solid var(--border-primary); padding: 12px; border-radius: 6px;">
                 <div class="ad-meta-label"
-                    style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Мережа входу</div>
+                    style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">{{ t.meta_network }}
+                </div>
                 <div class="ad-meta-val" style="font-size: 14px; font-weight: 500; margin-top: 4px;">{{
-                    session.get('network', 'Evaluated') | uppercase }}</div>
+                    session.get('network', 'EVALUATED') | uppercase }}</div>
             </div>
         </div>
 
         <div class="zt-card" style="padding: 20px; margin-bottom: 1.5rem;">
             <div
                 style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 12px; font-family: 'IBM Plex Mono', monospace;">
-                📊 Аналіз критеріїв рушія політик (Policy Engine)
+                {{ t.engine_analysis }}
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; line-height: 1.5;">
                 <div style="display: flex; gap: 8px; align-items: start;">
                     <span style="color: var(--accent);">•</span>
-                    <span><strong>Вердикт системи:</strong> {{ reason if reason else 'Доступ оброблено автоматичною
+                    <span><strong>{{ t.title_pdp }}:</strong> {{ reason if reason else 'Доступ оброблено автоматичною
                         політикою безпеки.' }}</span>
                 </div>
                 <div style="display: flex; gap: 8px; align-items: start;">
                     <span style="color: var(--accent);">•</span>
-                    <span><strong>Рекомендація:</strong> Для забезпечення maximal-ного Trust Score використовуйте
-                        виключно корпоративні пристрої ліцею всередині захищеної мережі School Network.</span>
+                    <span><strong>{{ t.recommendation_title }}</strong> {{ t.recommendation_text }}</span>
                 </div>
             </div>
         </div>
 
-        <div style="display: flex; gap: 12px; margin-top: 1.5rem;">
+        <!-- КНОПКИ: ОДНАКОВИЙ РОЗМІР СІТКИ 2х1 З ПРАВИЛЬНИМ МАРШРУТОМ -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 1.5rem;">
             {% if decision in ["ALLOW", "LIMITED"] %}
-            <a href="{{ url_for('dashboard') }}" class="zt-btn"
-                style="text-decoration: none; text-align: center; flex: 1; display: block; padding: 12px;">
-                Перейти до об'єктів інфраструктури →
+            <!-- ЗМІНЕНО: Тепер викликає функцію resource_page для відображення карти інфраструктури -->
+            <a href="{{ url_for('resource_page') }}" class="zt-btn"
+                style="text-decoration: none; text-align: center; display: block; padding: 12px; margin: 0; width: 100%;">
+                {{ t.btn_continue }}
             </a>
             <a href="{{ url_for('logout') }}" class="zt-btn"
-                style="text-decoration: none; text-align: center; background: transparent; border: 1px solid var(--border-secondary); color: var(--text-main); padding: 12px;">
-                Скасувати
+                style="text-decoration: none; text-align: center; background: transparent; border: 1px solid var(--border-secondary); color: var(--text-main); padding: 12px; margin: 0; width: 100%;">
+                {{ t.btn_cancel }}
             </a>
             {% else %}
             <a href="{{ url_for('login') }}" class="zt-btn"
-                style="text-decoration: none; text-align: center; flex: 1; display: block; padding: 12px; border-color: var(--color-deny); color: var(--color-deny); background: transparent; border: 1px solid;">
-                ← Повернутися та змінити контекст входу
+                style="grid-column: span 2; text-decoration: none; text-align: center; display: block; padding: 12px; border-color: var(--color-deny); color: var(--color-deny); background: transparent; border: 1px solid; margin: 0; width: 100%;">
+                {{ t.btn_back_login }}
             </a>
             {% endif %}
         </div>

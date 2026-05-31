@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="uk" data-theme="auto">
+<html lang="{{ lang }}" data-theme="auto">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель адміністратора | Zero Trust Admin SIEM</title>
+    <title>{{ t.dash_title }} | Zero Trust Admin SIEM</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
@@ -242,6 +242,25 @@
             margin: 0 4px;
             color: var(--border-secondary);
         }
+
+        .lang-btn {
+            background: transparent;
+            border: 1px solid var(--border-primary);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .lang-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--border-secondary);
+        }
     </style>
 </head>
 
@@ -250,18 +269,25 @@
 
         <div class="dash-hdr">
             <div>
-                <div class="dash-title">Security Monitoring Dashboard (SIEM)</div>
+                <div class="dash-title">{{ t.dash_title }}</div>
                 <div class="dash-now">
-                    Оператор: <strong>{{ user.username }}</strong> <span class="sep">·</span> Контекст сесії: <span
-                        class="pill pill-allow" style="font-size: 9px; padding: 1px 6px;">ALLOW</span>
+                    {{ t.dash_operator }}: <strong>{{ user.username }}</strong> <span class="sep">·</span> {{
+                    t.dash_context }}: <span class="pill pill-allow"
+                        style="font-size: 9px; padding: 1px 6px;">ALLOW</span>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
+                {% if lang == 'uk' %}
+                <a href="{{ url_for('set_language', lang_code='en') }}" class="lang-btn">🇬🇧 EN</a>
+                {% else %}
+                <a href="{{ url_for('set_language', lang_code='uk') }}" class="lang-btn">🇺🇦 UA</a>
+                {% endif %}
                 <button id="theme-toggle" class="theme-btn" type="button" style="padding: 6px 10px;">🌓</button>
                 <button onclick="window.location.reload();" class="zt-badge"
-                    style="cursor: pointer; background: transparent; padding: 4px 12px; border-color: var(--accent); color: var(--accent);">🔄
-                    Оновити сторінку</button>
-                <a href="{{ url_for('dashboard') }}" class="zt-badge" style="text-decoration: none;">← До ресурсів</a>
+                    style="cursor: pointer; background: transparent; padding: 4px 12px; border-color: var(--accent); color: var(--accent);">{{
+                    t.dash_btn_refresh }}</button>
+                <a href="{{ url_for('resource_page') }}" class="zt-badge" style="text-decoration: none;">{{
+                    t.dash_btn_to_resources }}</a>
             </div>
         </div>
 
@@ -270,40 +296,40 @@
         <div class="stat-row">
             <div class="stat">
                 <div class="stat-n">{{ logs|length }}</div>
-                <div class="stat-l">Всього запитів</div>
+                <div class="stat-l">{{ t.dash_stat_total }}</div>
             </div>
             <div class="stat">
                 {% set allow_count = logs | selectattr('security_metrics.decision', 'equalto', 'ALLOW') | list | length
                 %}
                 <div class="stat-n ok">{{ allow_count }}</div>
-                <div class="stat-l">Дозволено</div>
+                <div class="stat-l">{{ t.dash_stat_allow }}</div>
             </div>
             <div class="stat">
                 {% set deny_count = logs | selectattr('security_metrics.decision', 'equalto', 'DENY') | list | length %}
                 <div class="stat-n deny">{{ deny_count }}</div>
-                <div class="stat-l">Заблоковано</div>
+                <div class="stat-l">{{ t.dash_stat_deny }}</div>
             </div>
             <div class="stat">
                 {% set susp_count = logs | selectattr('incident_response.suspicious_flag', 'equalto', true) | list |
                 length %}
                 <div class="stat-n warn">{{ susp_count }}</div>
-                <div class="stat-l">Аномалії (Suspicious)</div>
+                <div class="stat-l">{{ t.dash_stat_suspicious }}</div>
             </div>
         </div>
 
         <div class="two-col">
             <div class="dash-card">
-                <div class="section-label">Recent access log (Журнал авторизацій)</div>
+                <div class="section-label">{{ t.dash_label_log }}</div>
                 <div style="overflow-x: auto;">
                     <table class="log-table">
                         <thead>
                             <tr>
-                                <th style="width: 18%;">Time / Date</th>
-                                <th style="width: 15%;">User</th>
-                                <th style="width: 14%;">Role</th>
-                                <th style="width: 20%;">Device Trust</th>
-                                <th style="width: 18%;">Network Trust</th>
-                                <th style="width: 15%;">Decision</th>
+                                <th style="width: 18%;">{{ t.dash_th_time }}</th>
+                                <th style="width: 15%;">{{ t.dash_th_user }}</th>
+                                <th style="width: 14%;">{{ t.dash_th_role }}</th>
+                                <th style="width: 20%;">{{ t.dash_th_device }}</th>
+                                <th style="width: 18%;">{{ t.dash_th_network }}</th>
+                                <th style="width: 15%;">{{ t.dash_th_decision }}</th>
                             </tr>
                         </thead>
                         <tbody id="logs-tbody">
@@ -317,9 +343,9 @@
 
                                 <td>
                                     {% if log.context.device == 'managed' %}
-                                    ⚙️ Managed
+                                    {{ t.device_txt_managed }}
                                     {% elif log.context.device == 'unmanaged' %}
-                                    📱 BYOD Device
+                                    {{ t.device_txt_unmanaged }}
                                     {% else %}
                                     ❓ {{ log.context.device }}
                                     {% endif %}
@@ -327,11 +353,11 @@
 
                                 <td>
                                     {% if log.context.network == 'school' %}
-                                    🏫 School Net
+                                    {{ t.net_txt_school }}
                                     {% elif log.context.network == 'home' %}
-                                    🏠 Home Net
+                                    {{ t.net_txt_home }}
                                     {% elif log.context.network == 'public' %}
-                                    🌐 Public Net
+                                    {{ t.net_txt_public }}
                                     {% else %}
                                     ❓ {{ log.context.network }}
                                     {% endif %}
@@ -352,7 +378,7 @@
                             <tr>
                                 <td colspan="6"
                                     style="text-align: center; color: var(--text-muted); padding: 30px; font-style: italic;">
-                                    Журнал автентифікацій порожній (Події відсутні)
+                                    {{ t.dash_log_empty }}
                                 </td>
                             </tr>
                             {% endif %}
@@ -362,7 +388,7 @@
             </div>
 
             <div class="dash-card">
-                <div class="section-label">Suspicious activity (Критичні інциденти)</div>
+                <div class="section-label">{{ t.dash_label_activity }}</div>
                 <div class="activity-box" id="activity-container">
                     {% set anomalies = logs | selectattr('incident_response.suspicious_flag', 'equalto', true) | list %}
                     {% if anomalies %}
@@ -373,8 +399,15 @@
                             {% if is_deny %}✕{% else %}⚠️{% endif %}
                         </div>
                         <div class="activity-text">
-                            <strong>{{ anom.security_metrics.reason }}</strong> <span class="sep">·</span> суб'єкт:
-                            <strong>{{ anom.username }}</strong>
+                            {% set raw_reason = anom.security_metrics.reason %}
+                            <strong>
+                                {% if lang == 'uk' and raw_reason in t.reasons %}
+                                {{ t.reasons[raw_reason] }}
+                                {% else %}
+                                {{ raw_reason }}
+                                {% endif %}
+                            </strong>
+                            <span class="sep">·</span> {{ t.dash_subject }}: <strong>{{ anom.username }}</strong>
                         </div>
                         <div class="activity-time">{{ anom.timestamp[11:16] }}</div>
                     </div>
@@ -382,7 +415,7 @@
                     {% else %}
                     <div
                         style="text-align: center; color: var(--text-muted); padding: 40px; font-size: 13px; font-style: italic;">
-                        ✅ Критичних відхилень чи аномалій в інфраструктурі не виявлено
+                        {{ t.dash_anomalies_empty }}
                     </div>
                     {% endif %}
                 </div>
@@ -390,70 +423,60 @@
         </div>
 
         <div class="dash-card">
-            <div class="section-label" style="margin-bottom:16px;">Denied requests breakdown (Аналітика причин
-                блокувань)</div>
+            <div class="section-label" style="margin-bottom:16px;">{{ t.dash_label_breakdown }}</div>
             <div style="display:flex; flex-direction:column; gap:14px;" id="breakdown-container">
 
                 {% set dev_denied = logs | selectattr('context.device', 'equalto', 'unmanaged') |
                 selectattr('security_metrics.decision', 'equalto', 'DENY') | list | length %}
+                {% set dev_percent = ((dev_denied / logs|length) * 100)|round(1) if logs|length > 0 else 0 %}
                 <div>
                     <div
                         style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; color:var(--text-muted);">
-                        <span>Вхід з некерованих/власних пристроїв (BYOD Restriction)</span>
-                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ dev_denied }}
-                            запитів</span>
+                        <span>{{ t.dash_breakdown_byod }}</span>
+                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ dev_denied }} {{
+                            t.dash_text_requests }}</span>
                     </div>
                     <div
                         style="height:6px; background:var(--bg-main); border-radius:3px; border: 1px solid var(--border-primary);">
-                        {% if logs|length > 0 %}
                         <div
-                            style="width: {{ (dev_denied / logs|length) * 100 }}%; height: 100%; background:var(--color-deny); border-radius:3px;">
+                            style="width: {{ dev_percent }}%; height: 100%; background:var(--color-deny); border-radius:3px;">
                         </div>
-                        {% else %}
-                        <div style="width: 0%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
-                        {% endif %}
                     </div>
                 </div>
 
                 {% set net_denied = logs | selectattr('context.network', 'equalto', 'public') |
                 selectattr('security_metrics.decision', 'equalto', 'DENY') | list | length %}
+                {% set net_percent = ((net_denied / logs|length) * 100)|round(1) if logs|length > 0 else 0 %}
                 <div>
                     <div
                         style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; color:var(--text-muted);">
-                        <span>Порушення довіри до мережевого середовища (External Public Network)</span>
-                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ net_denied }}
-                            запитів</span>
+                        <span>{{ t.dash_breakdown_net }}</span>
+                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ net_denied }} {{
+                            t.dash_text_requests }}</span>
                     </div>
                     <div
                         style="height:6px; background:var(--bg-main); border-radius:3px; border: 1px solid var(--border-primary);">
-                        {% if logs|length > 0 %}
                         <div
-                            style="width: {{ (net_denied / logs|length) * 100 }}%; height: 100%; background:var(--color-deny); border-radius:3px;">
+                            style="width: {{ net_percent }}%; height: 100%; background:var(--color-deny); border-radius:3px;">
                         </div>
-                        {% else %}
-                        <div style="width: 0%; height: 100%; background:var(--color-deny); border-radius:3px;"></div>
-                        {% endif %}
                     </div>
                 </div>
 
                 {% set cred_denied = logs | selectattr('security_metrics.reason', 'equalto', 'Invalid credentials') |
                 list | length %}
+                {% set cred_percent = ((cred_denied / logs|length) * 100)|round(1) if logs|length > 0 else 0 %}
                 <div>
                     <div
                         style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; color:var(--text-muted);">
-                        <span>Критичні помилки автентифікації сесії (Invalid Credentials)</span>
-                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ cred_denied }}
-                            запитів</span>
+                        <span>{{ t.dash_breakdown_cred }}</span>
+                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ cred_denied }} {{
+                            t.dash_text_requests }}</span>
                     </div>
                     <div
                         style="height:6px; background:var(--bg-main); border-radius:3px; border: 1px solid var(--border-primary);">
-                        {% if logs|length > 0 %}
                         <div
-                            style="width: {{ (cred_denied / logs|length) * 100 }}%; height: 100%; background:var(--color-limited); border-radius:3px;">
+                            style="width: {{ cred_percent }}%; height: 100%; background:var(--color-limited); border-radius:3px;">
                         </div>
-                        {% else %}
-                        <div style="width: 0%; height: 100%; background:var(--color-limited); border-radius:3px;"></div>
-                        {% endif %}
                     </div>
                 </div>
 
@@ -463,13 +486,12 @@
         <div style="margin-top: 2rem; text-align: center;">
             <a href="{{ url_for('logout') }}" class="zt-btn"
                 style="background: transparent; border: 1px solid var(--border-secondary); color: var(--color-deny); text-decoration: none; display: inline-block; width: auto; padding: 10px 24px;">
-                Завершити адміністративну сесію (Logout)
+                {{ t.dash_btn_logout }}
             </a>
         </div>
     </div>
 
     <script>
-        // Скрипт перемикання кольорових тем (Збережено вашу робочу логіку)
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
         const savedTheme = localStorage.getItem('theme') || 'auto';
