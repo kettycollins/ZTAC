@@ -226,6 +226,7 @@ TRANSLATIONS = {
             "Student limited access: Low Trust Level restriction": "Частковий доступ для студента: Низький рівень довіри.",
             "Guest role restriction": "Запит відхилено: Гостьові акаунти не мають доступу до приватного контуру системи.",
             "Invalid credentials": "Невірні облікові дані (Помилка входу).",
+            "Guest role restriction: access allowed only within school network": "Обмеження гостьового контуру: доступ дозволено виключно всередині шкільної мережі.",
         },
     },
     "en": {
@@ -453,6 +454,7 @@ TRANSLATIONS = {
             "Student limited access: Low Trust Level restriction": "Partial access for student: Low Trust Level context.",
             "Guest role restriction": "Request rejected: Guest accounts are restricted from private infrastructure.",
             "Invalid credentials": "Invalid credentials provided (Authentication failure).",
+            "Guest role restriction: access allowed only within school network": "Guest role restriction: access allowed only within school network.",
         },
     },
 }

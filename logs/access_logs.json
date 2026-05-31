@@ -2465,5 +2465,113 @@
         "incident_response": {
             "suspicious_flag": false
         }
+    },
+    {
+        "timestamp": "2026-06-01T00:21:09.971614",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 90,
+            "decision": "ALLOW",
+            "reason": "Access context processed for admin. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-06-01T00:27:59.921484",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction: access allowed only within school network"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-06-01T00:29:54.540890",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 90,
+            "decision": "ALLOW",
+            "reason": "Access context processed for admin. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-06-01T00:30:25.003135",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction: access allowed only within school network"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-06-01T00:34:13.522325",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction: access allowed only within school network"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-06-01T00:34:26.177781",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction: access allowed only within school network"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
     }
 ]

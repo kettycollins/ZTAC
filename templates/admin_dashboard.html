@@ -336,42 +336,42 @@
                         <tbody id="logs-tbody">
                             {% if logs %}
                             {% for log in logs[:8] %}
-                            <tr {% if log.incident_response.suspicious_flag
-                                %}style="background: rgba(225, 110, 110, 0.05); font-weight: 500;" {% endif %}>
+                            <tr {% if log.incident_response.suspicious_flag %}style="background: rgba(225, 110, 110, 0.05); font-weight: 500;"
+                                {% endif %}>
                                 <td>{{ log.timestamp[:19].replace('T', ' ') }}</td>
                                 <td><strong>{{ log.username }}</strong></td>
                                 <td><span class="role-pill">{{ log.role | uppercase }}</span></td>
-
+                        
                                 <td>
                                     {% if log.context.device == 'managed' %}
-                                    {{ t.device_txt_managed }}
+                                    {{ t.device_txt_managed | replace('⚙️ ', '') }}
                                     {% elif log.context.device == 'unmanaged' %}
-                                    {{ t.device_txt_unmanaged }}
+                                    {{ t.device_txt_unmanaged | replace('📱 ', '') }}
                                     {% else %}
-                                    ❓ {{ log.context.device }}
+                                    {{ log.context.device }}
                                     {% endif %}
                                 </td>
-
+                        
                                 <td>
                                     {% if log.context.network == 'school' %}
-                                    {{ t.net_txt_school }}
+                                    {{ t.net_txt_school | replace('🏫 ', '') }}
                                     {% elif log.context.network == 'home' %}
-                                    {{ t.net_txt_home }}
+                                    {{ t.net_txt_home | replace('🏠 ', '') }}
                                     {% elif log.context.network == 'public' %}
-                                    {{ t.net_txt_public }}
+                                    {{ t.net_txt_public | replace('🌐 ', '') }}
                                     {% else %}
-                                    ❓ {{ log.context.network }}
+                                    {{ log.context.network }}
                                     {% endif %}
                                 </td>
-
+                        
                                 <td>
                                     {% if log.context.vpn == 'yes' %}
-                                    {{ t.vpn_txt_yes }}
+                                    {{ t.vpn_txt_yes | replace('🔒 ', '') }}
                                     {% else %}
-                                    {{ t.vpn_txt_no }}
+                                    {{ t.vpn_txt_no | replace('🔓 ', '') }}
                                     {% endif %}
                                 </td>
-
+                        
                                 <td>
                                     {% if log.security_metrics.decision == 'ALLOW' %}
                                     <span class="pill pill-allow">ALLOW</span>
@@ -385,8 +385,7 @@
                             {% endfor %}
                             {% else %}
                             <tr>
-                                <td colspan="7"
-                                    style="text-align: center; color: var(--text-muted); padding: 30px; font-style: italic;">
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px; font-style: italic;">
                                     {{ t.dash_log_empty }}
                                 </td>
                             </tr>

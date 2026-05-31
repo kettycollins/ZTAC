@@ -139,8 +139,14 @@
             <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; line-height: 1.5;">
                 <div style="display: flex; gap: 8px; align-items: start;">
                     <span style="color: var(--accent);">•</span>
-                    <span><strong>{{ t.title_pdp }}:</strong> {{ reason if reason else 'Доступ оброблено автоматичною
-                        політикою безпеки.' }}</span>
+                    <span>
+                        <strong>{{ t.title_pdp }}:</strong>
+                        {% if reason in t.reasons %}
+                        {{ t.reasons[reason] }}
+                        {% else %}
+                        {{ reason if reason else 'Processed by policy.' }}
+                        {% endif %}
+                    </span>
                 </div>
                 <div style="display: flex; gap: 8px; align-items: start;">
                     <span style="color: var(--accent);">•</span>
