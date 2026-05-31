@@ -327,9 +327,10 @@
                                 <th style="width: 18%;">{{ t.dash_th_time }}</th>
                                 <th style="width: 15%;">{{ t.dash_th_user }}</th>
                                 <th style="width: 14%;">{{ t.dash_th_role }}</th>
-                                <th style="width: 20%;">{{ t.dash_th_device }}</th>
-                                <th style="width: 18%;">{{ t.dash_th_network }}</th>
-                                <th style="width: 15%;">{{ t.dash_th_decision }}</th>
+                                <th style="width: 18%;">{{ t.dash_th_device }}</th>
+                                <th style="width: 15%;">{{ t.dash_th_network }}</th>
+                                <th style="width: 10%;">{{ t.dash_th_vpn }}</th>
+                                <th style="width: 10%;">{{ t.dash_th_decision }}</th>
                             </tr>
                         </thead>
                         <tbody id="logs-tbody">
@@ -364,6 +365,14 @@
                                 </td>
 
                                 <td>
+                                    {% if log.context.vpn == 'yes' %}
+                                    {{ t.vpn_txt_yes }}
+                                    {% else %}
+                                    {{ t.vpn_txt_no }}
+                                    {% endif %}
+                                </td>
+
+                                <td>
                                     {% if log.security_metrics.decision == 'ALLOW' %}
                                     <span class="pill pill-allow">ALLOW</span>
                                     {% elif log.security_metrics.decision == 'LIMITED' %}
@@ -376,7 +385,7 @@
                             {% endfor %}
                             {% else %}
                             <tr>
-                                <td colspan="6"
+                                <td colspan="7"
                                     style="text-align: center; color: var(--text-muted); padding: 30px; font-style: italic;">
                                     {{ t.dash_log_empty }}
                                 </td>
@@ -485,7 +494,7 @@
 
         <div style="margin-top: 2rem; text-align: center;">
             <a href="{{ url_for('logout') }}" class="zt-btn"
-                style="background: transparent; border: 1px solid var(--border-secondary); color: var(--color-deny); text-decoration: none; display: inline-block; width: auto; padding: 10px 24px;">
+                style="background: transparent; border: 1px solid var(--border-secondary); color: var(--text-main); text-decoration: none; display: inline-block; width: auto; padding: 10px 24px;">
                 {{ t.dash_btn_logout }}
             </a>
         </div>

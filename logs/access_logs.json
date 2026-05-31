@@ -2123,5 +2123,347 @@
         "incident_response": {
             "suspicious_flag": true
         }
+    },
+    {
+        "timestamp": "2026-05-31T20:01:49.238466",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "yes"
+        },
+        "security_metrics": {
+            "trust_score": 100,
+            "decision": "ALLOW",
+            "reason": "Admin authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T20:03:18.655148",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 100,
+            "decision": "ALLOW",
+            "reason": "Admin authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T20:54:26.715288",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 100,
+            "decision": "ALLOW",
+            "reason": "Admin authorized"
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T21:30:59.602536",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "unmanaged",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 70,
+            "decision": "LIMITED",
+            "reason": "Admin limited access: Medium/Low Trust Level restriction"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-05-31T21:42:27.096928",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Access context processed for admin. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T21:42:36.675659",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Access context processed for admin. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T21:42:49.013708",
+        "username": "teacher1",
+        "role": "teacher",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Access context processed for teacher. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T21:48:12.290415",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Access context processed for admin. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T23:01:09.019581",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 80,
+            "decision": "ALLOW",
+            "reason": "Access context processed for admin. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T23:19:27.907500",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "yes"
+        },
+        "security_metrics": {
+            "trust_score": 85,
+            "decision": "ALLOW",
+            "reason": "Access context processed for admin. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T23:34:33.073159",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "yes"
+        },
+        "security_metrics": {
+            "trust_score": 85,
+            "decision": "ALLOW",
+            "reason": "Access context processed for admin. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T23:43:01.948124",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "yes"
+        },
+        "security_metrics": {
+            "trust_score": 90,
+            "decision": "ALLOW",
+            "reason": "Access context processed for admin. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-05-31T23:46:29.962398",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 65,
+            "decision": "ALLOW",
+            "reason": "Access context processed for guest. Trust Level: Low Risk."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-06-01T00:01:39.060809",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction: access allowed only within school network"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-06-01T00:02:19.719240",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction: access allowed only within school network"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-06-01T00:05:05.820902",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction: access allowed only within school network"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-06-01T00:05:34.985657",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "home",
+            "vpn": "yes"
+        },
+        "security_metrics": {
+            "trust_score": 0,
+            "decision": "DENY",
+            "reason": "Guest role restriction: access allowed only within school network"
+        },
+        "incident_response": {
+            "suspicious_flag": true
+        }
+    },
+    {
+        "timestamp": "2026-06-01T00:06:04.530254",
+        "username": "admin1",
+        "role": "admin",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 90,
+            "decision": "ALLOW",
+            "reason": "Access context processed for admin. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
+    },
+    {
+        "timestamp": "2026-06-01T00:06:21.061132",
+        "username": "guest1",
+        "role": "guest",
+        "context": {
+            "device": "managed",
+            "network": "school",
+            "vpn": "no"
+        },
+        "security_metrics": {
+            "trust_score": 90,
+            "decision": "ALLOW",
+            "reason": "Guest context verified within perimeter. Trust Level: Trusted."
+        },
+        "incident_response": {
+            "suspicious_flag": false
+        }
     }
 ]

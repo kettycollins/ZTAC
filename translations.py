@@ -15,7 +15,7 @@ TRANSLATIONS = {
         "meta_role": "Поточна роль",
         "meta_device": "Тип пристрою",
         "meta_network": "Мережа входу",
-        "engine_analysis": "📊 Аналіз критеріїв рушія політик",
+        "engine_analysis": "📊  Аналіз критеріїв рушія політик",
         "recommendation_title": "Рекомендація:",
         "recommendation_text": "Для забезпечення максимального Trust Score використовуйте виключно корпоративні пристрої ліцею всередині захищеної мережі School Network.",
         # index.html
@@ -44,7 +44,7 @@ TRANSLATIONS = {
         "idx_step_4_desc": "Формування фінального вердикту (ALLOW, LIMITED, DENY).",
         "idx_scenarios_hdr": "Example Scenarios · Сценарії верифікації моделі",
         "idx_sc_title_1": "Teacher with trusted corporate device",
-        "idx_sc_desc_1": "Максимальний рівень довіри. Надається повний доступ до Навчальних планів та Електронного журналу оцінок (Gradebook).",
+        "idx_sc_desc_1": "Максимальний уровень довіри. Надається повний доступ до Навчальних планів та Електронного журналу оцінок (Gradebook).",
         "idx_sc_title_2": "Teacher from unmanaged personal device (Remote)",
         "idx_sc_desc_2": "Середній рівень ризику (BYOD-контекст). Доступ до планів дозволено, але критичне редагування оцінок в журналі повністю блокується.",
         "idx_sc_title_3": "Admin from unmanaged device in public network",
@@ -71,7 +71,7 @@ TRANSLATIONS = {
         # resource_page.html
         "res_title": "ZTAC — Об'єкти інфраструктури",
         "res_user": "Користувач",
-        "res_session_role": "Роль сесії",
+        "res_session_role": "Role сесії",
         "res_context_allow": "КОНТЕКСТ ДОВІРЕНИЙ (ALLOW): Параметри пристрою та мережі безпечні. Доступ дозволено згідно з роллю.",
         "res_context_limited": "ОБМЕЖЕНИЙ КОНТЕКСТ (LIMITED): Виявлено некерований девайс або зовнішню мережу. Режим обмеженого використання.",
         "res_metrics_hdr": "Звіт доступності об'єктів",
@@ -89,7 +89,7 @@ TRANSLATIONS = {
         "res_main_desc": "Розподілена авторизація об'єктів відфільтрована за категоріями призначення на основі критеріїв контексту безпеки.",
         "res_btn_back": "Повернутися до авторизації",
         "cat_admin": "1. Aдміністрація & Центральна Інрафраструктура",
-        "cat_teaching": "2. Навчальні інструменти & Менеджмент навчальної мережі",
+        "cat_teaching": "2. Навчальні інструменти & Менеджщемнт навчальної мережі",
         "cat_learning": "3. Навчальні та контент-послуги",
         "cat_public": "4. Доступ до публічної інформації",
         "lock_context": "🔒 Блокування контекстом",
@@ -202,6 +202,15 @@ TRANSLATIONS = {
         "teacher_scope_out_2": "Конструктор навчальних планів та занять",
         "teacher_scope_out_3": "Управління профілями учнів та класів",
         "teacher_scope_out_4": "Розсилка внутрішніх сповіщень",
+        # ======================= VPN =========================================
+        "lbl_vpn": "VPN",
+        "opt_vpn_yes": "Шифрування тунелю активне",
+        "opt_vpn_no": "Пряме нешифроване підключення",
+        "vpn_comment_off": "вимкнено · трафік незахищений",
+        "vpn_comment_on": "активно · тунель зашифровано · tls-1.3",
+        "dash_th_vpn": "VPN",
+        "vpn_txt_yes": "🔒 Активний",
+        "vpn_txt_no": "🔓 Немає",
         # =====================================================================
         # СИСТЕМА ДИНАМІЧНИХ ВЕРДИКТІВ ДЛЯ БЛОКУ "uk"
         # =====================================================================
@@ -401,7 +410,7 @@ TRANSLATIONS = {
         "teacher_scope_out_2": "Curriculum and lesson planner builders",
         "teacher_scope_out_3": "Student profile and class registry management",
         "teacher_scope_out_4": "Internal alert and notification broadcasting",
-        # Локалізація для сторінки notice_guest.html
+        # notice_guest.html
         "guest_title": "ZTAC — Public Resources",
         "guest_header": "Public Resources Zone",
         "guest_warn_title": "Attention:",
@@ -420,6 +429,15 @@ TRANSLATIONS = {
         "guest_ctx_net": "external network",
         "guest_ctx_dev": "guest device",
         "guest_btn_back": "← Back to Resources",
+        # ======================= VPN =========================================
+        "lbl_vpn": "VPN State",
+        "opt_vpn_yes": "Tunnel encryption active",
+        "opt_vpn_no": "Direct unencrypted connection",
+        "vpn_comment_off": "disabled · traffic unencrypted",
+        "vpn_comment_on": "active · tunnel encrypted · tls-1.3",
+        "dash_th_vpn": "VPN",
+        "vpn_txt_yes": "🔒 Active",
+        "vpn_txt_no": "🔓 None",
         # =====================================================================
         # СИСТЕМА ДИНАМІЧНИХ ВЕРДИКТІВ ДЛЯ БЛОКУ "en"
         # =====================================================================

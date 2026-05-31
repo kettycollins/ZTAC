@@ -27,7 +27,6 @@
             --text2: var(--text-muted);
             --mono: 'IBM Plex Mono', monospace;
             --sans: 'IBM Plex Sans', sans-serif;
-
             --acc-fill: rgba(2, 136, 209, 0.1);
             --acc-text: var(--accent);
             --acc-border: var(--accent);
@@ -293,8 +292,22 @@
             <div class="session-row">
                 <strong>{{ user.username }}</strong><span class="sep">·</span>
                 <span>{{ user.role | uppercase }}</span><span class="sep">·</span>
-                <span>{{ t.student_ctx_dev }}: {{ t.student_ctx_any }}</span><span class="sep">·</span>
-                <span>{{ t.student_ctx_net }}: {{ t.student_ctx_any }}</span>
+                <span>
+                    {% if session.get('network') == 'school' %}
+                    {{ t.net_txt_school | lower | replace('🏫 ', '') }}
+                    {% else %}
+                    {{ t.guest_ctx_net }}
+                    {% endif %}
+                </span><span class="sep">·</span>
+                <span>
+                    {% if session.get('device') == 'managed' %}
+                    {{ t.device_txt_managed | lower | replace('⚙️ ', '') }}
+                    {% else %}
+                    {{ t.guest_ctx_dev }}
+                    {% endif %}
+                </span><span class="sep">·</span>
+                <span>VPN: {% if session.get('vpn') == 'yes' %}{% if lang == 'uk' %}так{% else %}yes{% endif %}{% else %}{% if lang
+                    == 'uk' %}ні{% else %}no{% endif %}{% endif %}</span>
             </div>
 
             <div class="actions">

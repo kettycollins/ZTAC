@@ -4,10 +4,10 @@ from datetime import datetime
 LOG_FILE = "logs/access_logs.json"
 
 
-def log_event(username, role, device, network, decision, trust_score, reason):
+def log_event(username, role, device, network, vpn, decision, trust_score, reason):
     """
     Розширене логування подій безпеки для Zero Trust системи.
-    Фіксує контекст, фінальний вердикт, рівень довіри та прапорці підозрілої активності.
+    Фіксує контекст (включаючи стан VPN), фінальний вердикт, рівень довіри та аномалії.
     """
 
     # Визначення підозрілої активності (Anomalous/Suspicious Behavior)
@@ -21,12 +21,12 @@ def log_event(username, role, device, network, decision, trust_score, reason):
     elif decision == "DENY" and trust_score <= 10:
         suspicious_flag = True
 
-    # Формування розширеного запису логу
+    # Формування розширеного запису логу (Додано параметр vpn)
     log_entry = {
         "timestamp": datetime.now().isoformat(),
         "username": username,
         "role": role,
-        "context": {"device": device, "network": network},
+        "context": {"device": device, "network": network, "vpn": vpn},
         "security_metrics": {
             "trust_score": trust_score,
             "decision": decision,
@@ -54,7 +54,7 @@ def log_event(username, role, device, network, decision, trust_score, reason):
         "🔴" if decision == "DENY" else ("🟡" if decision == "LIMITED" else "🟢")
     )
     print(
-        f"\n[AUDIT LOG] {status_symbol} Decision: {decision} | User: {username} ({role}) | Trust Score: {trust_score} | Suspicious: {suspicious_flag}"
+        f"\n[AUDIT LOG] {status_symbol} Decision: {decision} | User: {username} ({role}) | Trust Score: {trust_score} | VPN: {vpn} | Suspicious: {suspicious_flag}"
     )
     print(f"[REASON] {reason}")
 
@@ -65,14 +65,11 @@ def create_log_file():
     """Створює пустий файл логів, якщо він відсутній."""
     import os
 
-    # Створюємо папку logs, якщо її немає
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
-
     try:
         with open(LOG_FILE, "x", encoding="utf-8") as file:
             json.dump([], file)
             print(f"[INIT] Файл логів успішно створено: {LOG_FILE}")
     except FileExistsError:
         print(f"[INIT] Файл логів уже існує: {LOG_FILE}")
-
     return

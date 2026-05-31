@@ -31,22 +31,73 @@ def login():
         password = request.form.get("password")
         device = request.form.get("device")
         network = request.form.get("network")
+        vpn = request.form.get("vpn", "no")  # Зчитуємо інтерактивний повзунок VPN
 
         user = authenticate_user(username, password)
 
         if user:
-            decision, score, reason = evaluate_access(user["role"], device, network)
-            log_event(username, user["role"], device, network, decision, score, reason)
+            try:
+                # Виклик оновленого рушія політик Zero Trust v5.0
+                status, score, trust_level, reason, permissions = evaluate_access(
+                    user["role"], device, network, vpn
+                )
 
-            session["user"] = user["username"]
-            session["role"] = user["role"]
-            session["device"] = device
-            session["network"] = network
-            session["access_level"] = decision
-            session["trust_score"] = score
-            session["reason"] = reason
+                # Записуємо всі контекстні метMetricи у сесію користувача
+                session["user"] = user["username"]
+                session["role"] = user["role"]
+                session["device"] = device
+                session["network"] = network
+                session["vpn"] = vpn
+                session["trust_score"] = score
+                session["trust_level"] = trust_level
+                session["reason"] = reason
+                session["permissions"] = (
+                    permissions  # Зберігаємо словник гранульованих прав для карток
+                )
 
-            return redirect(url_for("decision_page"))
+                # ПЕРЕВІРКА ПЕРИМЕТРА: Якщо рушій політик повернув DENY (наприклад, гість поза School Net)
+                if status == "DENY":
+                    # Логуємо інцидент безпеки із суворим вердиктом DENY
+                    log_event(
+                        username,
+                        user["role"],
+                        device,
+                        network,
+                        vpn,
+                        "DENY",
+                        score,
+                        reason,
+                    )
+
+                    user_data = {
+                        "username": session.get("user"),
+                        "role": session.get("role"),
+                        "device": session.get("device"),
+                        "network": session.get("network"),
+                        "vpn": session.get("vpn"),
+                    }
+                    # Відображаємо екран жорсткого блокування
+                    return render_template(
+                        "denied.html",
+                        decision="DENY",
+                        score=score,
+                        trust_level=trust_level,
+                        reason=reason,
+                        user=user_data,
+                    )
+
+                # Якщо перевірку пройдено (ACCESS_GRANTED), логуємо ALLOW і йдемо далі
+                log_event(
+                    username, user["role"], device, network, vpn, "ALLOW", score, reason
+                )
+                return redirect(url_for("decision_page"))
+
+            except Exception as e:
+                print(f"[SERVER ERROR] Помилка обробки політики доступу: {e}")
+                lang = session.get("lang", "uk")
+                return render_template(
+                    "login.html", error="Внутрішня помилка PDP сервера."
+                )
         else:
             lang = session.get("lang", "uk")
             return render_template(
@@ -58,21 +109,47 @@ def login():
 
 @app.route("/decision")
 def decision_page():
-    if "user" not in session or "access_level" not in session:
+    """Проміжний екран вердикту PDP перед переходом до інфраструктури"""
+    if "user" not in session:
         return redirect(url_for("login"))
 
-    raw_reason = session.get("reason", "")
-    lang = session.get("lang", "uk")
-
-    translated_reason = raw_reason
-    if lang == "uk" and raw_reason in TRANSLATIONS["uk"]["reasons"]:
-        translated_reason = TRANSLATIONS["uk"]["reasons"][raw_reason]
+    user_data = {
+        "username": session.get("user"),
+        "role": session.get("role"),
+        "device": session.get("device"),
+        "network": session.get("network"),
+        "vpn": session.get("vpn"),
+    }
 
     return render_template(
         "denied.html",
-        decision=session.get("access_level"),
-        score=session.get("trust_score", 0),
-        reason=translated_reason,
+        decision="ALLOW",  # Для успішно авторизованих сесій
+        score=session.get("trust_score"),
+        trust_level=session.get("trust_level"),
+        reason=session.get("reason"),
+        user=user_data,
+    )
+
+
+@app.route("/resources")
+def resource_page():
+    """Головний екран об'єктів інфраструктури з гранульованими картками"""
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    user_role = session.get("role")
+    score = session.get("trust_score")
+    trust_level = session.get("trust_level")
+    permissions = session.get("permissions", {})  # Витягуємо пооб'єктні дозволи
+
+    user_data = {"username": session["user"], "role": user_role}
+
+    return render_template(
+        "resource_page.html",
+        user=user_data,
+        score=score,
+        trust_level=trust_level,
+        permissions=permissions,
     )
 
 
@@ -80,85 +157,58 @@ def decision_page():
 def set_language(lang_code):
     if lang_code in ["uk", "en"]:
         session["lang"] = lang_code
-    return redirect(request.referrer or url_for("index"))
 
-
-# --- НОВИЙ МАРШРУТ ДЛЯ КАРТИ РЕСУРСІВ ДЛЯ ВСІХ РОЛЕЙ ---
-@app.route("/resources")
-def resource_page():
-    """Головний екран об'єктів інфраструктури для всіх авторизованих користувачів"""
-    if "user" not in session:
-        return redirect(url_for("login"))
-
-    # Дозволяємо вхід усім, у кого вердикт ALLOW або LIMITED
-    if session.get("access_level") not in ["ALLOW", "LIMITED"]:
-        user_data = {"username": session.get("user"), "role": session.get("role")}
-        return render_template(
-            "denied.html",
-            decision="DENY",
-            score=session.get("trust_score"),
-            reason=session.get("reason"),
-            user=user_data,
-        )
-
-    user_role = session.get("role")
-    access_level = session.get("access_level")
-    score = session.get("trust_score")
-    user_data = {"username": session["user"], "role": user_role}
-
-    return render_template(
-        "resource_page.html", user=user_data, access_level=access_level, score=score
-    )
-
-
-# --- ЗАКРИТИЙ МАРШРУТ СУТО ДЛЯ SIEM-ПАНЕЛІ АДМІНІСТРАТОРА ---
-@app.route("/admin/dashboard")
-def admin_dashboard():
-    """Фінальна сторінка суто для адміністратора — SIEM консоль"""
-    if (
-        "user" not in session
-        or session.get("role") != "admin"
-        or session.get("access_level") != "ALLOW"
-    ):
-        user_data = {"username": session.get("user"), "role": session.get("role")}
-
-        reason_text = "Доступ до консолі SIEM дозволено виключно адміністраторам із повним рівнем довіри (ALLOW)."
-        if session.get("lang") == "en":
-            reason_text = "Access to the SIEM console is restricted to administrators with full trust level (ALLOW)."
-
+    if session.get("role") == "guest" and session.get("network") != "school":
+        user_data = {
+            "username": session.get("user"),
+            "role": session.get("role"),
+            "device": session.get("device"),
+            "network": session.get("network"),
+            "vpn": session.get("vpn"),
+        }
         return render_template(
             "denied.html",
             decision="DENY",
             score=session.get("trust_score", 0),
-            reason=reason_text,
+            trust_level=session.get("trust_level", "High Risk"),
+            reason=session.get("reason", ""),
             user=user_data,
         )
 
-    logs_data = []
+    # Для всіх інших стандартних випадків повертаємося на попередню сторінку
+    return redirect(request.referrer or url_for("index"))
+
+
+@app.route("/admin/dashboard")
+def admin_dashboard():
+    """Екран моніторингу безпеки (SIEM) для адміністратора"""
+    if "user" not in session or session.get("role") != "admin":
+        return redirect(url_for("login"))
+
     log_file_path = "logs/access_logs.json"
+    logs = []
     if os.path.exists(log_file_path):
         try:
             with open(log_file_path, "r", encoding="utf-8") as f:
-                logs_data = json.load(f)
-                logs_data.reverse()
+                logs = json.load(f)
+                logs = logs[::-1]  # Найновіші події зверху
         except Exception:
-            logs_data = []
+            pass
 
-    user_data = {"username": session["user"], "role": session["role"]}
-    score = session.get("trust_score")
-
-    return render_template(
-        "admin_dashboard.html", user=user_data, score=score, logs=logs_data
-    )
+    user_data = {"username": session.get("user"), "role": session.get("role")}
+    return render_template("admin_dashboard.html", user=user_data, logs=logs)
 
 
-@app.route("/admin/api/logs")
-def admin_api_logs():
-    if (
-        "user" not in session
-        or session.get("role") != "admin"
-        or session.get("access_level") != "ALLOW"
-    ):
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
+
+
+@app.route("/api/logs")
+def api_logs():
+    """Ендпоінт для SIEM моніторингу адміністратора"""
+    if "user" not in session or session.get("role") != "admin":
         return json.dumps([]), 403
 
     log_file_path = "logs/access_logs.json"
@@ -172,6 +222,7 @@ def admin_api_logs():
     return json.dumps([]), 200, {"Content-Type": "application/json"}
 
 
+# Роути для сторінок-заглушок (Notice Pages)
 @app.route("/resources/teacher")
 def notice_teacher():
     if "user" not in session:
@@ -194,12 +245,6 @@ def notice_guest():
         return redirect(url_for("login"))
     user_data = {"username": session.get("user"), "role": session.get("role")}
     return render_template("notice_guest.html", user=user_data)
-
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("index"))
 
 
 if __name__ == "__main__":

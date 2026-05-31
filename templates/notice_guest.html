@@ -63,7 +63,6 @@
             gap: 12px;
             margin-bottom: 1.5rem;
             padding-right: 120px;
-            /* Захист від налізання на кнопки у верхньому кутку */
         }
 
         .icon {
@@ -296,11 +295,14 @@
 
             <div class="divider"></div>
 
+            <!-- ДОДАНO VPN ON/OFF В ОРИГІНАЛЬНИЙ РЯДОК -->
             <div class="session-row">
                 <strong>{{ user.username }}</strong><span class="sep">·</span>
                 <span>{{ user.role | uppercase }}</span><span class="sep">·</span>
                 <span>{{ t.guest_ctx_net }}</span><span class="sep">·</span>
-                <span>{{ t.guest_ctx_dev }}</span>
+                <span>{{ t.guest_ctx_dev }}</span><span class="sep">·</span>
+                <span>VPN: {% if session.get('vpn') == 'yes' %}{% if lang == 'uk' %}так{% else %}yes{% endif %}{% else %}{% if lang
+                    == 'uk' %}ні{% else %}no{% endif %}{% endif %}</span>
             </div>
 
             <div class="actions">
