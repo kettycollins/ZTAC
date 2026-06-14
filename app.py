@@ -37,23 +37,17 @@ def login():
 
         if user:
             try:
-                # Виклик оновленого рушія політик Zero Trust v5.0
+                # Первинний виклик рушія політик Zero Trust PDP
                 status, score, trust_level, reason, permissions = evaluate_access(
                     user["role"], device, network, vpn
                 )
 
-                # Записуємо всі контекстні метMetricи у сесію користувача
+                # Записуємо первинні контекстні метрики у сесію користувача
                 session["user"] = user["username"]
                 session["role"] = user["role"]
                 session["device"] = device
                 session["network"] = network
                 session["vpn"] = vpn
-                session["trust_score"] = score
-                session["trust_level"] = trust_level
-                session["reason"] = reason
-                session["permissions"] = (
-                    permissions  # Зберігаємо словник гранульованих прав для карток
-                )
 
                 # ПЕРЕВІРКА ПЕРИМЕТРА: Якщо рушій політик повернув DENY (наприклад, гість поза School Net)
                 if status == "DENY":
@@ -94,7 +88,6 @@ def login():
 
             except Exception as e:
                 print(f"[SERVER ERROR] Помилка обробки політики доступу: {e}")
-                lang = session.get("lang", "uk")
                 return render_template(
                     "login.html", error="Внутрішня помилка PDP сервера."
                 )
@@ -113,6 +106,14 @@ def decision_page():
     if "user" not in session:
         return redirect(url_for("login"))
 
+    # ДИНАМІЧНИЙ ПЕРЕРАХУНОК: Беремо свіжий ключ причини з рушія політик
+    status, score, trust_level, reason, permissions = evaluate_access(
+        session.get("role"),
+        session.get("device"),
+        session.get("network"),
+        session.get("vpn", "no"),
+    )
+
     user_data = {
         "username": session.get("user"),
         "role": session.get("role"),
@@ -124,9 +125,9 @@ def decision_page():
     return render_template(
         "denied.html",
         decision="ALLOW",  # Для успішно авторизованих сесій
-        score=session.get("trust_score"),
-        trust_level=session.get("trust_level"),
-        reason=session.get("reason"),
+        score=score,
+        trust_level=trust_level,
+        reason=reason,  # Свіжий статичний ключ, який Jinja2 100% перекладе
         user=user_data,
     )
 
@@ -137,19 +138,22 @@ def resource_page():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    user_role = session.get("role")
-    score = session.get("trust_score")
-    trust_level = session.get("trust_level")
-    permissions = session.get("permissions", {})  # Витягуємо пооб'єктні дозволи
+    # ДИНАМІЧНИЙ ПЕРЕРАХУНОК: Перевіряємо актуальний контекст безпеки сесії
+    status, score, trust_level, reason, permissions = evaluate_access(
+        session.get("role"),
+        session.get("device"),
+        session.get("network"),
+        session.get("vpn", "no"),
+    )
 
-    user_data = {"username": session["user"], "role": user_role}
+    user_data = {"username": session["user"], "role": session.get("role")}
 
     return render_template(
         "resource_page.html",
         user=user_data,
         score=score,
         trust_level=trust_level,
-        permissions=permissions,
+        permissions=permissions,  # Актуальна матриця карток для фронтенду
     )
 
 
@@ -159,6 +163,14 @@ def set_language(lang_code):
         session["lang"] = lang_code
 
     if session.get("role") == "guest" and session.get("network") != "school":
+        # Якщо гість заблокований, динамічно перераховуємо скоринг перед рендером помилки блокування
+        status, score, trust_level, reason, permissions = evaluate_access(
+            session.get("role"),
+            session.get("device"),
+            session.get("network"),
+            session.get("vpn", "no"),
+        )
+
         user_data = {
             "username": session.get("user"),
             "role": session.get("role"),
@@ -169,9 +181,9 @@ def set_language(lang_code):
         return render_template(
             "denied.html",
             decision="DENY",
-            score=session.get("trust_score", 0),
-            trust_level=session.get("trust_level", "High Risk"),
-            reason=session.get("reason", ""),
+            score=score,
+            trust_level=trust_level,
+            reason=reason,
             user=user_data,
         )
 

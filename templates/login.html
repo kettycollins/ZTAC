@@ -285,9 +285,10 @@
             const currentUsername = document.querySelector('input[name="username"]').value.toLowerCase().trim();
 
             
-            // БІЗНЕС-ПРАВИЛО: VPN доступний ТІЛЬКИ для managed девайсів І НЕ в school мережі
+            // БІЗНЕС-ПРАВИЛО: VPN доступний ТІЛЬКИ для managed девайсів, НЕ в school мережі і НЕ для guest/student користувачів
             const isGuest = currentUsername.includes('guest') || currentUsername === '';
-            const isVpnAllowed = (currentDevice === 'managed' && currentNetwork !== 'school' && !isGuest);
+            const isStudent = currentUsername.includes('student') || currentUsername.includes('stud');
+            const isVpnAllowed = (currentDevice === 'managed' && currentNetwork !== 'school' && !isGuest && !isStudent);
 
             if (!isVpnAllowed) {
                 // Примусово вимикаємо та блокуємо тоглер

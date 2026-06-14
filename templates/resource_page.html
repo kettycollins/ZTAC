@@ -178,8 +178,7 @@
 
 <body>
 
-    <nav
-        style="position: sticky; top: 0; z-index: 100; background: var(--bg-card); border-bottom: 1px solid var(--border-primary); display: flex; align-items: center; padding: 0 20px; height: 56px; justify-content: space-between;">
+    <nav style="position: sticky; top: 0; z-index: 100; background: var(--bg-card); border-bottom: 1px solid var(--border-primary); display: flex; align-items: center; padding: 0 20px; height: 56px; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 20px;">
             <span class="ad-logo" style="font-size: 14px; font-weight: 600; letter-spacing: 0.1em;">ZTAC</span>
             <div style="display: flex; gap: 4px;">
@@ -194,28 +193,20 @@
             <a href="{{ url_for('set_language', lang_code='uk') }}" class="lang-btn">🇺🇦 UA</a>
             {% endif %}
             <button id="theme-toggle" class="theme-btn" type="button" style="padding: 4px 8px;">🌓</button>
-            <a href="{{ url_for('logout') }}" class="zt-badge"
-                style="text-decoration: none; border-color: var(--color-deny); color: var(--color-deny);">{{ t.nav_exit
-                }}</a>
+            <a href="{{ url_for('logout') }}" class="zt-badge" style="text-decoration: none; border-color: var(--color-deny); color: var(--color-deny);">{{ t.nav_exit }}</a>
         </div>
     </nav>
 
     <div class="zt-wrap" style="max-width: 900px; padding-top: 2rem;">
 
-        <div
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted);">
             <div>{{ t.res_user }}: <strong style="color: var(--text-main);">{{ user.username }}</strong></div>
-            <div>{{ t.res_session_role }}: <span class="zt-badge"
-                    style="padding: 1px 6px; font-size: 11px; border-color: var(--accent); color: var(--accent);">{{
-                    user.role | uppercase }}</span></div>
+            <div>{{ t.res_session_role }}: <span class="zt-badge" style="padding: 1px 6px; font-size: 11px; border-color: var(--accent); color: var(--accent);">{{ user.role | uppercase }}</span></div>
         </div>
 
-        <div class="zt-context-bar"
-            style="border-left: 4px solid {% if trust_level == 'Trusted' %}var(--color-allow){% elif trust_level == 'High Risk' %}var(--color-deny){% else %}var(--color-limited){% endif %}; background: var(--bg-card);">
-            <span class="zt-dot"
-                style="background-color: {% if trust_level == 'Trusted' %}var(--color-allow){% elif trust_level == 'High Risk' %}var(--color-deny){% else %}var(--color-limited){% endif %};"></span>
-            <span>Доступ надано · Рівень довіри: <strong>{{ trust_level | uppercase }}</strong> · Trust Score:
-                <strong>{{ score }}/90</strong>.</span>
+        <div class="zt-context-bar" style="border-left: 4px solid {% if trust_level == 'Trusted' %}var(--color-allow){% elif trust_level == 'High Risk' %}var(--color-deny){% else %}var(--color-limited){% endif %}; background: var(--bg-card);">
+            <span class="zt-dot" style="background-color: {% if trust_level == 'Trusted' %}var(--color-allow){% elif trust_level == 'High Risk' %}var(--color-deny){% else %}var(--color-limited){% endif %};"></span>
+            <span>{{ t.access_title }} · {{ t.trust_level }} <strong>{{ trust_level | uppercase }}</strong> · Trust Score: <strong>{{ score }}/100</strong></span>
         </div>
 
         <div class="zt-divider" style="width: 100%; margin-top: 1.5rem; margin-bottom: 1.5rem;"></div>
@@ -232,15 +223,9 @@
                         <div class="res-card-top">
                             <div class="res-icon" style="background: #FCEBEB; color: #791f1f;">🛡️</div>
                             <div style="display: flex; gap: 4px;">
-                                {% if permissions.admin_panel == 'LIMITED' %}<span class="zt-badge"
-                                    style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️
-                                    LIMITED ACCESS</span>
-                                {% elif permissions.admin_panel == 'READ_ONLY' %}<span class="zt-badge"
-                                    style="border-color: var(--accent); color: var(--accent); font-size: 9px; padding: 1px 4px;">📖
-                                    READ ONLY</span>
-                                {% elif permissions.admin_panel == 'DENY' %}<span class="zt-badge"
-                                    style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No
-                                    Access</span>{% endif %}
+                                {% if permissions.admin_panel == 'LIMITED' %}<span class="zt-badge" style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️ LIMITED ACCESS</span>
+                                {% elif permissions.admin_panel == 'READ_ONLY' %}<span class="zt-badge" style="border-color: var(--accent); color: var(--accent); font-size: 9px; padding: 1px 4px;">🎓 READ ONLY</span>
+                                {% elif permissions.admin_panel == 'DENY' %}<span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No Access</span>{% endif %}
                             </div>
                         </div>
                         <div class="res-name">{{ t.res_an_name }}</div>
@@ -249,10 +234,8 @@
                     <div>
                         <div class="res-meta"><span>⚙ Secure Node</span><span>🌐 Internal Net</span></div>
                         <div class="res-action {% if permissions.admin_panel == 'DENY' %}locked-btn{% endif %}">
-                            {% if permissions.admin_panel in ['FULL', 'LIMITED'] %}<a
-                                href="{{ url_for('admin_dashboard') }}">{{ t.res_an_action }}</a>
-                            {% elif permissions.admin_panel == 'READ_ONLY' %}<a
-                                href="{{ url_for('admin_dashboard') }}">Перегляд SIEM 👁️</a>
+                            {% if permissions.admin_panel in ['FULL', 'LIMITED'] %}<a href="{{ url_for('admin_dashboard') }}">{{ t.res_an_action }}</a>
+                            {% elif permissions.admin_panel == 'READ_ONLY' %}<a href="{{ url_for('admin_dashboard') }}">Перегляд SIEM 👁️</a>
                             {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
@@ -263,12 +246,8 @@
                         <div class="res-card-top">
                             <div class="res-icon" style="background: #FCEBEB; color: #791f1f;">⚙️</div>
                             <div style="display: flex; gap: 4px;">
-                                {% if permissions.sys_config == 'LIMITED' %}<span class="zt-badge"
-                                    style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️
-                                    LIMITED ACCESS</span>
-                                {% elif permissions.sys_config == 'DENY' %}<span class="zt-badge"
-                                    style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No
-                                    Access</span>{% endif %}
+                                {% if permissions.sys_config == 'LIMITED' %}<span class="zt-badge" style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️ LIMITED ACCESS</span>
+                                {% elif permissions.sys_config == 'DENY' %}<span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No Access</span>{% endif %}
                             </div>
                         </div>
                         <div class="res-name">{{ t.res_it_name }}</div>
@@ -277,10 +256,8 @@
                     <div>
                         <div class="res-meta"><span>⚙ Core Infrastructure</span><span>🌐 Internal Net</span></div>
                         <div class="res-action {% if permissions.sys_config == 'DENY' %}locked-btn{% endif %}">
-                            {% if permissions.sys_config == 'FULL' %}<a href="{{ url_for('admin_dashboard') }}">{{
-                                t.res_it_action }}</a>
-                            {% elif permissions.sys_config == 'LIMITED' %}<a
-                                href="{{ url_for('admin_dashboard') }}">Конфігурація (View Only) 👁️</a>
+                            {% if permissions.sys_config == 'FULL' %}<a href="{{ url_for('admin_dashboard') }}">{{ t.res_it_action }}</a>
+                            {% elif permissions.sys_config == 'LIMITED' %}<a href="{{ url_for('admin_dashboard') }}">Конфігурація (View Only) 👁️</a>
                             {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
@@ -293,20 +270,14 @@
             <div class="category-title">{{ t.cat_teaching }}</div>
             <div class="res-grid">
 
-                <div class="res-card {% if permissions.teaching_db == 'DENY' %}locked{% endif %}">
+                <div class="res-card {% if permissions.staff_panel == 'DENY' %}locked{% endif %}">
                     <div>
                         <div class="res-card-top">
                             <div class="res-icon" style="background: #E1F5FE; color: #0288D1;">📝</div>
                             <div style="display: flex; gap: 4px;">
-                                {% if permissions.teaching_db == 'LIMITED' %}<span class="zt-badge"
-                                    style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️
-                                    LIMITED ACCESS</span>
-                                {% elif permissions.teaching_db == 'READ_ONLY' %}<span class="zt-badge"
-                                    style="border-color: var(--accent); color: var(--accent); font-size: 9px; padding: 1px 4px;">📖
-                                    READ ONLY</span>
-                                {% elif permissions.teaching_db == 'DENY' %}<span class="zt-badge"
-                                    style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No
-                                    Access</span>{% endif %}
+                                {% if permissions.staff_panel == 'LIMITED' %}<span class="zt-badge" style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️ LIMITED ACCESS</span>
+                                {% elif permissions.staff_panel == 'READ_ONLY' %}<span class="zt-badge" style="border-color: var(--accent); color: var(--accent); font-size: 9px; padding: 1px 4px;">🎓 READ ONLY</span>
+                                {% elif permissions.staff_panel == 'DENY' %}<span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No Access</span>{% endif %}
                             </div>
                         </div>
                         <div class="res-name">{{ t.res_td_name }}</div>
@@ -314,11 +285,9 @@
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Corporate Workspace</span><span>🌐 Educational Net</span></div>
-                        <div class="res-action {% if permissions.teaching_db == 'DENY' %}locked-btn{% endif %}">
-                            {% if permissions.teaching_db in ['FULL', 'LIMITED'] %}<a
-                                href="{{ url_for('notice_teacher') }}">{{ t.res_td_action }}</a>
-                            {% elif permissions.teaching_db == 'READ_ONLY' %}<a
-                                href="{{ url_for('notice_teacher') }}">Аудит-режим 👁️</a>
+                        <div class="res-action {% if permissions.staff_panel == 'DENY' %}locked-btn{% endif %}">
+                            {% if permissions.staff_panel in ['FULL', 'LIMITED'] %}<a href="{{ url_for('notice_teacher') }}">{{ t.res_td_action }}</a>
+                            {% elif permissions.staff_panel == 'READ_ONLY' %}<a href="{{ url_for('notice_teacher') }}">{{ t.res_all_audit }}</a>
                             {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
@@ -329,15 +298,9 @@
                         <div class="res-card-top">
                             <div class="res-icon" style="background: #E1F5FE; color: #0288D1;">📊</div>
                             <div style="display: flex; gap: 4px;">
-                                {% if permissions.academic_ledger == 'LIMITED' %}<span class="zt-badge"
-                                    style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️
-                                    LIMITED ACCESS</span>
-                                {% elif permissions.academic_ledger == 'READ_ONLY' %}<span class="zt-badge"
-                                    style="border-color: var(--accent); color: var(--accent); font-size: 9px; padding: 1px 4px;">📖
-                                    READ ONLY</span>
-                                {% elif permissions.academic_ledger == 'DENY' %}<span class="zt-badge"
-                                    style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No
-                                    Access</span>{% endif %}
+                                {% if permissions.academic_ledger == 'LIMITED' %}<span class="zt-badge" style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️ LIMITED ACCESS</span>
+                                {% elif permissions.academic_ledger == 'READ_ONLY' %}<span class="zt-badge" style="border-color: var(--accent); color: var(--accent); font-size: 9px; padding: 1px 4px;">🎓 READ ONLY</span>
+                                {% elif permissions.academic_ledger == 'DENY' %}<span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No Access</span>{% endif %}
                             </div>
                         </div>
                         <div class="res-name">{{ t.res_gs_name }}</div>
@@ -346,12 +309,9 @@
                     <div>
                         <div class="res-meta"><span>⚙ Confidential Ledger</span><span>🌐 Secure Segment</span></div>
                         <div class="res-action {% if permissions.academic_ledger == 'DENY' %}locked-btn{% endif %}">
-                            {% if permissions.academic_ledger == 'FULL' %}<a href="{{ url_for('notice_teacher') }}">{{
-                                t.res_gs_action }}</a>
-                            {% elif permissions.academic_ledger == 'LIMITED' %}<a
-                                href="{{ url_for('notice_teacher') }}">Перегляд успішності 👁️</a>
-                            {% elif permissions.academic_ledger == 'READ_ONLY' %}<a
-                                href="{{ url_for('notice_teacher') }}">Аудит журналу 👁️</a>
+                            {% if permissions.academic_ledger == 'FULL' %}<a href="{{ url_for('notice_teacher') }}">{{ t.res_gs_action }}</a>
+                            {% elif permissions.academic_ledger == 'LIMITED' %}<a href="{{ url_for('notice_teacher') }}">{{ t.res_gs_audit }}</a>
+                            {% elif permissions.academic_ledger == 'READ_ONLY' %}<a href="{{ url_for('notice_teacher') }}">{{ t.res_all_audit }}</a>
                             {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
@@ -367,17 +327,11 @@
                 <div class="res-card {% if permissions.student_hub == 'DENY' %}locked{% endif %}">
                     <div>
                         <div class="res-card-top">
-                            <div class="res-icon" style="background: #EAF3DE; color: #27500a;">📖</div>
+                            <div class="res-icon" style="background: #EAF3DE; color: #27500a;">🎓</div>
                             <div style="display: flex; gap: 4px;">
-                                {% if permissions.student_hub == 'LIMITED' %}<span class="zt-badge"
-                                    style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️
-                                    LIMITED ACCESS</span>
-                                {% elif permissions.student_hub == 'READ_ONLY' %}<span class="zt-badge"
-                                    style="border-color: var(--accent); color: var(--accent); font-size: 9px; padding: 1px 4px;">📖
-                                    READ ONLY</span>
-                                {% elif permissions.student_hub == 'DENY' %}<span class="zt-badge"
-                                    style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No
-                                    Access</span>{% endif %}
+                                {% if permissions.student_hub == 'LIMITED' %}<span class="zt-badge" style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️ LIMITED ACCESS</span>
+                                {% elif permissions.student_hub == 'READ_ONLY' %}<span class="zt-badge" style="border-color: var(--accent); color: var(--accent); font-size: 9px; padding: 1px 4px;">🎓 READ ONLY</span>
+                                {% elif permissions.student_hub == 'DENY' %}<span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No Access</span>{% endif %}
                             </div>
                         </div>
                         <div class="res-name">{{ t.res_sp_name }}</div>
@@ -388,38 +342,33 @@
                         <div class="res-action {% if permissions.student_hub == 'DENY' %}locked-btn{% endif %}">
                             {% if permissions.student_hub in ['FULL', 'LIMITED', 'READ_ONLY'] %}
                             <a href="{{ url_for('notice_student') }}">
-                                {% if permissions.student_hub == 'LIMITED' %}Перегляд профілю 👁️{% elif
-                                permissions.student_hub == 'READ_ONLY' %}Режим аудиту 👁️{% else %}{{ t.res_sp_action
-                                }}{% endif %}
+                                {% if permissions.student_hub == 'LIMITED' %}Перегляд профілю 👁️{% elif permissions.student_hub == 'READ_ONLY' %}{{ t.res_all_audit }}{% else %}{{ t.res_sp_action }}{% endif %}
                             </a>
                             {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
                 </div>
 
-                <div class="res-card {% if permissions.e_library == 'DENY' %}locked{% endif %}">
+                <div class="res-card {% if permissions.student_hub == 'DENY' or permissions.student_hub == 'LIMITED' and user.role == 'guest' %}locked{% endif %}">
                     <div>
                         <div class="res-card-top">
-                            <div class="res-icon" style="background: #EAF3DE; color: #27500a;">📚</div>
+                            <div class="res-icon" style="background: #EAF3DE; color: #27500a;">📥</div>
                             <div style="display: flex; gap: 4px;">
-                                {% if permissions.e_library == 'LIMITED' %}<span class="zt-badge"
-                                    style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️
-                                    LIMITED ACCESS</span>
-                                {% elif permissions.e_library == 'DENY' %}<span class="zt-badge"
-                                    style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No
-                                    Access</span>{% endif %}
+                                {% if permissions.student_hub == 'LIMITED' %}<span class="zt-badge" style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️ LIMITED ACCESS</span>
+                                {% elif permissions.student_hub == 'DENY' %}<span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No Access</span>{% endif %}
                             </div>
                         </div>
                         <div class="res-name">{{ t.res_dl_name }}</div>
-                        <div class="res-desc">{{ t.res_dl_desc }}</div>
+                        <div class="res-desc">
+                            {% if lang == 'uk' %}Завантаження виконаних домашніх завдань, лабораторних та самостійних робіт.{% else %}Uploading completed homework, lab reports, and independent assignments.{% endif %}
+                        </div>
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Knowledge Nodes</span><span>🌐 Distribution Layer</span></div>
-                        <div class="res-action {% if permissions.e_library == 'DENY' %}locked-btn{% endif %}">
-                            {% if permissions.e_library in ['FULL', 'LIMITED'] %}
+                        <div class="res-action {% if permissions.student_hub == 'DENY' %}locked-btn{% endif %}">
+                            {% if permissions.student_hub in ['FULL', 'LIMITED', 'READ_ONLY'] %}
                             <a href="{{ url_for('notice_student') }}">
-                                {% if permissions.e_library == 'LIMITED' %}Публічний сектор бібліотеки 👁️{% else %}{{
-                                t.res_dl_action }}{% endif %}
+                                {% if permissions.student_hub == 'LIMITED' %}Перегляд ДЗ 👁️{% else %}{{ t.res_dl_action }}{% endif %}
                             </a>
                             {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
@@ -433,33 +382,48 @@
             <div class="category-title">{{ t.cat_public }}</div>
             <div class="res-grid">
 
-                <div class="res-card">
+                <div class="res-card {% if permissions.e_library == 'DENY' %}locked{% endif %}">
                     <div>
                         <div class="res-card-top">
-                            <div class="res-icon" style="background: #FFF3E0; color: #E65100;">📢</div>
-                            <span class="zt-badge" style="font-size: 9px; padding: 1px 4px;">Public domain</span>
+                            <div class="res-icon" style="background: #FFF3E0; color: #E65100;">📖</div>
+                            <div style="display: flex; gap: 4px;">
+                                {% if permissions.e_library == 'LIMITED' %}<span class="zt-badge" style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️ LIMITED ACCESS</span>
+                                {% elif permissions.e_library == 'DENY' %}<span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No Access</span>{% endif %}
+                            </div>
                         </div>
                         <div class="res-name">{{ t.res_am_name }}</div>
                         <div class="res-desc">{{ t.res_am_desc }}</div>
                     </div>
                     <div>
-                        <div class="res-meta"><span>⚙ Open Access</span><span>🌐 Unrestricted</span></div>
-                        <div class="res-action"><a href="{{ url_for('notice_guest') }}">{{ t.res_am_action }}</a></div>
+                        <div class="res-meta"><span>⚙ Knowledge Nodes</span><span>🌐 Distribution Layer</span></div>
+                        <div class="res-action {% if permissions.e_library == 'DENY' %}locked-btn{% endif %}">
+                            {% if permissions.e_library in ['FULL', 'LIMITED'] %}
+                            <a href="{{ url_for('notice_student') }}">
+                                {% if permissions.e_library == 'LIMITED' %}Публічний сектор бібліотеки 👁️{% else %}{{ t.res_am_action }}{% endif %}
+                            </a>
+                            {% else %}{{ t.lock_deny }}{% endif %}
+                        </div>
                     </div>
                 </div>
 
-                <div class="res-card">
+                <div class="res-card {% if permissions.public_res == 'DENY' %}locked{% endif %}">
                     <div>
                         <div class="res-card-top">
                             <div class="res-icon" style="background: #FFF3E0; color: #E65100;">🌐</div>
-                            <span class="zt-badge" style="font-size: 9px; padding: 1px 4px;">Public domain</span>
+                            <div style="display: flex; gap: 4px;">
+                                {% if permissions.public_res == 'DENY' %}<span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No Access</span>
+                                {% else %}<span class="zt-badge" style="font-size: 9px; padding: 1px 4px;">Public domain</span>{% endif %}
+                            </div>
                         </div>
                         <div class="res-name">{{ t.res_pr_name }}</div>
                         <div class="res-desc">{{ t.res_pr_desc }}</div>
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Open Access</span><span>🌐 Unrestricted</span></div>
-                        <div class="res-action"><a href="{{ url_for('notice_guest') }}">{{ t.res_pr_action }}</a></div>
+                        <div class="res-action {% if permissions.public_res == 'DENY' %}locked-btn{% endif %}">
+                            {% if permissions.public_res != 'DENY' %}<a href="{{ url_for('notice_guest') }}">{{ t.res_pr_action }}</a>
+                            {% else %}{{ t.lock_deny }}{% endif %}
+                        </div>
                     </div>
                 </div>
 
@@ -467,9 +431,7 @@
         </div>
 
         <div style="margin-top: 2.5rem; text-align: center;">
-            <a href="{{ url_for('login') }}" class="zt-btn"
-                style="background: transparent; border: 1px solid var(--border-secondary); color: var(--text-main); text-decoration: none; padding: 10px 20px;">{{
-                t.res_btn_back }}</a>
+            <a href="{{ url_for('login') }}" class="zt-btn" style="background: transparent; border: 1px solid var(--border-secondary); color: var(--text-main); text-decoration: none; padding: 10px 20px;">{{ t.res_btn_back }}</a>
         </div>
     </div>
 
