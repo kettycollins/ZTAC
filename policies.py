@@ -1,19 +1,16 @@
-# policies.py
-
-
-def evaluate_access(role, device, network, vpn="no"):
+def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
     """
-    Динамічний рушій політик Zero Trust (Policy Decision Point) v7.5-cloud.
-    Повністю адаптований під оновлену 100-бальну математичну модель контексту:
-    - Device: Managed = 50, BYOD (unmanaged) = 30
-    - Network: School = 50, Home = 30, Public = 10
-    - Extra Protection (VPN/MFA): On = 20, Off = 0
+    Динамічний рушій політик Zero Trust (Policy Decision Point) v8.0-cloud.
+    Математична модель контексту (Максимум: 100 балів):
+    - Device: Managed = 40, Unmanaged = 20
+    - Network: School = 40, Home = 20, Public = 10
+    - Extra Security (WireGuard VPN або MFA): +20 балів (не сумуються вище 20)
     """
     if not role:
         role = "guest"
 
     # =========================================================================
-    # СУВОРИЙ БЕЗПЕКОВИЙ ФІЛЬТР ДЛЯ ГОСТЯ (Guest Perimeter Protection)
+    # СУВОРИЙ БЕЗПЕКОВИЙ ФІЛЬТР ДЛЯ ГОСТЯ
     # =========================================================================
     if role == "guest":
         if network != "school":
@@ -35,15 +32,16 @@ def evaluate_access(role, device, network, vpn="no"):
             )
 
     # =========================================================================
-    # 1. ОБЧИСЛЕННЯ ДИНАМІЧНОГО TRUST SCORE (ДЛЯ ЛЕГІТИМНИХ КОНТЕКСТІВ)
+    # 1. ОБЧИСЛЕННЯ ДИНАМІЧНОГО TRUST SCORE
     # =========================================================================
-    device_score = 50 if device == "managed" else 30
-    network_score = 50 if network == "school" else (30 if network == "home" else 10)
-    extra_score = 20 if vpn == "yes" else 0
+    device_score = 40 if device == "managed" else 20
+    network_score = 40 if network == "school" else (20 if network == "home" else 10)
+
+    # Опційний бонус безпеки: якщо активовано наш WireGuard VPN АБО користувач здав MFA
+    extra_score = 20 if (vpn == "yes" or mfa_verified) else 0
 
     trust_score = device_score + network_score + extra_score
 
-    # Визначення інтегрального рівня ризику на основі вашої шкали thresholds
     if trust_score >= 80:
         trust_level = "Trusted"
     elif 50 <= trust_score <= 79:
@@ -52,7 +50,7 @@ def evaluate_access(role, device, network, vpn="no"):
         trust_level = "High Risk"
 
     # =========================================================================
-    # 2. ІНІЦІАЛІЗАЦІЯ МАТРИЦІ ДОЗВОЛІВ ЗА ПРИНЦИПОМ DEFAULT DENY
+    # 2. ІНІЦІАЛІЗАЦІЯ МАТРИЦІ ДОЗВОЛІВ (DEFAULT DENY)
     # =========================================================================
     permissions = {
         "admin_panel": "DENY",
@@ -64,10 +62,6 @@ def evaluate_access(role, device, network, vpn="no"):
         "e_library": "DENY",
         "public_res": "DENY",
     }
-
-    # =========================================================================
-    # 3. ГРАНУЛЬОВАНЕ НАРІЗАННЯ ПРАВ ЗГІДНО З ПОРОГАМИ ДОСТУПУ ТАБЛИЦІ
-    # =========================================================================
 
     if trust_score >= 40:
         permissions["public_res"] = "FULL"
@@ -90,9 +84,10 @@ def evaluate_access(role, device, network, vpn="no"):
                 permissions["student_hub"] = "READ_ONLY"
                 permissions["submissions"] = "READ_ONLY"
 
-        # СУВОРЕ ВИКЛЮЧЕННЯ: Вхід Адміна через BYOD (unmanaged) всередині школи (30 + 50 = 80 балів)
+        # Оновлене BYOD-правило: якщо адмін на unmanaged (BYOD) у школі,
+        # але здав опційне MFA (або включив VPN) -> отримав 20+40+20 = 80 балів та FULL доступи!
         if device == "unmanaged" and network == "school":
-            if trust_score >= 60:
+            if trust_score >= 80:
                 permissions["admin_panel"] = "LIMITED"
                 permissions["sys_config"] = "LIMITED"
                 permissions["e_library"] = "FULL"
@@ -100,6 +95,10 @@ def evaluate_access(role, device, network, vpn="no"):
                 permissions["academic_ledger"] = "READ_ONLY"
                 permissions["student_hub"] = "READ_ONLY"
                 permissions["submissions"] = "READ_ONLY"
+            elif 50 <= trust_score <= 79:
+                permissions["admin_panel"] = "DENY"
+                permissions["sys_config"] = "DENY"
+                permissions["e_library"] = "LIMITED"
 
     # 3.3 Роль: TEACHER
     if role == "teacher":
@@ -135,28 +134,20 @@ def evaluate_access(role, device, network, vpn="no"):
         permissions["e_library"] = "LIMITED"
 
     # =========================================================================
-    # 4. КІНЦЕВЕ ВИЗНАЧЕННЯ СТАТУСУ СЕСІЇ (PEP VERDICT)
+    # 4. PEP VERDICT
     # =========================================================================
-    if role == "admin" and device == "unmanaged" and network != "school":
-        return (
-            "DENY",
-            trust_score,
-            "High Risk",
-            "Guest role restriction",
-            permissions,
-        )
+    if (
+        role == "admin"
+        and device == "unmanaged"
+        and network != "school"
+        and not mfa_verified
+    ):
+        return ("DENY", trust_score, "High Risk", "Guest role restriction", permissions)
 
     if trust_score < 40 and role not in ["student", "teacher"]:
-        return (
-            "DENY",
-            trust_score,
-            trust_level,
-            "Guest role restriction",
-            permissions,
-        )
+        return ("DENY", trust_score, trust_level, "Guest role restriction", permissions)
 
-    # ДИНАМІЧНИЙ ПІДБІР СТАТИЧНОГО КЛЮЧА ДЛЯ СЛОВНИКА ПЕРЕКЛАДІВ
-    if trust_level == "Approve" or trust_level == "Trusted":
+    if trust_level in ["Approve", "Trusted"]:
         reason_key = f"{role.capitalize()} authorized"
     elif trust_level == "Medium Risk":
         reason_key = (

@@ -2,6 +2,7 @@
 import os
 import json
 import ipaddress
+import pyotp
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
@@ -15,12 +16,11 @@ app = Flask(__name__)
 app.jinja_env.filters["uppercase"] = lambda s: s.upper() if s else ""
 app.config.from_object(Config)
 
-# Налаштування довіри до зворотного проксі Nginx у Google Cloud
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 
 def detect_device_from_cert(req):
-    """Визначає пристрій: managed = наявність валідного mTLS сертифіката."""
+    """Managed device = валідний клієнтський сертифікат mTLS від Nginx."""
     cert_status = req.headers.get("X-Client-Verified", "NONE")
     cert_dn = req.headers.get("X-Client-DN", "")
     if cert_status == "SUCCESS" and "laptop-managed" in cert_dn:
@@ -29,9 +29,8 @@ def detect_device_from_cert(req):
 
 
 def detect_vpn_from_ip(client_ip):
-    """Автоматично визначає VPN підключення за IP адресою клієнта (підмережа OpenVPN/WireGuard)."""
+    """Автоматично визначає WireGuard VPN підключення за IP адресою клієнта."""
     try:
-        # Обробляємо випадок, коли проксі передає декілька IP через кому
         ip_string = client_ip.split(",")[0].strip()
         ip = ipaddress.ip_address(ip_string)
         vpn_network = ipaddress.ip_network("10.8.0.0/24")
@@ -53,8 +52,12 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # Визначаємо інфраструктурний статус пристрою за сертифікатом
+    # Автоматичне зчитування пристрою хмарою через сертифікат
     device_status = detect_device_from_cert(request)
+
+    # Автоматичне зчитування WireGuard VPN за IP клієнта
+    client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    vpn_status = "yes" if detect_vpn_from_ip(client_ip) else "no"
 
     if request.method == "POST":
         username = request.form.get("username")
@@ -62,52 +65,46 @@ def login():
         otp_code = request.form.get("otp_code", "").strip()
         network = request.form.get("network")
 
-        # Автоматичне визначення VPN за IP + резервний зчитувач форми
-        client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
-        vpn_auto = "yes" if detect_vpn_from_ip(client_ip) else "no"
-        vpn_form = request.form.get("vpn", "no")
-        vpn = vpn_auto if vpn_auto == "yes" else vpn_form
-
-        # 1. Первинна автентифікація по паролю
         user = authenticate_user(username, password)
 
         if user:
             try:
-                # 2. Сувора перевірка другого фактора (MFA)
-                if not verify_totp(username, otp_code):
-                    lang = session.get("lang", "uk")
-                    return render_template(
-                        "login.html",
-                        device_status=device_status,
-                        error="Невірний MFA код.",
-                    )
+                mfa_verified = False
 
-                # =============================================================
-                # СУВОРЕ БЕЗПЕКОВЕ ПРАВИЛО БЕКЕНДУ: Заборона VPN для ролі студент
-                # =============================================================
-                if user["role"] == "student":
-                    vpn = "no"
+                # ОПЦІЙНИЙ MFA ФІЛЬТР: Перевіряємо код, тільки якщо користувач його ввів
+                if otp_code != "":
+                    if verify_totp(username, otp_code):
+                        mfa_verified = True
+                    else:
+                        return render_template(
+                            "login.html",
+                            device_status=device_status,
+                            vpn_status=vpn_status,
+                            error="Невірний MFA код.",
+                        )
 
-                # 3. Виклик PDP-рушія Zero Trust (device визначається виключно хмарою)
+                # Заборона VPN для студентів
+                current_vpn = "no" if user["role"] == "student" else vpn_status
+
+                # Виклик PDP рушія з передачею прапора опційного MFA
                 status, score, trust_level, reason, permissions = evaluate_access(
-                    user["role"], device_status, network, vpn
+                    user["role"], device_status, network, current_vpn, mfa_verified
                 )
 
-                # Записуємо контекстні метрики у сесію
                 session["user"] = user["username"]
                 session["role"] = user["role"]
                 session["device"] = device_status
                 session["network"] = network
-                session["vpn"] = vpn
+                session["vpn"] = current_vpn
+                session["mfa_verified"] = mfa_verified
 
-                # ПЕРЕВІРКА ПЕРИМЕТРА БЕЗПЕКИ (Якщо повернуто DENY)
                 if status == "DENY":
                     log_event(
                         username,
                         user["role"],
                         device_status,
                         network,
-                        vpn,
+                        current_vpn,
                         "DENY",
                         score,
                         reason,
@@ -128,13 +125,12 @@ def login():
                         user=user_data,
                     )
 
-                # Успішний вхід (ACCESS_GRANTED)
                 log_event(
                     username,
                     user["role"],
                     device_status,
                     network,
-                    vpn,
+                    current_vpn,
                     "ALLOW",
                     score,
                     reason,
@@ -142,10 +138,11 @@ def login():
                 return redirect(url_for("decision_page"))
 
             except Exception as e:
-                print(f"[SERVER ERROR] Помилка обробки політики доступу: {e}")
+                print(f"[SERVER ERROR] Помилка PDP: {e}")
                 return render_template(
                     "login.html",
                     device_status=device_status,
+                    vpn_status=vpn_status,
                     error="Внутрішня помилка PDP сервера.",
                 )
         else:
@@ -153,10 +150,13 @@ def login():
             return render_template(
                 "login.html",
                 device_status=device_status,
+                vpn_status=vpn_status,
                 error=TRANSLATIONS[lang]["login_error"],
             )
 
-    return render_template("login.html", device_status=device_status)
+    return render_template(
+        "login.html", device_status=device_status, vpn_status=vpn_status
+    )
 
 
 @app.route("/decision")
@@ -169,6 +169,7 @@ def decision_page():
         session.get("device"),
         session.get("network"),
         session.get("vpn", "no"),
+        session.get("mfa_verified", False),
     )
 
     user_data = {
@@ -178,7 +179,6 @@ def decision_page():
         "network": session.get("network"),
         "vpn": session.get("vpn"),
     }
-
     return render_template(
         "denied.html",
         decision="ALLOW",
@@ -199,6 +199,7 @@ def resource_page():
         session.get("device"),
         session.get("network"),
         session.get("vpn", "no"),
+        session.get("mfa_verified", False),
     )
 
     user_data = {"username": session["user"], "role": session.get("role")}
@@ -215,96 +216,13 @@ def resource_page():
 def set_language(lang_code):
     if lang_code in ["uk", "en"]:
         session["lang"] = lang_code
-
-    if session.get("role") == "guest" and session.get("network") != "school":
-        status, score, trust_level, reason, permissions = evaluate_access(
-            session.get("role"),
-            session.get("device"),
-            session.get("network"),
-            session.get("vpn", "no"),
-        )
-        user_data = {
-            "username": session.get("user"),
-            "role": session.get("role"),
-            "device": session.get("device"),
-            "network": session.get("network"),
-            "vpn": session.get("vpn"),
-        }
-        return render_template(
-            "denied.html",
-            decision="DENY",
-            score=score,
-            trust_level=trust_level,
-            reason=reason,
-            user=user_data,
-        )
-
     return redirect(request.referrer or url_for("index"))
-
-
-@app.route("/admin/dashboard")
-def admin_dashboard():
-    if "user" not in session or session.get("role") != "admin":
-        return redirect(url_for("login"))
-
-    log_file_path = "logs/access_logs.json"
-    logs = []
-    if os.path.exists(log_file_path):
-        try:
-            with open(log_file_path, "r", encoding="utf-8") as f:
-                logs = json.load(f)
-                logs = logs[::-1]
-        except Exception:
-            pass
-
-    user_data = {"username": session.get("user"), "role": session.get("role")}
-    return render_template("admin_dashboard.html", user=user_data, logs=logs)
 
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("index"))
-
-
-@app.route("/api/logs")
-def api_logs():
-    if "user" not in session or session.get("role") != "admin":
-        return json.dumps([]), 403
-
-    log_file_path = "logs/access_logs.json"
-    if os.path.exists(log_file_path):
-        try:
-            with open(log_file_path, "r", encoding="utf-8") as f:
-                logs = json.load(f)
-                return json.dumps(logs[::-1]), 200, {"Content-Type": "application/json"}
-        except Exception:
-            pass
-    return json.dumps([]), 200, {"Content-Type": "application/json"}
-
-
-@app.route("/resources/teacher")
-def notice_teacher():
-    if "user" not in session:
-        return redirect(url_for("login"))
-    user_data = {"username": session.get("user"), "role": session.get("role")}
-    return render_template("notice_teacher.html", user=user_data)
-
-
-@app.route("/resources/student")
-def notice_student():
-    if "user" not in session:
-        return redirect(url_for("login"))
-    user_data = {"username": session.get("user"), "role": session.get("role")}
-    return render_template("notice_student.html", user=user_data)
-
-
-@app.route("/resources/guest")
-def notice_guest():
-    if "user" not in session:
-        return redirect(url_for("login"))
-    user_data = {"username": session.get("user"), "role": session.get("role")}
-    return render_template("notice_guest.html", user=user_data)
 
 
 if __name__ == "__main__":

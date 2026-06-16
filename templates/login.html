@@ -26,9 +26,7 @@
             border-color: var(--border-secondary);
         }
 
-        /* --- СТИЛІЗАЦІЯ ІНТЕРАКТИВНОГО TOGGLE BUTTON ДЛЯ VPN --- */
         .vpn-toggle-container {
-            position: relative;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -42,19 +40,13 @@
 
         .vpn-toggle-container.active {
             border-color: var(--color-allow);
+            background: rgba(46, 125, 50, 0.02);
         }
 
         .vpn-toggle-container.disabled {
-            opacity: 0.6;
             background: var(--bg-card);
             border-color: var(--border-primary);
-            cursor: not-allowed;
-        }
-
-        .vpn-toggle-container.disabled .switch,
-        .vpn-toggle-container.disabled input {
-            cursor: not-allowed;
-            pointer-events: none;
+            opacity: 0.7;
         }
 
         .vpn-left-side {
@@ -66,12 +58,6 @@
         .vpn-icon-box {
             font-size: 20px;
             line-height: 1;
-            display: inline-flex;
-            transition: transform 0.2s;
-        }
-
-        .vpn-toggle-container.active .vpn-icon-box {
-            transform: scale(1.1);
         }
 
         .vpn-info-block {
@@ -81,7 +67,6 @@
         }
 
         .vpn-status-label {
-            font-family: 'IBM Plex Sans', sans-serif;
             font-size: 14px;
             font-weight: 500;
             color: var(--text-main);
@@ -91,61 +76,10 @@
             font-family: 'IBM Plex Mono', monospace;
             font-size: 11px;
             color: var(--text-muted);
-            transition: color 0.2s;
         }
 
         .vpn-toggle-container.active .vpn-tech-comment {
             color: var(--color-allow);
-        }
-
-        /* Конструкція повзунка */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 22px;
-            flex-shrink: 0;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--border-primary);
-            transition: .2s;
-            border-radius: 22px;
-            border: 1px solid var(--border-secondary);
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 14px;
-            width: 14px;
-            left: 3px;
-            bottom: 3px;
-            background-color: var(--text-main);
-            transition: .2s;
-            border-radius: 50%;
-        }
-
-        input:checked+.slider {
-            background-color: var(--color-allow);
-            border-color: var(--color-allow);
-        }
-
-        input:checked+.slider:before {
-            transform: translateX(22px);
-            background-color: #ffffff;
         }
     </style>
 </head>
@@ -154,18 +88,17 @@
     <div class="zt-wrap">
         <div class="zt-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1;">
-                <span class="zt-badge">pdp-v7.5-cloud</span>
+                <span class="zt-badge">pdp-v8.0-wireguard</span>
                 <span class="zt-logo">Zero Trust Access Control</span>
                 <div class="zt-divider" style="flex-grow: 1;"></div>
             </div>
-
             <div style="display: flex; align-items: center; gap: 10px; margin-left: 15px;">
                 {% if lang == 'uk' %}
                 <a href="{{ url_for('set_language', lang_code='en') }}" class="lang-btn">🇬🇧 EN</a>
                 {% else %}
                 <a href="{{ url_for('set_language', lang_code='uk') }}" class="lang-btn">🇺🇦 UA</a>
                 {% endif %}
-                <button id="theme-toggle" class="theme-btn" type="button" title="Змінити тему">🌓</button>
+                <button id="theme-toggle" class="theme-btn" type="button">🌓</button>
             </div>
         </div>
 
@@ -182,8 +115,7 @@
                 <div class="zt-grid">
                     <div class="zt-field">
                         <label class="zt-label">{{ t.lbl_username }}</label>
-                        <input type="text" name="username" class="zt-input" placeholder="e.g. admin1, teacher1..."
-                            required>
+                        <input type="text" name="username" class="zt-input" placeholder="e.g. admin1..." required>
                     </div>
 
                     <div class="zt-field">
@@ -193,8 +125,8 @@
 
                     <div class="zt-field">
                         <label class="zt-label">{{ t.lbl_device }}</label>
-                        <div class="vpn-toggle-container {% if device_status == 'managed' %}active{% else %}disabled{% endif %}"
-                            style="cursor: default;">
+                        <div
+                            class="vpn-toggle-container {% if device_status == 'managed' %}active{% else %}disabled{% endif %}">
                             <div class="vpn-left-side">
                                 <div class="vpn-icon-box">{% if device_status == 'managed' %}🔐{% else %}🔓{% endif %}
                                 </div>
@@ -204,8 +136,8 @@
                                         t.opt_unmanaged }}{% endif %}
                                     </div>
                                     <div class="vpn-tech-comment">
-                                        {% if device_status == 'managed' %}mTLS certificate verified{% else %}no client
-                                        certificate detected{% endif %}
+                                        {% if device_status == 'managed' %}mTLS certificate valid{% else %}no client
+                                        certificate found (BYOD){% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -222,40 +154,38 @@
                     </div>
 
                     <div class="zt-field">
-                        <label class="zt-label">MFA Code (Google Authenticator)</label>
-                        <input type="text" name="otp_code" class="zt-input" placeholder="123456" maxlength="6"
-                            autocomplete="off"
-                            style="font-family:'IBM Plex Mono', monospace; letter-spacing:0.2em; font-weight:600;">
+                        <label class="zt-label">MFA Code <span
+                                style="color:var(--accent); font-weight:normal; font-size:11px;">(Optional: +20 Trust
+                                Score for BYOD)</span></label>
+                        <input type="text" name="otp_code" class="zt-input" placeholder="Leave empty if not configured"
+                            maxlength="6" autocomplete="off"
+                            style="font-family:'IBM Plex Mono', monospace; letter-spacing:0.1em;">
                     </div>
 
-                    <div class="zt-field" style="margin-top: auto;">
-                        <label class="zt-label">{{ t.lbl_vpn }}</label>
-                        <div id="vpn-container" class="vpn-toggle-container">
+                    <div class="zt-field">
+                        <label class="zt-label">WireGuard Инфраструктура VPN</label>
+                        <div
+                            class="vpn-toggle-container {% if vpn_status == 'yes' %}active{% else %}disabled{% endif %}">
                             <div class="vpn-left-side">
-                                <div id="vpn-icon" class="vpn-icon-box">🔓</div>
+                                <div class="vpn-icon-box">{% if vpn_status == 'yes' %}🛡️{% else %}🔓{% endif %}</div>
                                 <div class="vpn-info-block">
-                                    <div id="vpn-status-text" class="vpn-status-label">
-                                        {{ t.opt_vpn_no }}
+                                    <div class="vpn-status-label">
+                                        {% if vpn_status == 'yes' %}{{ t.opt_vpn_yes }}{% else %}{{ t.opt_vpn_no }}{%
+                                        endif %}
                                     </div>
-                                    <div id="vpn-comment" class="vpn-tech-comment">
-                                        disabled · traffic unencrypted
+                                    <div class="vpn-tech-comment">
+                                        {% if vpn_status == 'yes' %}WireGuard IP subnet verified (10.8.0.0/24){% else
+                                        %}direct unencrypted connection{% endif %}
                                     </div>
                                 </div>
                             </div>
-
-                            <label class="switch">
-                                <input type="checkbox" id="vpn-checkbox">
-                                <span class="slider"></span>
-                            </label>
                         </div>
-
-                        <input type="hidden" name="vpn" id="vpn-hidden-input" value="no">
                     </div>
                 </div>
 
                 <div class="zt-context-bar">
                     <span class="zt-dot"></span>
-                    <span>infrastructure-mode · mTLS-enforced · context-aware · idp-active</span>
+                    <span>infrastructure-mode · mTLS active · WireGuard Auto-Detect · Step-up MFA</span>
                 </div>
 
                 <button type="submit" class="zt-btn">{{ t.btn_submit_login }}</button>
@@ -264,7 +194,6 @@
     </div>
 
     <script>
-        // Тема оформлення
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
         const savedTheme = localStorage.getItem('theme') || 'auto';
@@ -272,94 +201,10 @@
 
         toggleBtn.addEventListener('click', () => {
             const currentTheme = htmlEl.getAttribute('data-theme');
-            let newTheme = 'light';
-            if (currentTheme === 'light') newTheme = 'dark';
-            else if (currentTheme === 'dark') newTheme = 'light';
-            else {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                newTheme = prefersDark ? 'light' : 'dark';
-            }
+            let newTheme = currentTheme === 'light' ? 'dark' : 'light';
             htmlEl.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
         });
-
-        // Інтерактивний VPN тоґлер з новою хмарною логікою
-        const fixedDeviceStatus = "{{ device_status }}";
-        const networkSelect = document.getElementById('network-select');
-        const vpnCheckbox = document.getElementById('vpn-checkbox');
-        const vpnHiddenInput = document.getElementById('vpn-hidden-input');
-        const vpnStatusText = document.getElementById('vpn-status-text');
-        const vpnContainer = document.getElementById('vpn-container');
-        const vpnIcon = document.getElementById('vpn-icon');
-        const vpnComment = document.getElementById('vpn-comment');
-        const usernameInput = document.querySelector('input[name="username"]');
-
-        const txtVpnYes = "{{ t.opt_vpn_yes }}";
-        const txtVpnNo = "{{ t.opt_vpn_no }}";
-        const commentOn = "{{ t.vpn_comment_on }}";
-        const commentOff = "{{ t.vpn_comment_off }}";
-
-        function updateVpnState() {
-            const currentDevice = fixedDeviceStatus;
-            const currentNetwork = networkSelect.value;
-            const currentUsername = usernameInput ? usernameInput.value.toLowerCase().trim() : '';
-
-            const isGuest = currentUsername.includes('guest') || currentUsername === '';
-            const isStudent = currentUsername.includes('student') || currentUsername.includes('stud');
-
-            // БІЗНЕС-ПРАВИЛО ХМАРИ: VPN дозволений тільки для Managed пристроїв (mTLS), НЕ всередині школи,
-            // і суворо ЗАБОРОНЕНИЙ для гостей та студентів
-            const isVpnAllowed = (currentDevice === 'managed' && currentNetwork !== 'school' && !isGuest && !isStudent);
-
-            if (!isVpnAllowed) {
-                vpnCheckbox.checked = false;
-                vpnCheckbox.disabled = true;
-                vpnHiddenInput.value = 'no';
-                vpnStatusText.textContent = txtVpnNo;
-                vpnIcon.textContent = '🔓';
-
-                if (isStudent && currentUsername !== '') {
-                    vpnComment.textContent = document.documentElement.getAttribute('lang') === 'uk'
-                        ? "🔒 VPN недоступний для ролі Студент"
-                        : "🔒 VPN is disabled for Student role";
-                } else if (currentDevice === 'unmanaged') {
-                    vpnComment.textContent = document.documentElement.getAttribute('lang') === 'uk'
-                        ? "🔒 VPN доступний тільки для корпоративних пристроїв (mTLS)"
-                        : "🔒 VPN restricted to corporate devices (mTLS)";
-                } else {
-                    vpnComment.textContent = commentOff;
-                }
-                vpnContainer.classList.remove('active');
-                vpnContainer.classList.add('disabled');
-            } else {
-                vpnCheckbox.disabled = false;
-                vpnComment.textContent = commentOff;
-                vpnContainer.classList.remove('disabled');
-            }
-        }
-
-        vpnCheckbox.addEventListener('change', function () {
-            if (this.checked) {
-                vpnHiddenInput.value = 'yes';
-                vpnStatusText.textContent = txtVpnYes;
-                vpnIcon.textContent = '🔒';
-                vpnComment.textContent = commentOn;
-                vpnContainer.classList.add('active');
-            } else {
-                vpnHiddenInput.value = 'no';
-                vpnStatusText.textContent = txtVpnNo;
-                vpnIcon.textContent = '🔓';
-                vpnComment.textContent = commentOff;
-                vpnContainer.classList.remove('active');
-            }
-        });
-
-        networkSelect.addEventListener('change', updateVpnState);
-        if (usernameInput) {
-            usernameInput.addEventListener('input', updateVpnState);
-        }
-
-        updateVpnState();
     </script>
 </body>
 
