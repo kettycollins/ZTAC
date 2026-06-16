@@ -28,6 +28,7 @@
 
         /* --- СТИЛІЗАЦІЯ ІНТЕРАКТИВНОГО TOGGLE BUTTON ДЛЯ VPN --- */
         .vpn-toggle-container {
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -43,9 +44,8 @@
             border-color: var(--color-allow);
         }
 
-        /* Стилі для стану, коли VPN недоступний (disabled) */
         .vpn-toggle-container.disabled {
-            opacity: 0.5;
+            opacity: 0.6;
             background: var(--bg-card);
             border-color: var(--border-primary);
             cursor: not-allowed;
@@ -154,7 +154,7 @@
     <div class="zt-wrap">
         <div class="zt-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1;">
-                <span class="zt-badge">pdp-v3.5</span>
+                <span class="zt-badge">pdp-v7.5-cloud</span>
                 <span class="zt-logo">Zero Trust Access Control</span>
                 <div class="zt-divider" style="flex-grow: 1;"></div>
             </div>
@@ -193,10 +193,23 @@
 
                     <div class="zt-field">
                         <label class="zt-label">{{ t.lbl_device }}</label>
-                        <select name="device" id="device-select" class="zt-select">
-                            <option value="managed">{{ t.opt_managed }}</option>
-                            <option value="unmanaged">{{ t.opt_unmanaged }}</option>
-                        </select>
+                        <div class="vpn-toggle-container {% if device_status == 'managed' %}active{% else %}disabled{% endif %}"
+                            style="cursor: default;">
+                            <div class="vpn-left-side">
+                                <div class="vpn-icon-box">{% if device_status == 'managed' %}🔐{% else %}🔓{% endif %}
+                                </div>
+                                <div class="vpn-info-block">
+                                    <div class="vpn-status-label">
+                                        {% if device_status == 'managed' %}{{ t.opt_managed }}{% else %}{{
+                                        t.opt_unmanaged }}{% endif %}
+                                    </div>
+                                    <div class="vpn-tech-comment">
+                                        {% if device_status == 'managed' %}mTLS certificate verified{% else %}no client
+                                        certificate detected{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="zt-field">
@@ -208,7 +221,14 @@
                         </select>
                     </div>
 
-                    <div class="zt-field" style="grid-column: span 2;">
+                    <div class="zt-field">
+                        <label class="zt-label">MFA Code (Google Authenticator)</label>
+                        <input type="text" name="otp_code" class="zt-input" placeholder="123456" maxlength="6"
+                            autocomplete="off"
+                            style="font-family:'IBM Plex Mono', monospace; letter-spacing:0.2em; font-weight:600;">
+                    </div>
+
+                    <div class="zt-field" style="margin-top: auto;">
                         <label class="zt-label">{{ t.lbl_vpn }}</label>
                         <div id="vpn-container" class="vpn-toggle-container">
                             <div class="vpn-left-side">
@@ -235,7 +255,7 @@
 
                 <div class="zt-context-bar">
                     <span class="zt-dot"></span>
-                    <span>policy-engine · v3.5 · context-verification · identity-provider</span>
+                    <span>infrastructure-mode · mTLS-enforced · context-aware · idp-active</span>
                 </div>
 
                 <button type="submit" class="zt-btn">{{ t.btn_submit_login }}</button>
@@ -263,8 +283,8 @@
             localStorage.setItem('theme', newTheme);
         });
 
-        // Інтерактивний VPN тоґлер з бізнес-логікою
-        const deviceSelect = document.getElementById('device-select');
+        // Інтерактивний VPN тоґлер з новою хмарною логікою
+        const fixedDeviceStatus = "{{ device_status }}";
         const networkSelect = document.getElementById('network-select');
         const vpnCheckbox = document.getElementById('vpn-checkbox');
         const vpnHiddenInput = document.getElementById('vpn-hidden-input');
@@ -272,42 +292,52 @@
         const vpnContainer = document.getElementById('vpn-container');
         const vpnIcon = document.getElementById('vpn-icon');
         const vpnComment = document.getElementById('vpn-comment');
+        const usernameInput = document.querySelector('input[name="username"]');
 
         const txtVpnYes = "{{ t.opt_vpn_yes }}";
         const txtVpnNo = "{{ t.opt_vpn_no }}";
         const commentOn = "{{ t.vpn_comment_on }}";
         const commentOff = "{{ t.vpn_comment_off }}";
 
-        // Функція перевірки контексту для активації/деактивації тоґлера
         function updateVpnState() {
-            const currentDevice = deviceSelect.value;
+            const currentDevice = fixedDeviceStatus;
             const currentNetwork = networkSelect.value;
-            const currentUsername = document.querySelector('input[name="username"]').value.toLowerCase().trim();
+            const currentUsername = usernameInput ? usernameInput.value.toLowerCase().trim() : '';
 
-            
-            // БІЗНЕС-ПРАВИЛО: VPN доступний ТІЛЬКИ для managed девайсів, НЕ в school мережі і НЕ для guest/student користувачів
             const isGuest = currentUsername.includes('guest') || currentUsername === '';
             const isStudent = currentUsername.includes('student') || currentUsername.includes('stud');
+
+            // БІЗНЕС-ПРАВИЛО ХМАРИ: VPN дозволений тільки для Managed пристроїв (mTLS), НЕ всередині школи,
+            // і суворо ЗАБОРОНЕНИЙ для гостей та студентів
             const isVpnAllowed = (currentDevice === 'managed' && currentNetwork !== 'school' && !isGuest && !isStudent);
 
             if (!isVpnAllowed) {
-                // Примусово вимикаємо та блокуємо тоглер
                 vpnCheckbox.checked = false;
                 vpnCheckbox.disabled = true;
                 vpnHiddenInput.value = 'no';
                 vpnStatusText.textContent = txtVpnNo;
                 vpnIcon.textContent = '🔓';
-                vpnComment.textContent = commentOff;
+
+                if (isStudent && currentUsername !== '') {
+                    vpnComment.textContent = document.documentElement.getAttribute('lang') === 'uk'
+                        ? "🔒 VPN недоступний для ролі Студент"
+                        : "🔒 VPN is disabled for Student role";
+                } else if (currentDevice === 'unmanaged') {
+                    vpnComment.textContent = document.documentElement.getAttribute('lang') === 'uk'
+                        ? "🔒 VPN доступний тільки для корпоративних пристроїв (mTLS)"
+                        : "🔒 VPN restricted to corporate devices (mTLS)";
+                } else {
+                    vpnComment.textContent = commentOff;
+                }
                 vpnContainer.classList.remove('active');
-                vpnContainer.classList.add('disabled'); // Робимо блок напівпрозорим
+                vpnContainer.classList.add('disabled');
             } else {
-                // Розблоковуємо тоглер для використання
                 vpnCheckbox.disabled = false;
+                vpnComment.textContent = commentOff;
                 vpnContainer.classList.remove('disabled');
             }
         }
-        
-        // Обробник ручного кліку по самому тоґлеру
+
         vpnCheckbox.addEventListener('change', function () {
             if (this.checked) {
                 vpnHiddenInput.value = 'yes';
@@ -324,11 +354,11 @@
             }
         });
 
-        // Слідкуємо за змінами у полях пристрою та мережі
-        deviceSelect.addEventListener('change', updateVpnState);
         networkSelect.addEventListener('change', updateVpnState);
+        if (usernameInput) {
+            usernameInput.addEventListener('input', updateVpnState);
+        }
 
-        // Ініціалізація стану при завантаженні сторінки
         updateVpnState();
     </script>
 </body>

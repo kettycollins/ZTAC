@@ -1,9 +1,12 @@
+# app.py
 import os
 import json
+import ipaddress
 from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
 from database import init_db
-from authenticate import authenticate_user
+from authenticate import authenticate_user, verify_totp
 from policies import evaluate_access
 from logging_utils import log_event
 from translations import TRANSLATIONS
@@ -11,6 +14,30 @@ from translations import TRANSLATIONS
 app = Flask(__name__)
 app.jinja_env.filters["uppercase"] = lambda s: s.upper() if s else ""
 app.config.from_object(Config)
+
+# Налаштування довіри до зворотного проксі Nginx у Google Cloud
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+
+def detect_device_from_cert(req):
+    """Визначає пристрій: managed = наявність валідного mTLS сертифіката."""
+    cert_status = req.headers.get("X-Client-Verified", "NONE")
+    cert_dn = req.headers.get("X-Client-DN", "")
+    if cert_status == "SUCCESS" and "laptop-managed" in cert_dn:
+        return "managed"
+    return "unmanaged"
+
+
+def detect_vpn_from_ip(client_ip):
+    """Автоматично визначає VPN підключення за IP адресою клієнта (підмережа OpenVPN/WireGuard)."""
+    try:
+        # Обробляємо випадок, коли проксі передає декілька IP через кому
+        ip_string = client_ip.split(",")[0].strip()
+        ip = ipaddress.ip_address(ip_string)
+        vpn_network = ipaddress.ip_network("10.8.0.0/24")
+        return ip in vpn_network
+    except ValueError:
+        return False
 
 
 @app.context_processor
@@ -26,43 +53,65 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # Визначаємо інфраструктурний статус пристрою за сертифікатом
+    device_status = detect_device_from_cert(request)
+
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        device = request.form.get("device")
+        otp_code = request.form.get("otp_code", "").strip()
         network = request.form.get("network")
-        vpn = request.form.get("vpn", "no")  # Зчитуємо інтерактивний повзунок VPN
 
+        # Автоматичне визначення VPN за IP + резервний зчитувач форми
+        client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+        vpn_auto = "yes" if detect_vpn_from_ip(client_ip) else "no"
+        vpn_form = request.form.get("vpn", "no")
+        vpn = vpn_auto if vpn_auto == "yes" else vpn_form
+
+        # 1. Первинна автентифікація по паролю
         user = authenticate_user(username, password)
 
         if user:
             try:
-                # Первинний виклик рушія політик Zero Trust PDP
+                # 2. Сувора перевірка другого фактора (MFA)
+                if not verify_totp(username, otp_code):
+                    lang = session.get("lang", "uk")
+                    return render_template(
+                        "login.html",
+                        device_status=device_status,
+                        error="Невірний MFA код.",
+                    )
+
+                # =============================================================
+                # СУВОРЕ БЕЗПЕКОВЕ ПРАВИЛО БЕКЕНДУ: Заборона VPN для ролі студент
+                # =============================================================
+                if user["role"] == "student":
+                    vpn = "no"
+
+                # 3. Виклик PDP-рушія Zero Trust (device визначається виключно хмарою)
                 status, score, trust_level, reason, permissions = evaluate_access(
-                    user["role"], device, network, vpn
+                    user["role"], device_status, network, vpn
                 )
 
-                # Записуємо первинні контекстні метрики у сесію користувача
+                # Записуємо контекстні метрики у сесію
                 session["user"] = user["username"]
                 session["role"] = user["role"]
-                session["device"] = device
+                session["device"] = device_status
                 session["network"] = network
                 session["vpn"] = vpn
 
-                # ПЕРЕВІРКА ПЕРИМЕТРА: Якщо рушій політик повернув DENY (наприклад, гість поза School Net)
+                # ПЕРЕВІРКА ПЕРИМЕТРА БЕЗПЕКИ (Якщо повернуто DENY)
                 if status == "DENY":
-                    # Логуємо інцидент безпеки із суворим вердиктом DENY
                     log_event(
                         username,
                         user["role"],
-                        device,
+                        device_status,
                         network,
                         vpn,
                         "DENY",
                         score,
                         reason,
                     )
-
                     user_data = {
                         "username": session.get("user"),
                         "role": session.get("role"),
@@ -70,7 +119,6 @@ def login():
                         "network": session.get("network"),
                         "vpn": session.get("vpn"),
                     }
-                    # Відображаємо екран жорсткого блокування
                     return render_template(
                         "denied.html",
                         decision="DENY",
@@ -80,33 +128,42 @@ def login():
                         user=user_data,
                     )
 
-                # Якщо перевірку пройдено (ACCESS_GRANTED), логуємо ALLOW і йдемо далі
+                # Успішний вхід (ACCESS_GRANTED)
                 log_event(
-                    username, user["role"], device, network, vpn, "ALLOW", score, reason
+                    username,
+                    user["role"],
+                    device_status,
+                    network,
+                    vpn,
+                    "ALLOW",
+                    score,
+                    reason,
                 )
                 return redirect(url_for("decision_page"))
 
             except Exception as e:
                 print(f"[SERVER ERROR] Помилка обробки політики доступу: {e}")
                 return render_template(
-                    "login.html", error="Внутрішня помилка PDP сервера."
+                    "login.html",
+                    device_status=device_status,
+                    error="Внутрішня помилка PDP сервера.",
                 )
         else:
             lang = session.get("lang", "uk")
             return render_template(
-                "login.html", error=TRANSLATIONS[lang]["login_error"]
+                "login.html",
+                device_status=device_status,
+                error=TRANSLATIONS[lang]["login_error"],
             )
 
-    return render_template("login.html")
+    return render_template("login.html", device_status=device_status)
 
 
 @app.route("/decision")
 def decision_page():
-    """Проміжний екран вердикту PDP перед переходом до інфраструктури"""
     if "user" not in session:
         return redirect(url_for("login"))
 
-    # ДИНАМІЧНИЙ ПЕРЕРАХУНОК: Беремо свіжий ключ причини з рушія політик
     status, score, trust_level, reason, permissions = evaluate_access(
         session.get("role"),
         session.get("device"),
@@ -124,21 +181,19 @@ def decision_page():
 
     return render_template(
         "denied.html",
-        decision="ALLOW",  # Для успішно авторизованих сесій
+        decision="ALLOW",
         score=score,
         trust_level=trust_level,
-        reason=reason,  # Свіжий статичний ключ, який Jinja2 100% перекладе
+        reason=reason,
         user=user_data,
     )
 
 
 @app.route("/resources")
 def resource_page():
-    """Головний екран об'єктів інфраструктури з гранульованими картками"""
     if "user" not in session:
         return redirect(url_for("login"))
 
-    # ДИНАМІЧНИЙ ПЕРЕРАХУНОК: Перевіряємо актуальний контекст безпеки сесії
     status, score, trust_level, reason, permissions = evaluate_access(
         session.get("role"),
         session.get("device"),
@@ -147,13 +202,12 @@ def resource_page():
     )
 
     user_data = {"username": session["user"], "role": session.get("role")}
-
     return render_template(
         "resource_page.html",
         user=user_data,
         score=score,
         trust_level=trust_level,
-        permissions=permissions,  # Актуальна матриця карток для фронтенду
+        permissions=permissions,
     )
 
 
@@ -163,14 +217,12 @@ def set_language(lang_code):
         session["lang"] = lang_code
 
     if session.get("role") == "guest" and session.get("network") != "school":
-        # Якщо гість заблокований, динамічно перераховуємо скоринг перед рендером помилки блокування
         status, score, trust_level, reason, permissions = evaluate_access(
             session.get("role"),
             session.get("device"),
             session.get("network"),
             session.get("vpn", "no"),
         )
-
         user_data = {
             "username": session.get("user"),
             "role": session.get("role"),
@@ -187,13 +239,11 @@ def set_language(lang_code):
             user=user_data,
         )
 
-    # Для всіх інших стандартних випадків повертаємося на попередню сторінку
     return redirect(request.referrer or url_for("index"))
 
 
 @app.route("/admin/dashboard")
 def admin_dashboard():
-    """Екран моніторингу безпеки (SIEM) для адміністратора"""
     if "user" not in session or session.get("role") != "admin":
         return redirect(url_for("login"))
 
@@ -203,7 +253,7 @@ def admin_dashboard():
         try:
             with open(log_file_path, "r", encoding="utf-8") as f:
                 logs = json.load(f)
-                logs = logs[::-1]  # Найновіші події зверху
+                logs = logs[::-1]
         except Exception:
             pass
 
@@ -219,7 +269,6 @@ def logout():
 
 @app.route("/api/logs")
 def api_logs():
-    """Ендпоінт для SIEM моніторингу адміністратора"""
     if "user" not in session or session.get("role") != "admin":
         return json.dumps([]), 403
 
@@ -234,7 +283,6 @@ def api_logs():
     return json.dumps([]), 200, {"Content-Type": "application/json"}
 
 
-# Роути для сторінок-заглушок (Notice Pages)
 @app.route("/resources/teacher")
 def notice_teacher():
     if "user" not in session:
