@@ -6,7 +6,7 @@ import pyotp
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
-from database import init_db
+from database import init_db, get_db_connection
 from authenticate import authenticate_user, verify_totp
 from policies import evaluate_access
 from logging_utils import log_event
@@ -16,11 +16,17 @@ app = Flask(__name__)
 app.jinja_env.filters["uppercase"] = lambda s: s.upper() if s else ""
 app.config.from_object(Config)
 
+# Налаштування для Chrome (HTTP розгортання)
+app.config.update(
+    SESSION_COOKIE_SECURE=False,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+)
+
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 
 def detect_device_from_cert(req):
-    """Managed device = валідний клієнтський сертифікат mTLS від Nginx."""
     cert_status = req.headers.get("X-Client-Verified", "NONE")
     cert_dn = req.headers.get("X-Client-DN", "")
     if cert_status == "SUCCESS" and "laptop-managed" in cert_dn:
@@ -29,7 +35,6 @@ def detect_device_from_cert(req):
 
 
 def detect_vpn_from_ip(client_ip):
-    """Автоматично визначає WireGuard VPN підключення за IP адресою клієнта."""
     try:
         ip_string = client_ip.split(",")[0].strip()
         ip = ipaddress.ip_address(ip_string)
@@ -52,17 +57,19 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # Автоматичне зчитування пристрою хмарою через сертифікат
     device_status = detect_device_from_cert(request)
-
-    # Автоматичне зчитування WireGuard VPN за IP клієнта
     client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     vpn_status = "yes" if detect_vpn_from_ip(client_ip) else "no"
+
+    # Генеруємо новий випадковий секрет для випадку, якщо користувач захоче налаштувати MFA вперше
+    setup_secret = pyotp.random_base32()
 
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+        mfa_enabled = request.form.get("mfa_enabled", "no")
         otp_code = request.form.get("otp_code", "").strip()
+        current_setup_secret = request.form.get("current_setup_secret", "")
         network = request.form.get("network")
 
         user = authenticate_user(username, password)
@@ -71,22 +78,47 @@ def login():
             try:
                 mfa_verified = False
 
-                # ОПЦІЙНИЙ MFA ФІЛЬТР: Перевіряємо код, тільки якщо користувач його ввів
-                if otp_code != "":
-                    if verify_totp(username, otp_code):
+                # Якщо користувач увімкнув тогл MFA
+                if mfa_enabled == "yes":
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "SELECT totp_secret FROM users WHERE username = ?", (username,)
+                    )
+                    row = cursor.fetchone()
+
+                    # Якщо в базі порожньо, записуємо той ключ, який відображався на екрані
+                    if (
+                        not row
+                        or not row["totp_secret"]
+                        or row["totp_secret"] == "None"
+                    ):
+                        cursor.execute(
+                            "UPDATE users SET totp_secret = ? WHERE username = ?",
+                            (current_setup_secret, username),
+                        )
+                        conn.commit()
+                        user_secret = current_setup_secret
+                    else:
+                        user_secret = row["totp_secret"]
+                    conn.close()
+
+                    # Перевіряємо введений 6-значний код
+                    if otp_code != "" and verify_totp(username, otp_code):
                         mfa_verified = True
                     else:
                         return render_template(
                             "login.html",
                             device_status=device_status,
                             vpn_status=vpn_status,
-                            error="Невірний MFA код.",
+                            setup_secret=setup_secret,
+                            error="Невірний або порожній MFA код.",
                         )
 
-                # Заборона VPN для студентів
+                # Студентський фільтр на VPN
                 current_vpn = "no" if user["role"] == "student" else vpn_status
 
-                # Виклик PDP рушія з передачею прапора опційного MFA
+                # Виклик PDP рушія
                 status, score, trust_level, reason, permissions = evaluate_access(
                     user["role"], device_status, network, current_vpn, mfa_verified
                 )
@@ -109,20 +141,13 @@ def login():
                         score,
                         reason,
                     )
-                    user_data = {
-                        "username": session.get("user"),
-                        "role": session.get("role"),
-                        "device": session.get("device"),
-                        "network": session.get("network"),
-                        "vpn": session.get("vpn"),
-                    }
                     return render_template(
                         "denied.html",
                         decision="DENY",
                         score=score,
                         trust_level=trust_level,
                         reason=reason,
-                        user=user_data,
+                        user=session,
                     )
 
                 log_event(
@@ -143,6 +168,7 @@ def login():
                     "login.html",
                     device_status=device_status,
                     vpn_status=vpn_status,
+                    setup_secret=setup_secret,
                     error="Внутрішня помилка PDP сервера.",
                 )
         else:
@@ -151,11 +177,15 @@ def login():
                 "login.html",
                 device_status=device_status,
                 vpn_status=vpn_status,
+                setup_secret=setup_secret,
                 error=TRANSLATIONS[lang]["login_error"],
             )
 
     return render_template(
-        "login.html", device_status=device_status, vpn_status=vpn_status
+        "login.html",
+        device_status=device_status,
+        vpn_status=vpn_status,
+        setup_secret=setup_secret,
     )
 
 
@@ -163,7 +193,6 @@ def login():
 def decision_page():
     if "user" not in session:
         return redirect(url_for("login"))
-
     status, score, trust_level, reason, permissions = evaluate_access(
         session.get("role"),
         session.get("device"),
@@ -171,21 +200,13 @@ def decision_page():
         session.get("vpn", "no"),
         session.get("mfa_verified", False),
     )
-
-    user_data = {
-        "username": session.get("user"),
-        "role": session.get("role"),
-        "device": session.get("device"),
-        "network": session.get("network"),
-        "vpn": session.get("vpn"),
-    }
     return render_template(
         "denied.html",
         decision="ALLOW",
         score=score,
         trust_level=trust_level,
         reason=reason,
-        user=user_data,
+        user=session,
     )
 
 
@@ -193,7 +214,6 @@ def decision_page():
 def resource_page():
     if "user" not in session:
         return redirect(url_for("login"))
-
     status, score, trust_level, reason, permissions = evaluate_access(
         session.get("role"),
         session.get("device"),
@@ -201,7 +221,6 @@ def resource_page():
         session.get("vpn", "no"),
         session.get("mfa_verified", False),
     )
-
     user_data = {"username": session["user"], "role": session.get("role")}
     return render_template(
         "resource_page.html",
@@ -210,13 +229,6 @@ def resource_page():
         trust_level=trust_level,
         permissions=permissions,
     )
-
-
-@app.route("/set_language/<lang_code>")
-def set_language(lang_code):
-    if lang_code in ["uk", "en"]:
-        session["lang"] = lang_code
-    return redirect(request.referrer or url_for("index"))
 
 
 @app.route("/logout")

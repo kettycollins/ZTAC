@@ -81,6 +81,56 @@
         .vpn-toggle-container.active .vpn-tech-comment {
             color: var(--color-allow);
         }
+
+        /* Стилізація повзунка (Switch) */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-primary);
+            transition: .2s;
+            border-radius: 22px;
+            border: 1px solid var(--border-secondary);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-main);
+            transition: .2s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(22px);
+            background-color: #ffffff;
+        }
     </style>
 </head>
 
@@ -88,7 +138,7 @@
     <div class="zt-wrap">
         <div class="zt-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1;">
-                <span class="zt-badge">pdp-v8.0-wireguard</span>
+                <span class="zt-badge">pdp-v8.0-context</span>
                 <span class="zt-logo">Zero Trust Access Control</span>
                 <div class="zt-divider" style="flex-grow: 1;"></div>
             </div>
@@ -154,16 +204,7 @@
                     </div>
 
                     <div class="zt-field">
-                        <label class="zt-label">MFA Code <span
-                                style="color:var(--accent); font-weight:normal; font-size:11px;">(Optional: +20 Trust
-                                Score for BYOD)</span></label>
-                        <input type="text" name="otp_code" class="zt-input" placeholder="Leave empty if not configured"
-                            maxlength="6" autocomplete="off"
-                            style="font-family:'IBM Plex Mono', monospace; letter-spacing:0.1em;">
-                    </div>
-
-                    <div class="zt-field">
-                        <label class="zt-label">WireGuard Инфраструктура VPN</label>
+                        <label class="zt-label">WireGuard Інфраструктура VPN</label>
                         <div
                             class="vpn-toggle-container {% if vpn_status == 'yes' %}active{% else %}disabled{% endif %}">
                             <div class="vpn-left-side">
@@ -181,11 +222,58 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="zt-field">
+                        <label class="zt-label">Додаткове підтвердження MFA</label>
+                        <div id="mfa-toggle-container" class="vpn-toggle-container">
+                            <div class="vpn-left-side">
+                                <div class="vpn-icon-box">🔑</div>
+                                <div class="vpn-info-block">
+                                    <div class="vpn-status-label">Автентифікація по TOTP коду</div>
+                                    <div class="vpn-tech-comment">опційно: +20 балів Trust Score для BYOD</div>
+                                </div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="mfa-checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <input type="hidden" name="mfa_enabled" id="mfa-hidden-input" value="no">
+                    </div>
                 </div>
 
-                <div class="zt-context-bar">
+                <div id="mfa-expanded-zone"
+                    style="display: none; margin-top: 20px; background: var(--bg-main); border: 1px dashed var(--border-primary); padding: 20px; border-radius: 6px;">
+                    <div
+                        style="font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-family: 'IBM Plex Mono', monospace;">
+                        ⚙ Первинне налаштування / Конфігурація Google Authenticator
+                    </div>
+                    <p
+                        style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4; margin-top: 0; margin-bottom: 12px;">
+                        Якщо ви підключаєте другий фактор вперше: відкрийте додаток Google Authenticator, натисніть
+                        значок <strong>«+»</strong> $\rightarrow$ <strong>«Ввести ключ налаштування»</strong> і
+                        скопіюйте туди цей секрет:
+                    </p>
+
+                    <div
+                        style="background: var(--bg-card); padding: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 15px; text-align: center; letter-spacing: 0.08em; border: 1px solid var(--border-primary); color: var(--text-main); font-weight: 600; margin-bottom: 15px; border-radius: 4px;">
+                        {{ setup_secret }}
+                    </div>
+
+                    <input type="hidden" name="current_setup_secret" value="{{ setup_secret }}">
+
+                    <div class="zt-field">
+                        <label class="zt-label" style="color: var(--text-main);">Введіть 6-значний код з
+                            додатка:</label>
+                        <input type="text" name="otp_code" class="zt-input" placeholder="123456" maxlength="6"
+                            autocomplete="off"
+                            style="font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.2em; font-weight: 600; text-align: center;">
+                    </div>
+                </div>
+
+                <div class="zt-context-bar" style="margin-top: 20px;">
                     <span class="zt-dot"></span>
-                    <span>infrastructure-mode · mTLS active · WireGuard Auto-Detect · Step-up MFA</span>
+                    <span>infrastructure-mode · WireGuard-auto · Step-up MFA active</span>
                 </div>
 
                 <button type="submit" class="zt-btn">{{ t.btn_submit_login }}</button>
@@ -196,16 +284,3 @@
     <script>
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
-        const savedTheme = localStorage.getItem('theme') || 'auto';
-        htmlEl.setAttribute('data-theme', savedTheme);
-
-        toggleBtn.addEventListener('click', () => {
-            const currentTheme = htmlEl.getAttribute('data-theme');
-            let newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            htmlEl.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        });
-    </script>
-</body>
-
-</html>
