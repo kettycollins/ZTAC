@@ -1,17 +1,17 @@
+# policies.py
+
+
 def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
     """
     Динамічний рушій політик Zero Trust (Policy Decision Point) v8.0-cloud.
-    Математична модель контексту (Максимум: 100 балів):
+    100-бальна математична модель контексту:
     - Device: Managed = 40, Unmanaged = 20
     - Network: School = 40, Home = 20, Public = 10
-    - Extra Security (WireGuard VPN або MFA): +20 балів (не сумуються вище 20)
+    - Extra Security (WireGuard VPN або MFA): +20 балів (макс бонус = 20)
     """
     if not role:
         role = "guest"
 
-    # =========================================================================
-    # СУВОРИЙ БЕЗПЕКОВИЙ ФІЛЬТР ДЛЯ ГОСТЯ
-    # =========================================================================
     if role == "guest":
         if network != "school":
             return (
@@ -31,13 +31,9 @@ def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
                 },
             )
 
-    # =========================================================================
-    # 1. ОБЧИСЛЕННЯ ДИНАМІЧНОГО TRUST SCORE
-    # =========================================================================
+    # 1. ОБЧИСЛЕННЯ TRUST SCORE
     device_score = 40 if device == "managed" else 20
     network_score = 40 if network == "school" else (20 if network == "home" else 10)
-
-    # Опційний бонус безпеки: якщо активовано наш WireGuard VPN АБО користувач здав MFA
     extra_score = 20 if (vpn == "yes" or mfa_verified) else 0
 
     trust_score = device_score + network_score + extra_score
@@ -49,9 +45,7 @@ def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
     else:
         trust_level = "High Risk"
 
-    # =========================================================================
-    # 2. ІНІЦІАЛІЗАЦІЯ МАТРИЦІ ДОЗВОЛІВ (DEFAULT DENY)
-    # =========================================================================
+    # 2. ІНІЦІАЛІЗАЦІЯ МАТРИЦІ ДОЗВОЛІВ
     permissions = {
         "admin_panel": "DENY",
         "sys_config": "DENY",
@@ -84,8 +78,7 @@ def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
                 permissions["student_hub"] = "READ_ONLY"
                 permissions["submissions"] = "READ_ONLY"
 
-        # Оновлене BYOD-правило: якщо адмін на unmanaged (BYOD) у школі,
-        # але здав опційне MFA (або включив VPN) -> отримав 20+40+20 = 80 балів та FULL доступи!
+        # BYOD-правило: якщо адмін на unmanaged у школі + увімкнув WireGuard або здав MFA -> отримав 80 балів!
         if device == "unmanaged" and network == "school":
             if trust_score >= 80:
                 permissions["admin_panel"] = "LIMITED"
@@ -133,22 +126,29 @@ def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
         permissions["public_res"] = "FULL"
         permissions["e_library"] = "LIMITED"
 
-    # =========================================================================
     # 4. PEP VERDICT
-    # =========================================================================
     if (
         role == "admin"
         and device == "unmanaged"
         and network != "school"
         and not mfa_verified
     ):
-        return ("DENY", trust_score, "High Risk", "Guest role restriction", permissions)
+        return (
+            "DENY",
+            trust_score,
+            "High Risk",
+            "Admin limited access: Low Trust Level restriction",
+            permissions,
+        )
 
     if trust_score < 40 and role not in ["student", "teacher"]:
         return ("DENY", trust_score, trust_level, "Guest role restriction", permissions)
 
+    # Залізобетонні мовні ключі, які 100% є у твому translations.py
     if trust_level in ["Approve", "Trusted"]:
-        reason_key = f"{role.capitalize()} authorized"
+        reason_key = (
+            "Admin authorized" if role == "admin" else f"{role.capitalize()} authorized"
+        )
     elif trust_level == "Medium Risk":
         reason_key = (
             f"{role.capitalize()} limited access: Medium Trust Level restriction"

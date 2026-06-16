@@ -16,7 +16,7 @@ app = Flask(__name__)
 app.jinja_env.filters["uppercase"] = lambda s: s.upper() if s else ""
 app.config.from_object(Config)
 
-# Налаштування для Chrome (HTTP розгортання)
+# Налаштування сесій для запобігання вилітання в Chrome/Safari
 app.config.update(
     SESSION_COOKIE_SECURE=False,
     SESSION_COOKIE_HTTPONLY=True,
@@ -27,6 +27,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 
 def detect_device_from_cert(req):
+    """Визначає пристрій: managed = наявність клієнтського сертифіката mTLS."""
     cert_status = req.headers.get("X-Client-Verified", "NONE")
     cert_dn = req.headers.get("X-Client-DN", "")
     if cert_status == "SUCCESS" and "laptop-managed" in cert_dn:
@@ -35,6 +36,7 @@ def detect_device_from_cert(req):
 
 
 def detect_vpn_from_ip(client_ip):
+    """Автоматично трекає, чи підключений користувач через WireGuard VPN за його IP."""
     try:
         ip_string = client_ip.split(",")[0].strip()
         ip = ipaddress.ip_address(ip_string)
@@ -61,7 +63,7 @@ def login():
     client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     vpn_status = "yes" if detect_vpn_from_ip(client_ip) else "no"
 
-    # Генеруємо новий випадковий секрет для випадку, якщо користувач захоче налаштувати MFA вперше
+    # Динамічний ключ для першого налаштування Google Authenticator
     setup_secret = pyotp.random_base32()
 
     if request.method == "POST":
@@ -78,7 +80,6 @@ def login():
             try:
                 mfa_verified = False
 
-                # Якщо користувач увімкнув тогл MFA
                 if mfa_enabled == "yes":
                     conn = get_db_connection()
                     cursor = conn.cursor()
@@ -87,7 +88,6 @@ def login():
                     )
                     row = cursor.fetchone()
 
-                    # Якщо в базі порожньо, записуємо той ключ, який відображався на екрані
                     if (
                         not row
                         or not row["totp_secret"]
@@ -103,7 +103,6 @@ def login():
                         user_secret = row["totp_secret"]
                     conn.close()
 
-                    # Перевіряємо введений 6-значний код
                     if otp_code != "" and verify_totp(username, otp_code):
                         mfa_verified = True
                     else:
@@ -115,10 +114,8 @@ def login():
                             error="Невірний або порожній MFA код.",
                         )
 
-                # Студентський фільтр на VPN
                 current_vpn = "no" if user["role"] == "student" else vpn_status
 
-                # Виклик PDP рушія
                 status, score, trust_level, reason, permissions = evaluate_access(
                     user["role"], device_status, network, current_vpn, mfa_verified
                 )
@@ -229,6 +226,13 @@ def resource_page():
         trust_level=trust_level,
         permissions=permissions,
     )
+
+
+@app.route("/set_language/<lang_code>")
+def set_language(lang_code):
+    if lang_code in ["uk", "en"]:
+        session["lang"] = lang_code
+    return redirect(request.referrer or url_for("index"))
 
 
 @app.route("/logout")
