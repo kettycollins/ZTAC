@@ -26,6 +26,7 @@
             border-color: var(--border-secondary);
         }
 
+        /* --- СТИЛІЗАЦІЯ СТАТУС-БЕЙДЖІВ (DEVICE / VPN) ТА ТОГЛЕРА (MFA) --- */
         .vpn-toggle-container {
             display: flex;
             align-items: center;
@@ -40,13 +41,19 @@
 
         .vpn-toggle-container.active {
             border-color: var(--color-allow);
-            background: rgba(46, 125, 50, 0.02);
         }
 
+        /* Стилі для неактивного/негативного статусу (BYOD, VPN off) */
         .vpn-toggle-container.disabled {
+            opacity: 0.6;
             background: var(--bg-card);
             border-color: var(--border-primary);
-            opacity: 0.7;
+        }
+
+        .vpn-toggle-container.disabled .switch,
+        .vpn-toggle-container.disabled input {
+            cursor: not-allowed;
+            pointer-events: none;
         }
 
         .vpn-left-side {
@@ -58,6 +65,12 @@
         .vpn-icon-box {
             font-size: 20px;
             line-height: 1;
+            display: inline-flex;
+            transition: transform 0.2s;
+        }
+
+        .vpn-toggle-container.active .vpn-icon-box {
+            transform: scale(1.1);
         }
 
         .vpn-info-block {
@@ -67,6 +80,7 @@
         }
 
         .vpn-status-label {
+            font-family: 'IBM Plex Sans', sans-serif;
             font-size: 14px;
             font-weight: 500;
             color: var(--text-main);
@@ -76,13 +90,14 @@
             font-family: 'IBM Plex Mono', monospace;
             font-size: 11px;
             color: var(--text-muted);
+            transition: color 0.2s;
         }
 
         .vpn-toggle-container.active .vpn-tech-comment {
             color: var(--color-allow);
         }
 
-        /* Стилізація повзунка (Switch) */
+        /* Конструкція повзунка (лише для MFA — це єдине, що реально перемикає користувач) */
         .switch {
             position: relative;
             display: inline-block;
@@ -123,13 +138,45 @@
         }
 
         input:checked+.slider {
-            background-color: var(--accent);
-            border-color: var(--accent);
+            background-color: var(--color-allow);
+            border-color: var(--color-allow);
         }
 
         input:checked+.slider:before {
             transform: translateX(22px);
             background-color: #ffffff;
+        }
+
+        /* --- ПАНЕЛЬ НАЛАШТУВАННЯ MFA (QR-код + поле коду) --- */
+        .mfa-setup-panel {
+            margin-top: 12px;
+            padding: 16px;
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            background: var(--bg-main);
+        }
+
+        .mfa-setup-instruction {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .mfa-qr-loading {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .mfa-qr-image {
+            display: none;
+            max-width: 170px;
+            border-radius: 6px;
+            margin-bottom: 14px;
+            background: #ffffff;
+            padding: 8px;
         }
     </style>
 </head>
@@ -138,17 +185,18 @@
     <div class="zt-wrap">
         <div class="zt-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1;">
-                <span class="zt-badge">pdp-v8.0-context</span>
+                <span class="zt-badge">pdp-v3.5</span>
                 <span class="zt-logo">Zero Trust Access Control</span>
                 <div class="zt-divider" style="flex-grow: 1;"></div>
             </div>
+
             <div style="display: flex; align-items: center; gap: 10px; margin-left: 15px;">
                 {% if lang == 'uk' %}
                 <a href="{{ url_for('set_language', lang_code='en') }}" class="lang-btn">🇬🇧 EN</a>
                 {% else %}
                 <a href="{{ url_for('set_language', lang_code='uk') }}" class="lang-btn">🇺🇦 UA</a>
                 {% endif %}
-                <button id="theme-toggle" class="theme-btn" type="button">🌓</button>
+                <button id="theme-toggle" class="theme-btn" type="button" title="Змінити тему">🌓</button>
             </div>
         </div>
 
@@ -165,7 +213,8 @@
                 <div class="zt-grid">
                     <div class="zt-field">
                         <label class="zt-label">{{ t.lbl_username }}</label>
-                        <input type="text" name="username" class="zt-input" placeholder="e.g. admin1..." required>
+                        <input type="text" name="username" id="username-input" class="zt-input"
+                            placeholder="e.g. admin1, teacher1..." required>
                     </div>
 
                     <div class="zt-field">
@@ -173,6 +222,7 @@
                         <input type="password" name="password" class="zt-input" placeholder="••••••••" required>
                     </div>
 
+                    <!-- DEVICE: визначається автоматично mTLS-сертифікатом, користувач нічого не обирає -->
                     <div class="zt-field">
                         <label class="zt-label">{{ t.lbl_device }}</label>
                         <div
@@ -186,8 +236,8 @@
                                         t.opt_unmanaged }}{% endif %}
                                     </div>
                                     <div class="vpn-tech-comment">
-                                        {% if device_status == 'managed' %}mTLS certificate valid{% else %}no client
-                                        certificate found (BYOD){% endif %}
+                                        {% if device_status == 'managed' %}{{ t.device_comment_verified }}{% else %}{{
+                                        t.device_comment_none }}{% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -203,34 +253,36 @@
                         </select>
                     </div>
 
-                    <div class="zt-field">
-                        <label class="zt-label">WireGuard Інфраструктура VPN</label>
+                    <!-- VPN: визначається автоматично за активним WireGuard тунелем, користувач нічого не обирає -->
+                    <div class="zt-field" style="grid-column: span 2;">
+                        <label class="zt-label">{{ t.lbl_vpn }}</label>
                         <div
                             class="vpn-toggle-container {% if vpn_status == 'yes' %}active{% else %}disabled{% endif %}">
                             <div class="vpn-left-side">
-                                <div class="vpn-icon-box">{% if vpn_status == 'yes' %}🛡️{% else %}🔓{% endif %}</div>
+                                <div class="vpn-icon-box">{% if vpn_status == 'yes' %}🔒{% else %}🔓{% endif %}</div>
                                 <div class="vpn-info-block">
                                     <div class="vpn-status-label">
                                         {% if vpn_status == 'yes' %}{{ t.opt_vpn_yes }}{% else %}{{ t.opt_vpn_no }}{%
                                         endif %}
                                     </div>
                                     <div class="vpn-tech-comment">
-                                        {% if vpn_status == 'yes' %}WireGuard IP subnet verified (10.8.0.0/24){% else
-                                        %}direct unencrypted connection{% endif %}
+                                        {% if vpn_status == 'yes' %}{{ t.vpn_comment_on }}{% else %}{{ t.vpn_comment_off
+                                        }}{% endif %}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="zt-field">
-                        <label class="zt-label">Додаткове підтвердження MFA</label>
-                        <div id="mfa-toggle-container" class="vpn-toggle-container">
+                    <!-- MFA: ОПЦІЙНИЙ перемикач, єдиний елемент контексту, який реально обирає користувач -->
+                    <div class="zt-field" style="grid-column: span 2;">
+                        <label class="zt-label">{{ t.lbl_mfa }}</label>
+                        <div id="mfa-container" class="vpn-toggle-container">
                             <div class="vpn-left-side">
-                                <div class="vpn-icon-box">🔑</div>
+                                <div id="mfa-icon" class="vpn-icon-box">🔓</div>
                                 <div class="vpn-info-block">
-                                    <div class="vpn-status-label">Автентифікація по TOTP коду</div>
-                                    <div class="vpn-tech-comment">опційно: +20 балів Trust Score для BYOD</div>
+                                    <div id="mfa-status-text" class="vpn-status-label">{{ t.opt_mfa_no }}</div>
+                                    <div id="mfa-comment" class="vpn-tech-comment">{{ t.mfa_comment_off }}</div>
                                 </div>
                             </div>
                             <label class="switch">
@@ -238,42 +290,24 @@
                                 <span class="slider"></span>
                             </label>
                         </div>
-                        <input type="hidden" name="mfa_enabled" id="mfa-hidden-input" value="no">
+
+                        <input type="hidden" name="want_mfa" id="mfa-hidden-input" value="no">
+
+                        <div id="mfa-setup-panel" class="mfa-setup-panel" style="display: none;">
+                            <div class="mfa-setup-instruction">{{ t.mfa_scan_instruction }}</div>
+                            <div id="mfa-qr-loading" class="mfa-qr-loading">{{ t.mfa_loading_qr }}</div>
+                            <img id="mfa-qr-image" class="mfa-qr-image" alt="MFA QR code">
+                            <label class="zt-label" style="display: block; margin-bottom: 6px;">{{
+                                t.mfa_enter_code_label }}</label>
+                            <input type="text" name="otp_code" id="mfa-otp-input" class="zt-input" maxlength="6"
+                                placeholder="{{ t.mfa_code_placeholder }}" autocomplete="off" inputmode="numeric">
+                        </div>
                     </div>
                 </div>
 
-                <div id="mfa-expanded-zone"
-                    style="display: none; margin-top: 20px; background: var(--bg-main); border: 1px dashed var(--border-primary); padding: 20px; border-radius: 6px;">
-                    <div
-                        style="font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-family: 'IBM Plex Mono', monospace;">
-                        ⚙ Первинне налаштування / Конфігурація Google Authenticator
-                    </div>
-                    <p
-                        style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4; margin-top: 0; margin-bottom: 12px;">
-                        Якщо ви підключаєте другий фактор вперше: відкрийте додаток Google Authenticator, натисніть
-                        значок <strong>«+»</strong> $\rightarrow$ <strong>«Ввести ключ налаштування»</strong> і
-                        скопіюйте туди цей секрет:
-                    </p>
-
-                    <div
-                        style="background: var(--bg-card); padding: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 15px; text-align: center; letter-spacing: 0.08em; border: 1px solid var(--border-primary); color: var(--text-main); font-weight: 600; margin-bottom: 15px; border-radius: 4px;">
-                        {{ setup_secret }}
-                    </div>
-
-                    <input type="hidden" name="current_setup_secret" value="{{ setup_secret }}">
-
-                    <div class="zt-field">
-                        <label class="zt-label" style="color: var(--text-main);">Введіть 6-значний код з
-                            додатка:</label>
-                        <input type="text" name="otp_code" class="zt-input" placeholder="123456" maxlength="6"
-                            autocomplete="off"
-                            style="font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.2em; font-weight: 600; text-align: center;">
-                    </div>
-                </div>
-
-                <div class="zt-context-bar" style="margin-top: 20px;">
+                <div class="zt-context-bar">
                     <span class="zt-dot"></span>
-                    <span>infrastructure-mode · WireGuard-auto · Step-up MFA active</span>
+                    <span>policy-engine · v3.5 · context-verification · identity-provider</span>
                 </div>
 
                 <button type="submit" class="zt-btn">{{ t.btn_submit_login }}</button>
@@ -282,5 +316,104 @@
     </div>
 
     <script>
+        // Тема оформлення
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
+        const savedTheme = localStorage.getItem('theme') || 'auto';
+        htmlEl.setAttribute('data-theme', savedTheme);
+
+        toggleBtn.addEventListener('click', () => {
+            const currentTheme = htmlEl.getAttribute('data-theme');
+            let newTheme = 'light';
+            if (currentTheme === 'light') newTheme = 'dark';
+            else if (currentTheme === 'dark') newTheme = 'light';
+            else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                newTheme = prefersDark ? 'light' : 'dark';
+            }
+            htmlEl.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // ────────────────────────────────────────────────────────────
+        // MFA: єдиний елемент контексту, яким керує сам користувач
+        // ────────────────────────────────────────────────────────────
+        const usernameInput = document.getElementById('username-input');
+        const mfaCheckbox = document.getElementById('mfa-checkbox');
+        const mfaHiddenInput = document.getElementById('mfa-hidden-input');
+        const mfaStatusText = document.getElementById('mfa-status-text');
+        const mfaContainer = document.getElementById('mfa-container');
+        const mfaIcon = document.getElementById('mfa-icon');
+        const mfaComment = document.getElementById('mfa-comment');
+        const mfaSetupPanel = document.getElementById('mfa-setup-panel');
+        const mfaQrImage = document.getElementById('mfa-qr-image');
+        const mfaQrLoading = document.getElementById('mfa-qr-loading');
+
+        const txtMfaYes = "{{ t.opt_mfa_yes }}";
+        const txtMfaNo = "{{ t.opt_mfa_no }}";
+        const mfaCommentOn = "{{ t.mfa_comment_on }}";
+        const mfaCommentOff = "{{ t.mfa_comment_off }}";
+        const mfaNeedUsername = "{{ t.mfa_need_username }}";
+        const mfaQrError = "{{ t.mfa_qr_error }}";
+        const mfaLoadingQr = "{{ t.mfa_loading_qr }}";
+
+        function loadMfaQrCode() {
+            const username = usernameInput.value.trim();
+
+            if (!username) {
+                mfaQrLoading.textContent = mfaNeedUsername;
+                mfaQrLoading.style.display = 'block';
+                mfaQrImage.style.display = 'none';
+                return;
+            }
+
+            mfaQrLoading.textContent = mfaLoadingQr;
+            mfaQrLoading.style.display = 'block';
+            mfaQrImage.style.display = 'none';
+
+            fetch(`/mfa/qrcode/${encodeURIComponent(username)}`)
+                .then(res => {
+                    if (!res.ok) throw new Error('mfa qr fetch failed');
+                    return res.json();
+                })
+                .then(data => {
+                    mfaQrImage.src = 'data:image/png;base64,' + data.qr_base64;
+                    mfaQrImage.style.display = 'block';
+                    mfaQrLoading.style.display = 'none';
+                })
+                .catch(() => {
+                    mfaQrLoading.textContent = mfaQrError;
+                    mfaQrLoading.style.display = 'block';
+                    mfaQrImage.style.display = 'none';
+                });
+        }
+
+        mfaCheckbox.addEventListener('change', function () {
+            if (this.checked) {
+                mfaHiddenInput.value = 'yes';
+                mfaStatusText.textContent = txtMfaYes;
+                mfaIcon.textContent = '🔒';
+                mfaComment.textContent = mfaCommentOn;
+                mfaContainer.classList.add('active');
+                mfaSetupPanel.style.display = 'block';
+                loadMfaQrCode();
+            } else {
+                mfaHiddenInput.value = 'no';
+                mfaStatusText.textContent = txtMfaNo;
+                mfaIcon.textContent = '🔓';
+                mfaComment.textContent = mfaCommentOff;
+                mfaContainer.classList.remove('active');
+                mfaSetupPanel.style.display = 'none';
+            }
+        });
+
+        // Якщо MFA вже увімкнено і користувач дописав/змінив username — перезавантажити QR під нього
+        usernameInput.addEventListener('blur', function () {
+            if (mfaCheckbox.checked) {
+                loadMfaQrCode();
+            }
+        });
+    </script>
+</body>
+
+</html>
