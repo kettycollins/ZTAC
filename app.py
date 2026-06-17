@@ -47,20 +47,15 @@ def detect_device_from_cert(req):
         return "managed"
     return "unmanaged"
 
+VPN_GATEWAY_PUBLIC_IP = 35.195.43.82
+
 
 def detect_vpn_from_ip(req):
-    """
-    VPN вважається активним, якщо клієнт підключений через WireGuard-тунель
-    (підмережа 10.8.0.0/24, яку видає zt-vpn-gateway).
-    """
+    """VPN активний, якщо запит прийшов через зовнішній IP нашого WireGuard-гейтвея."""
     client_ip = req.headers.get("X-Forwarded-For", req.remote_addr)
     if client_ip:
         client_ip = client_ip.split(",")[0].strip()
-    try:
-        ip = ipaddress.ip_address(client_ip)
-        return ip in ipaddress.ip_network("10.8.0.0/24")
-    except (ValueError, TypeError):
-        return False
+    return client_ip == VPN_GATEWAY_PUBLIC_IP
 
 
 # =============================================================================
