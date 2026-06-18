@@ -94,17 +94,13 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # Визначаємо контекст на базі живого запиту
     device_status = detect_device_from_cert(request)
     vpn_status = "yes" if detect_vpn_from_ip(request) else "no"
 
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        network = request.form.get("network")  # мережа залишається ручним вибором
-
-        device = device_status
-        vpn = vpn_status  # Використовуємо автоматично визначений vpn_status
+        network = request.form.get("network")  # залишається ручним вибором
 
         want_mfa = request.form.get("want_mfa", "no")
         otp_code = request.form.get("otp_code", "").strip()
@@ -112,7 +108,7 @@ def login():
         user = authenticate_user(username, password)
 
         if user:
-            # Якщо користувач сам обрав підтвердження через MFA — перевіряємо код
+            # Опційне MFA: перевіряється тільки якщо увімкнено тоглер
             mfa_verified = False
             if want_mfa == "yes":
                 if not verify_totp(username, otp_code):
@@ -128,26 +124,25 @@ def login():
             try:
                 # Первинний виклик рушія політик Zero Trust PDP
                 status, score, trust_level, reason, permissions = evaluate_access(
-                    user["role"], device, network, vpn, mfa_verified
+                    user["role"], device_status, network, vpn_status, mfa_verified
                 )
 
-                # Записуємо первинні контекстні метрики у сесію користувача
+                # Записуємо метрики у сесію користувача
                 session["user"] = user["username"]
                 session["role"] = user["role"]
-                session["device"] = device
+                session["device"] = device_status
                 session["network"] = network
-                session["vpn"] = vpn
+                session["vpn"] = vpn_status
                 session["mfa_verified"] = mfa_verified
 
                 # ПЕРЕВІРКА ПЕРИМЕТРА: Якщо рушій політик повернув DENY
                 if status == "DENY":
-                    # Повертаємо оригінальний виклик логування (без mfa_verified)
                     log_event(
                         username,
                         user["role"],
-                        device,
+                        device_status,
                         network,
-                        vpn,
+                        vpn_status,
                         "DENY",
                         score,
                         reason,
@@ -170,9 +165,8 @@ def login():
                     )
 
                 # Якщо перевірку пройдено (ACCESS_GRANTED), логуємо ALLOW і йдемо далі
-                # Повертаємо оригінальний виклик логування (без mfa_verified)
                 log_event(
-                    username, user["role"], device, network, vpn, "ALLOW", score, reason
+                    username, user["role"], device_status, network, vpn_status, "ALLOW", score, reason
                 )
                 return redirect(url_for("decision_page"))
 
@@ -180,7 +174,7 @@ def login():
                 print(f"[SERVER ERROR] Помилка обробки політики доступу: {e}")
                 return render_template(
                     "login.html",
-                    error="Внутрішня помилка PDP сервера.",
+                    error=f"Внутрішня помилка PDP сервера. Деталі: {e}",
                     device_status=device_status,
                     vpn_status=vpn_status,
                 )
@@ -194,7 +188,6 @@ def login():
             )
 
     return render_template("login.html", device_status=device_status, vpn_status=vpn_status)
-
 @app.route("/decision")
 def decision_page():
     """Проміжний екран вердикту PDP перед переходом до інфраструктури"""

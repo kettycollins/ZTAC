@@ -1,5 +1,4 @@
 import json
-import os
 from datetime import datetime
 
 LOG_FILE = "logs/access_logs.json"
