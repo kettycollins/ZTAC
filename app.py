@@ -144,14 +144,13 @@ def login():
                 # ПЕРЕВІРКА ПЕРИМЕТРА: Якщо рушій політик повернув DENY
                 if status == "DENY":
                     log_event(
-                        username,
-                        user["role"],
-                        device,
-                        network,
-                        vpn,
-                        "DENY",
-                        score,
-                        reason,
+                        username, 
+                        user["role"], 
+                        device_status, 
+                        network, vpn_status, 
+                        mfa_verified, "ALLOW", 
+                        score, 
+                        reason
                     )
 
                     user_data = {

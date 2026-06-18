@@ -324,24 +324,25 @@
                     <table class="log-table">
                         <thead>
                             <tr>
-                                <th style="width: 18%;">{{ t.dash_th_time }}</th>
-                                <th style="width: 15%;">{{ t.dash_th_user }}</th>
-                                <th style="width: 14%;">{{ t.dash_th_role }}</th>
-                                <th style="width: 18%;">{{ t.dash_th_device }}</th>
-                                <th style="width: 15%;">{{ t.dash_th_network }}</th>
-                                <th style="width: 10%;">{{ t.dash_th_vpn }}</th>
+                                <th style="width: 16%;">{{ t.dash_th_time }}</th>
+                                <th style="width: 14%;">{{ t.dash_th_user }}</th>
+                                <th style="width: 12%;">{{ t.dash_th_role }}</th>
+                                <th style="width: 16%;">{{ t.dash_th_device }}</th>
+                                <th style="width: 14%;">{{ t.dash_th_network }}</th>
+                                <th style="width: 9%;">{{ t.dash_th_vpn }}</th>
+                                <th style="width: 9%;">MFA</th>
                                 <th style="width: 10%;">{{ t.dash_th_decision }}</th>
                             </tr>
                         </thead>
                         <tbody id="logs-tbody">
                             {% if logs %}
                             {% for log in logs[:8] %}
-                            <tr {% if log.incident_response.suspicious_flag %}style="background: rgba(225, 110, 110, 0.05); font-weight: 500;"
-                                {% endif %}>
+                            <tr {% if log.incident_response.suspicious_flag
+                                %}style="background: rgba(225, 110, 110, 0.05); font-weight: 500;" {% endif %}>
                                 <td>{{ log.timestamp[:19].replace('T', ' ') }}</td>
                                 <td><strong>{{ log.username }}</strong></td>
                                 <td><span class="role-pill">{{ log.role | uppercase }}</span></td>
-                        
+                    
                                 <td>
                                     {% if log.context.device == 'managed' %}
                                     {{ t.device_txt_managed | replace('⚙️ ', '') }}
@@ -351,7 +352,7 @@
                                     {{ log.context.device }}
                                     {% endif %}
                                 </td>
-                        
+                    
                                 <td>
                                     {% if log.context.network == 'school' %}
                                     {{ t.net_txt_school | replace('🏫 ', '') }}
@@ -363,7 +364,7 @@
                                     {{ log.context.network }}
                                     {% endif %}
                                 </td>
-                        
+                    
                                 <td>
                                     {% if log.context.vpn == 'yes' %}
                                     {{ t.vpn_txt_yes | replace('🔒 ', '') }}
@@ -371,7 +372,15 @@
                                     {{ t.vpn_txt_no | replace('🔓 ', '') }}
                                     {% endif %}
                                 </td>
-                        
+                    
+                                <td>
+                                    {% if log.context.mfa == 'yes' or log.context.mfa == true %}
+                                    {{ t.opt_mfa_yes if t.opt_mfa_yes else 'ON' }}
+                                    {% else %}
+                                    {{ t.opt_mfa_no if t.opt_mfa_no else 'OFF' }}
+                                    {% endif %}
+                                </td>
+                    
                                 <td>
                                     {% if log.security_metrics.decision == 'ALLOW' %}
                                     <span class="pill pill-allow">ALLOW</span>
@@ -385,7 +394,7 @@
                             {% endfor %}
                             {% else %}
                             <tr>
-                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px; font-style: italic;">
+                                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px; font-style: italic;">
                                     {{ t.dash_log_empty }}
                                 </td>
                             </tr>

@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 
 LOG_FILE = "logs/access_logs.json"
@@ -23,16 +24,23 @@ def log_event(username, role, device, network, vpn, decision, trust_score, reaso
 
     # Формування розширеного запису логу (Додано параметр vpn)
     log_entry = {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.utcnow().isoformat() + "Z",
         "username": username,
         "role": role,
-        "context": {"device": device, "network": network, "vpn": vpn},
-        "security_metrics": {
-            "trust_score": trust_score,
-            "decision": decision,
-            "reason": reason,
+        "context": {
+            "device": device,
+            "network": network,
+            "vpn": vpn,
+            "mfa": "yes" if mfa else "no"  
         },
-        "incident_response": {"suspicious_flag": suspicious_flag},
+        "security_metrics": {
+            "decision": decision,
+            "trust_score": score,
+            "reason": reason
+        },
+        "incident_response": {
+            "suspicious_flag": True if decision == "DENY" else False
+        }
     }
 
     # Читання існуючих логів
