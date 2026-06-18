@@ -147,8 +147,10 @@ def login():
                         username, 
                         user["role"], 
                         device_status, 
-                        network, vpn_status, 
-                        mfa_verified, "ALLOW", 
+                        network, 
+                        vpn_status, 
+                        mfa_verified, 
+                        "DENY", 
                         score, 
                         reason
                     )
@@ -171,7 +173,15 @@ def login():
 
                 # Якщо перевірку пройдено (ACCESS_GRANTED), логуємо ALLOW і йдемо далі
                 log_event(
-                    username, user["role"], device, network, vpn, "ALLOW", score, reason
+                    username, 
+                    user["role"], 
+                    device, 
+                    network, 
+                    vpn_status, 
+                    mfa_verified, 
+                    "ALLOW", 
+                    score, 
+                    reason
                 )
                 return redirect(url_for("decision_page"))
 
