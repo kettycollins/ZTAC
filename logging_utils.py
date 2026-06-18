@@ -30,11 +30,10 @@ def log_event(username, role, device, network, vpn, decision, trust_score, reaso
             "device": device,
             "network": network,
             "vpn": vpn,
-            "mfa": "yes" if mfa else "no"  
         },
         "security_metrics": {
             "decision": decision,
-            "trust_score": score,
+            "trust_score": trust_score,
             "reason": reason
         },
         "incident_response": {
