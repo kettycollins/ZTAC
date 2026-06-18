@@ -94,7 +94,7 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # Визначаємо контекст на базі живого запиту
+    # Визначаємо контекст на базі живого запиту одразу для обох методів (GET та POST)
     device_status = detect_device_from_cert(request)
     vpn_status = "yes" if detect_vpn_from_ip(request) else "no"
 
@@ -104,9 +104,7 @@ def login():
         network = request.form.get("network")  # мережа залишається ручним вибором
 
         device = device_status
-        vpn = (
-            "yes" if detect_vpn_from_ip(request) else "no"
-        )  # WireGuard тунель — автоматично
+        vpn = vpn_status  # Використовуємо вже зчитаний глобальний vpn_status
 
         want_mfa = request.form.get("want_mfa", "no")
         otp_code = request.form.get("otp_code", "").strip()
@@ -146,9 +144,9 @@ def login():
                     log_event(
                         username, 
                         user["role"], 
-                        device_status, 
+                        device, 
                         network, 
-                        vpn_status, 
+                        vpn, 
                         mfa_verified, 
                         "DENY", 
                         score, 
@@ -177,7 +175,7 @@ def login():
                     user["role"], 
                     device, 
                     network, 
-                    vpn_status, 
+                    vpn, 
                     mfa_verified, 
                     "ALLOW", 
                     score, 
@@ -191,6 +189,7 @@ def login():
                     "login.html",
                     error="Внутрішня помилка PDP сервера.",
                     device_status=device_status,
+                    vpn_status=vpn_status,
                 )
         else:
             lang = session.get("lang", "uk")
@@ -198,9 +197,10 @@ def login():
                 "login.html",
                 error=TRANSLATIONS[lang]["login_error"],
                 device_status=device_status,
+                vpn_status=vpn_status,
             )
 
-    return render_template("login.html", device_status=device_status)
+    return render_template("login.html", device_status=device_status, vpn_status=vpn_status)
 
 
 @app.route("/decision")
