@@ -108,7 +108,7 @@ def login():
         user = authenticate_user(username, password)
 
         if user:
-            # Опційне MFA: перевіряється тільки якщо увімкнено тоглер
+            # Опційне MFA
             mfa_verified = False
             if want_mfa == "yes":
                 if not verify_totp(username, otp_code):

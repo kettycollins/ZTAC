@@ -7,10 +7,6 @@ LOG_FILE = "logs/access_logs.json"
 def log_event(username, role, device, network, vpn, decision, trust_score, reason, mfa=False):
     """
     Розширене логування подій безпеки для Zero Trust системи.
-    Фіксує контекст (включаючи стан VPN та MFA), фінальний вердикт, рівень довіри та аномалії.
-
-    Параметр mfa має default=False, щоб виклики log_event() зі старого коду
-    (без передачі MFA) не ламались — нові записи просто отримають mfa=False.
     """
 
     # Визначення підозрілої активності (Anomalous/Suspicious Behavior)
