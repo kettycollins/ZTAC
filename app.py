@@ -94,8 +94,9 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # Пристрій визначається автоматично при КОЖНОМУ запиті (mTLS-сертифікат)
+    # Визначаємо контекст на базі живого запиту
     device_status = detect_device_from_cert(request)
+    vpn_status = "yes" if detect_vpn_from_ip(request) else "no"
 
     if request.method == "POST":
         username = request.form.get("username")
@@ -116,7 +117,7 @@ def login():
             # Якщо користувач сам обрав підтвердження через MFA — перевіряємо код
             mfa_verified = False
             if want_mfa == "yes":
-                if not verify_totp_code(username, otp_code):
+                if not verify_totp(username, otp_code):
                     lang = session.get("lang", "uk")
                     return render_template(
                         "login.html",
@@ -202,15 +203,15 @@ def decision_page():
     # ДИНАМІЧНИЙ ПЕРЕРАХУНОК: пристрій і VPN перевіряються живим запитом (continuous verification),
     # мережа — ручний вибір, MFA — підтверджується одноразово при логіні
     device = detect_device_from_cert(request)
-    vpn = "yes" if detect_vpn_from_ip(request) else "no"
+    vpn_status = "yes" if detect_vpn_from_ip(request) else "no"
     session["device"] = device
-    session["vpn"] = vpn
+    session["vpn"] = vpn_status
 
     status, score, trust_level, reason, permissions = evaluate_access(
         session.get("role"),
         device,
         session.get("network"),
-        vpn,
+        vpn_status,
         session.get("mfa_verified", False),
     )
 
@@ -239,15 +240,15 @@ def resource_page():
         return redirect(url_for("login"))
 
     device = detect_device_from_cert(request)
-    vpn = "yes" if detect_vpn_from_ip(request) else "no"
+    vpn_status = "yes" if detect_vpn_from_ip(request) else "no"
     session["device"] = device
-    session["vpn"] = vpn
+    session["vpn"] = vpn_status
 
     status, score, trust_level, reason, permissions = evaluate_access(
         session.get("role"),
         device,
         session.get("network"),
-        vpn,
+        vpn_status,
         session.get("mfa_verified", False),
     )
 
