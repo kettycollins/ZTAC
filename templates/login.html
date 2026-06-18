@@ -26,8 +26,7 @@
             border-color: var(--border-secondary);
         }
 
-
-        /* --- СТИЛІЗАЦІЯ СТАТУС-БЕЙДЖІВ (DEVICE / VPN) ТА ТОГЛЕРА (MFA) --- /
+        /* --- СТИЛІЗАЦІЯ СТАТУС-БЕЙДЖІВ (DEVICE) ТА ТОГЛЕРА (MFA) --- */
         .vpn-toggle-container {
             display: flex;
             align-items: center;
@@ -50,8 +49,6 @@
             background: var(--bg-card);
             border-color: var(--border-primary);
         }
-
-
 
         .vpn-toggle-container.disabled .switch,
         .vpn-toggle-container.disabled input {
@@ -256,26 +253,6 @@
                     </div>
 
                     <div class="zt-field" style="grid-column: span 2;">
-                        <label class="zt-label">{{ t.lbl_vpn }}</label>
-                        <div
-                            class="vpn-toggle-container {% if vpn_status == 'yes' %}active{% else %}disabled{% endif %}">
-                            <div class="vpn-left-side">
-                                <div class="vpn-icon-box">{% if vpn_status == 'yes' %}🔒{% else %}🔓{% endif %}</div>
-                                <div class="vpn-info-block">
-                                    <div class="vpn-status-label">
-                                        {% if vpn_status == 'yes' %}{{ t.vpn_txt_yes if t.vpn_txt_yes else t.opt_vpn_yes
-                                        }}{% else %}{{ t.vpn_txt_no if t.vpn_txt_no else t.opt_vpn_no }}{% endif %}
-                                    </div>
-                                    <div class="vpn-tech-comment">
-                                        {% if vpn_status == 'yes' %}{{ t.vpn_comment_on }}{% else %}{{ t.vpn_comment_off
-                                        }}{% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="zt-field" style="grid-column: span 2;">
                         <label class="zt-label">{{ t.lbl_mfa }}</label>
                         <div id="mfa-container" class="vpn-toggle-container">
                             <div class="vpn-left-side">
@@ -407,6 +384,7 @@
             }
         });
 
+        // Якщо MFA вже увімкнено і користувач дописав/змінив username — перезавантажити QR під нього
         usernameInput.addEventListener('blur', function () {
             if (mfaCheckbox.checked) {
                 loadMfaQrCode();
