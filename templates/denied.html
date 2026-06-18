@@ -139,9 +139,9 @@
                 <div class="ad-meta-val"
                     style="font-size: 14px; font-weight: 600; margin-top: 4px; color: {% if session.get('mfa_verified') %}var(--color-allow){% else %}var(--text-muted){% endif %};">
                     {% if session.get('mfa_verified') %}
-                    {{ t.opt_mfa_yes if t.opt_mfa_yes else 'ON' }}
+                    {{ t.shrt_opt_mfa_yes }}
                     {% else %}
-                    {{ t.opt_mfa_no if t.opt_mfa_no else 'OFF' }}
+                    {{ t.shrt_opt_mfa_no }}
                     {% endif %}
                 </div>
             </div>
