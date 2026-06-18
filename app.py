@@ -122,6 +122,7 @@ def login():
                 mfa_verified = True
 
             try:
+                print(f"[DEBUG] mfa_verified = {mfa_verified} (type: {type(mfa_verified)})")
                 # Первинний виклик рушія політик Zero Trust PDP
                 status, score, trust_level, reason, permissions = evaluate_access(
                     user["role"], device_status, network, vpn_status, mfa_verified
