@@ -144,6 +144,7 @@ def login():
                         network,
                         vpn_status,
                         "DENY",
+                        mfa_verified,
                         score,
                         reason,
                     )
@@ -154,6 +155,7 @@ def login():
                         "device": session.get("device"),
                         "network": session.get("network"),
                         "vpn": session.get("vpn"),
+                        "mfa": session.get("mfa_verified", False),
                     }
                     return render_template(
                         "denied.html",
@@ -166,7 +168,7 @@ def login():
 
                 # Якщо перевірку пройдено (ACCESS_GRANTED), логуємо ALLOW і йдемо далі
                 log_event(
-                    username, user["role"], device_status, network, vpn_status, "ALLOW", score, reason
+                    username, user["role"], device_status, network, vpn_status, "ALLOW", mfa_verified,score, reason,
                 )
                 return redirect(url_for("decision_page"))
 
@@ -215,6 +217,7 @@ def decision_page():
         "device": session.get("device"),
         "network": session.get("network"),
         "vpn": session.get("vpn"),
+        "mfa": session.get("mfa_verified", False),
     }
 
     return render_template(
@@ -282,6 +285,8 @@ def set_language(lang_code):
             "device": session.get("device"),
             "network": session.get("network"),
             "vpn": session.get("vpn"),
+            "mfa": session.get("mfa_verified", False),
+            
         }
         return render_template(
             "denied.html",

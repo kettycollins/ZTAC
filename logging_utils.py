@@ -4,18 +4,14 @@ from datetime import datetime
 LOG_FILE = "logs/access_logs.json"
 
 
-def log_event(username, role, device, network, vpn, decision, trust_score, reason, mfa="no"):
+def log_event(username, role, device, network, vpn, decision, trust_score, reason, mfa=False):
     """
     Розширене логування подій безпеки для Zero Trust системи.
     Фіксує контекст (включаючи стан VPN та MFA), фінальний вердикт, рівень довіри та аномалії.
 
-    Параметр mfa необов'язковий (default="no") — це забезпечує зворотну сумісність
-    зі старими викликами, написаними до додавання MFA, без падіння функції.
-    Приймає bool (True/False) або рядок ("yes"/"no") — нормалізується нижче.
+    Параметр mfa має default=False, щоб виклики log_event() зі старого коду
+    (без передачі MFA) не ламались — нові записи просто отримають mfa=False.
     """
-
-    # Нормалізація: і True, і "yes" -> "yes"; все інше -> "no"
-    mfa_normalized = "yes" if mfa in (True, "yes") else "no"
 
     # Визначення підозрілої активності (Anomalous/Suspicious Behavior)
     suspicious_flag = False
@@ -28,7 +24,7 @@ def log_event(username, role, device, network, vpn, decision, trust_score, reaso
     elif decision == "DENY" and trust_score <= 10:
         suspicious_flag = True
 
-    # Формування розширеного запису логу (Додано параметри vpn та mfa)
+    # Формування розширеного запису логу (Додано параметр vpn та mfa)
     log_entry = {
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "username": username,
@@ -37,7 +33,7 @@ def log_event(username, role, device, network, vpn, decision, trust_score, reaso
             "device": device,
             "network": network,
             "vpn": vpn,
-            "mfa": mfa_normalized,
+            "mfa": bool(mfa),
         },
         "security_metrics": {
             "decision": decision,
@@ -45,7 +41,7 @@ def log_event(username, role, device, network, vpn, decision, trust_score, reaso
             "reason": reason
         },
         "incident_response": {
-            "suspicious_flag": True if decision == "DENY" else False
+            "suspicious_flag": suspicious_flag
         }
     }
 
@@ -68,7 +64,7 @@ def log_event(username, role, device, network, vpn, decision, trust_score, reaso
         "🔴" if decision == "DENY" else ("🟡" if decision == "LIMITED" else "🟢")
     )
     print(
-        f"\n[AUDIT LOG] {status_symbol} Decision: {decision} | User: {username} ({role}) | Trust Score: {trust_score} | VPN: {vpn} | Suspicious: {suspicious_flag}"
+        f"\n[AUDIT LOG] {status_symbol} Decision: {decision} | User: {username} ({role}) | Trust Score: {trust_score} | VPN: {vpn} | MFA: {bool(mfa)} | Suspicious: {suspicious_flag}"
     )
     print(f"[REASON] {reason}")
 
