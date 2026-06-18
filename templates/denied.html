@@ -85,7 +85,7 @@
         {% endif %}
 
         <div class="ad-meta-grid"
-            style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem;">
+            style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 1.5rem;">
 
             <div class="ad-meta-item"
                 style="background: var(--bg-card); border: 1px solid var(--border-primary); padding: 12px; border-radius: 6px;">
@@ -126,6 +126,22 @@
                     {{ t.vpn_txt_yes }}
                     {% else %}
                     {{ t.vpn_txt_no }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="ad-meta-item"
+                style="background: var(--bg-card); border: 1px solid var(--border-primary); padding: 12px; border-radius: 6px; border-color: {% if session.get('mfa_verified') %}var(--color-allow){% else %}var(--border-primary){% endif %};">
+                <div class="ad-meta-label"
+                    style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-family: 'IBM Plex Mono', monospace;">
+                    MFA
+                </div>
+                <div class="ad-meta-val"
+                    style="font-size: 14px; font-weight: 600; margin-top: 4px; color: {% if session.get('mfa_verified') %}var(--color-allow){% else %}var(--text-muted){% endif %};">
+                    {% if session.get('mfa_verified') %}
+                    {{ t.opt_mfa_yes if t.opt_mfa_yes else 'ON' }}
+                    {% else %}
+                    {{ t.opt_mfa_no if t.opt_mfa_no else 'OFF' }}
                     {% endif %}
                 </div>
             </div>
