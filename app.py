@@ -94,7 +94,7 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # Визначаємо контекст на базі живого запиту одразу для обох методів (GET та POST)
+    # Визначаємо контекст на базі живого запиту
     device_status = detect_device_from_cert(request)
     vpn_status = "yes" if detect_vpn_from_ip(request) else "no"
 
@@ -104,7 +104,7 @@ def login():
         network = request.form.get("network")  # мережа залишається ручним вибором
 
         device = device_status
-        vpn = vpn_status  # Використовуємо вже зчитаний глобальний vpn_status
+        vpn = vpn_status  # Використовуємо автоматично визначений vpn_status
 
         want_mfa = request.form.get("want_mfa", "no")
         otp_code = request.form.get("otp_code", "").strip()
@@ -141,16 +141,16 @@ def login():
 
                 # ПЕРЕВІРКА ПЕРИМЕТРА: Якщо рушій політик повернув DENY
                 if status == "DENY":
+                    # Повертаємо оригінальний виклик логування (без mfa_verified)
                     log_event(
-                        username, 
-                        user["role"], 
-                        device, 
-                        network, 
-                        vpn, 
-                        mfa_verified, 
-                        "DENY", 
-                        score, 
-                        reason
+                        username,
+                        user["role"],
+                        device,
+                        network,
+                        vpn,
+                        "DENY",
+                        score,
+                        reason,
                     )
 
                     user_data = {
@@ -170,16 +170,9 @@ def login():
                     )
 
                 # Якщо перевірку пройдено (ACCESS_GRANTED), логуємо ALLOW і йдемо далі
+                # Повертаємо оригінальний виклик логування (без mfa_verified)
                 log_event(
-                    username, 
-                    user["role"], 
-                    device, 
-                    network, 
-                    vpn, 
-                    mfa_verified, 
-                    "ALLOW", 
-                    score, 
-                    reason
+                    username, user["role"], device, network, vpn, "ALLOW", score, reason
                 )
                 return redirect(url_for("decision_page"))
 
@@ -201,7 +194,6 @@ def login():
             )
 
     return render_template("login.html", device_status=device_status, vpn_status=vpn_status)
-
 
 @app.route("/decision")
 def decision_page():
