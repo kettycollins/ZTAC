@@ -222,7 +222,6 @@
                         <input type="password" name="password" class="zt-input" placeholder="••••••••" required>
                     </div>
 
-                    <!-- DEVICE: визначається автоматично mTLS-сертифікатом, користувач нічого не обирає -->
                     <div class="zt-field">
                         <label class="zt-label">{{ t.lbl_device }}</label>
                         <div
@@ -253,7 +252,6 @@
                         </select>
                     </div>
 
-                    <!-- VPN: визначається автоматично за активним WireGuard тунелем, користувач нічого не обирає -->
                     <div class="zt-field" style="grid-column: span 2;">
                         <label class="zt-label">{{ t.lbl_vpn }}</label>
                         <div
@@ -262,8 +260,8 @@
                                 <div class="vpn-icon-box">{% if vpn_status == 'yes' %}🔒{% else %}🔓{% endif %}</div>
                                 <div class="vpn-info-block">
                                     <div class="vpn-status-label">
-                                        {% if vpn_status == 'yes' %}{{ t.opt_vpn_yes }}{% else %}{{ t.opt_vpn_no }}{%
-                                        endif %}
+                                        {% if vpn_status == 'yes' %}{{ t.vpn_txt_yes if t.vpn_txt_yes else t.opt_vpn_yes
+                                        }}{% else %}{{ t.vpn_txt_no if t.vpn_txt_no else t.opt_vpn_no }}{% endif %}
                                     </div>
                                     <div class="vpn-tech-comment">
                                         {% if vpn_status == 'yes' %}{{ t.vpn_comment_on }}{% else %}{{ t.vpn_comment_off
@@ -274,7 +272,6 @@
                         </div>
                     </div>
 
-                    <!-- MFA: ОПЦІЙНИЙ перемикач, єдиний елемент контексту, який реально обирає користувач -->
                     <div class="zt-field" style="grid-column: span 2;">
                         <label class="zt-label">{{ t.lbl_mfa }}</label>
                         <div id="mfa-container" class="vpn-toggle-container">
@@ -407,7 +404,6 @@
             }
         });
 
-        // Якщо MFA вже увімкнено і користувач дописав/змінив username — перезавантажити QR під нього
         usernameInput.addEventListener('blur', function () {
             if (mfaCheckbox.checked) {
                 loadMfaQrCode();
