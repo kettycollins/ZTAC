@@ -358,7 +358,31 @@ def admin_users_create():
     if "user" not in session or session.get("role") != "admin":
         return redirect(url_for("login"))
 
+    device = detect_device_from_cert(request)
+    vpn_status = "yes" if detect_vpn_from_ip(request) else "no"
+
+    status, score, trust_level, reason, permissions = evaluate_access(
+        session.get("role"),
+        device,
+        session.get("network"),
+        vpn_status,
+        session.get("mfa_verified", False),
+    )
+
     lang = session.get("lang", "uk")
+    sys_config_permission = permissions.get("sys_config", "DENY")
+
+    # Захист на бекенді: навіть якщо хтось обійде вимкнену кнопку через DevTools,
+    # створення дозволено лише при sys_config = FULL (Trust Score >= 80)
+    if sys_config_permission != "FULL":
+        return render_template(
+            "admin_users.html",
+            user={"username": session.get("user"), "role": session.get("role")},
+            all_users=get_all_users(),
+            sys_config_permission=sys_config_permission,
+            error=TRANSLATIONS[lang]["admin_users_error_low_trust"],
+        )
+
     new_username = request.form.get("new_username", "").strip()
     new_password = request.form.get("new_password", "")
     new_role = request.form.get("new_role", "")
@@ -381,6 +405,7 @@ def admin_users_create():
         "admin_users.html",
         user=user_data,
         all_users=get_all_users(),
+        sys_config_permission=sys_config_permission,
         error=error,
         success=success,
     )
