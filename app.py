@@ -330,11 +330,25 @@ def admin_users():
     if "user" not in session or session.get("role") != "admin":
         return redirect(url_for("login"))
 
+    device = detect_device_from_cert(request)
+    vpn_status = "yes" if detect_vpn_from_ip(request) else "no"
+    session["device"] = device
+    session["vpn"] = vpn_status
+
+    status, score, trust_level, reason, permissions = evaluate_access(
+        session.get("role"),
+        device,
+        session.get("network"),
+        vpn_status,
+        session.get("mfa_verified", False),
+    )
+
     user_data = {"username": session.get("user"), "role": session.get("role")}
     return render_template(
         "admin_users.html",
         user=user_data,
         all_users=get_all_users(),
+        sys_config_permission=permissions.get("sys_config", "DENY"),
     )
 
 

@@ -220,6 +220,31 @@
         .mfa-no {
             color: var(--text-muted);
         }
+
+        /* --- ДЕАКТИВОВАНИЙ СТАН ФОРМИ (sys_config != FULL) --- */
+        .zt-input:disabled,
+        .zt-select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--bg-card);
+        }
+
+        .zt-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: var(--text-muted);
+            border-color: var(--text-muted);
+        }
+
+        .zt-btn:disabled:hover {
+            background: var(--text-muted);
+        }
+
+        .form-msg.locked {
+            background: var(--color-limited-bg);
+            color: var(--color-limited);
+            border: 1px solid rgba(237, 137, 54, 0.3);
+        }
     </style>
 </head>
 
@@ -279,21 +304,27 @@
                 {% if success %}
                 <div class="form-msg success">{{ success }}</div>
                 {% endif %}
+                {% if sys_config_permission != "FULL" %}
+                <div class="form-msg locked">{{ t.admin_users_locked_notice }}</div>
+                {% endif %}
 
                 <form action="{{ url_for('admin_users_create') }}" method="POST">
                     <div class="zt-field" style="margin-bottom: 14px;">
                         <label class="zt-label">{{ t.admin_users_lbl_username }}</label>
-                        <input type="text" name="new_username" class="zt-input" placeholder="e.g. teacher2" required>
+                        <input type="text" name="new_username" class="zt-input" placeholder="e.g. teacher2" required {%
+                            if sys_config_permission !="FULL" %}disabled{% endif %}>
                     </div>
 
                     <div class="zt-field" style="margin-bottom: 14px;">
                         <label class="zt-label">{{ t.admin_users_lbl_password }}</label>
-                        <input type="password" name="new_password" class="zt-input" placeholder="••••••••" required>
+                        <input type="password" name="new_password" class="zt-input" placeholder="••••••••" required {%
+                            if sys_config_permission !="FULL" %}disabled{% endif %}>
                     </div>
 
                     <div class="zt-field" style="margin-bottom: 18px;">
                         <label class="zt-label">{{ t.admin_users_lbl_role }}</label>
-                        <select name="new_role" class="zt-select">
+                        <select name="new_role" class="zt-select" {% if sys_config_permission !="FULL" %}disabled{%
+                            endif %}>
                             <option value="admin">{{ t.admin_users_opt_role_admin }}</option>
                             <option value="teacher">{{ t.admin_users_opt_role_teacher }}</option>
                             <option value="student">{{ t.admin_users_opt_role_student }}</option>
@@ -301,7 +332,9 @@
                         </select>
                     </div>
 
-                    <button type="submit" class="zt-btn">{{ t.admin_users_btn_create }}</button>
+                    <button type="submit" class="zt-btn" {% if sys_config_permission !="FULL" %}disabled{% endif %}>
+                        {{ t.admin_users_btn_create }}
+                    </button>
                 </form>
             </div>
 

@@ -255,6 +255,8 @@ TRANSLATIONS = {
         "admin_users_error_invalid": "Заповни всі поля коректно",
         "admin_users_error_duplicate": "Користувач з таким іменем вже існує",
         "admin_users_success": "Користувача успішно створено",
+        "admin_users_locked_notice": "🔒 Створення користувачів заблоковано: недостатній рівень довіри (потрібен Trust Score ≥ 80). Підвищ довіру — наприклад, підключи VPN або MFA — щоб розблокувати.",
+        "admin_users_error_low_trust": "Недостатній рівень довіри для створення користувачів.",
         # =====================================================================
         # СИСТЕМА ДИНАМІЧНИХ ВЕРДИКТІВ ДЛЯ БЛОКУ "uk"
         # =====================================================================
@@ -528,6 +530,8 @@ TRANSLATIONS = {
         "admin_users_error_invalid": "Please fill in all fields correctly",
         "admin_users_error_duplicate": "A user with this username already exists",
         "admin_users_success": "User created successfully",
+        "admin_users_locked_notice": "🔒 User creation is locked: insufficient trust level (Trust Score ≥ 80 required). Raise your trust — e.g. enable VPN or MFA — to unlock.",
+        "admin_users_error_low_trust": "Insufficient trust level to create users.",
         # =====================================================================
         # DYNAMIC VERDICTS POLICY ENGINE TRANSLATIONS FOR "en"
         # =====================================================================
