@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ t.dash_title }} | Zero Trust Admin SIEM</title>
+    <title>{{ t.admin_users_page_title }} | Zero Trust Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
@@ -72,18 +72,6 @@
             font-family: 'IBM Plex Mono', monospace;
         }
 
-        .stat-n.deny {
-            color: var(--color-deny);
-        }
-
-        .stat-n.warn {
-            color: var(--color-limited);
-        }
-
-        .stat-n.ok {
-            color: var(--color-allow);
-        }
-
         .section-label {
             font-size: 11px;
             text-transform: uppercase;
@@ -124,12 +112,6 @@
             border-bottom: none;
         }
 
-        .log-table td:first-child {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
         .pill {
             display: inline-block;
             font-size: 10px;
@@ -153,12 +135,6 @@
             border: 1px solid rgba(229, 62, 62, 0.3);
         }
 
-        .pill-restricted {
-            background: var(--color-limited-bg);
-            color: var(--color-limited);
-            border: 1px solid rgba(237, 137, 54, 0.3);
-        }
-
         .role-pill {
             font-size: 11px;
             background: var(--bg-main);
@@ -169,66 +145,21 @@
             font-family: 'IBM Plex Mono', monospace;
         }
 
-        .activity-box {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            max-height: 290px;
-            overflow-y: auto;
-        }
-
-        .activity-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border-primary);
-        }
-
-        .activity-row:last-child {
-            border-bottom: none;
-        }
-
-        .activity-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 11px;
-            font-weight: bold;
-        }
-
-        .activity-icon.deny {
-            background: var(--color-deny-bg);
-            color: var(--color-deny);
-        }
-
-        .activity-icon.warn {
-            background: var(--color-limited-bg);
-            color: var(--color-limited);
-        }
-
-        .activity-text {
-            font-size: 12.5px;
-            color: var(--text-main);
-            flex: 1;
-            line-height: 1.4;
-        }
-
-        .activity-time {
-            font-size: 11px;
-            color: var(--text-muted);
-            font-family: 'IBM Plex Mono', monospace;
-        }
-
         .two-col {
             display: grid;
-            grid-template-columns: 1.5fr 1fr;
+            grid-template-columns: 1fr 1.4fr;
             gap: 16px;
             margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 760px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         .dash-card {
@@ -261,6 +192,122 @@
             background: var(--bg-card);
             border-color: var(--border-secondary);
         }
+
+        .form-msg {
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .form-msg.error {
+            background: var(--color-deny-bg);
+            color: var(--color-deny);
+            border: 1px solid rgba(229, 62, 62, 0.3);
+        }
+
+        .form-msg.success {
+            background: var(--color-allow-bg);
+            color: var(--color-allow);
+            border: 1px solid rgba(56, 109, 17, 0.3);
+        }
+
+        .mfa-yes {
+            color: var(--color-allow);
+            font-weight: 500;
+        }
+
+        .mfa-no {
+            color: var(--text-muted);
+        }
+
+        /* --- ДЕАКТИВОВАНИЙ СТАН ФОРМИ (sys_config != FULL) --- */
+        .zt-input:disabled,
+        .zt-select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--bg-card);
+        }
+
+        .zt-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: var(--text-muted);
+            border-color: var(--text-muted);
+        }
+
+        .zt-btn:disabled:hover {
+            background: var(--text-muted);
+        }
+
+        .form-msg.locked {
+            background: var(--color-limited-bg);
+            color: var(--color-limited);
+            border: 1px solid rgba(237, 137, 54, 0.3);
+        }
+
+        .pwd-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            cursor: pointer;
+            padding: 3px 9px;
+            font-size: 10px;
+            background: transparent;
+            border: 1px solid var(--border-primary);
+            border-radius: 4px;
+            color: var(--text-main);
+            font-family: 'IBM Plex Mono', monospace;
+            text-decoration: none;
+        }
+
+        .action-btn:hover {
+            background: var(--bg-main);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .action-btn.danger {
+            border-color: var(--color-deny);
+            color: var(--color-deny);
+        }
+
+        .inline-pwd-form {
+            display: none;
+            margin-top: 8px;
+            gap: 6px;
+        }
+
+        .inline-pwd-form.visible {
+            display: flex;
+        }
+
+        .inline-pwd-input {
+            font-size: 12px;
+            padding: 6px 8px;
+            width: 140px;
+        }
+
+        .inline-pwd-save {
+            width: auto;
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 0;
+        }
     </style>
 </head>
 
@@ -269,11 +316,9 @@
 
         <div class="dash-hdr">
             <div>
-                <div class="dash-title">{{ t.dash_title }}</div>
+                <div class="dash-title">{{ t.admin_users_page_title }}</div>
                 <div class="dash-now">
-                    {{ t.dash_operator }}: <strong>{{ user.username }}</strong> <span class="sep">·</span> {{
-                    t.dash_context }}: <span class="pill pill-allow"
-                        style="font-size: 9px; padding: 1px 6px;">ALLOW</span>
+                    {{ t.dash_operator }}: <strong>{{ user.username }}</strong>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
@@ -283,11 +328,8 @@
                 <a href="{{ url_for('set_language', lang_code='uk') }}" class="lang-btn">🇺🇦 UA</a>
                 {% endif %}
                 <button id="theme-toggle" class="theme-btn" type="button" style="padding: 6px 10px;">🌓</button>
-                <button onclick="window.location.reload();" class="zt-badge"
-                    style="cursor: pointer; background: transparent; padding: 4px 12px; border-color: var(--accent); color: var(--accent);">{{
-                    t.dash_btn_refresh }}</button>
-                <a href="{{ url_for('resource_page') }}" class="zt-badge" style="text-decoration: none;">{{
-                    t.dash_btn_to_resources }}</a>
+                <a href="{{ url_for('admin_dashboard') }}" class="zt-badge" style="text-decoration: none;">{{
+                    t.admin_users_btn_back_dashboard }}</a>
             </div>
         </div>
 
@@ -295,208 +337,142 @@
 
         <div class="stat-row">
             <div class="stat">
-                <div class="stat-n">{{ logs|length }}</div>
-                <div class="stat-l">{{ t.dash_stat_total }}</div>
+                <div class="stat-n">{{ all_users|length }}</div>
+                <div class="stat-l">{{ t.admin_users_stat_total }}</div>
             </div>
             <div class="stat">
-                {% set allow_count = logs | selectattr('security_metrics.decision', 'equalto', 'ALLOW') | list | length
-                %}
-                <div class="stat-n ok">{{ allow_count }}</div>
-                <div class="stat-l">{{ t.dash_stat_allow }}</div>
+                {% set admin_count = all_users | selectattr('role', 'equalto', 'admin') | list | length %}
+                <div class="stat-n">{{ admin_count }}</div>
+                <div class="stat-l">{{ t.admin_users_stat_admins }}</div>
             </div>
             <div class="stat">
-                {% set deny_count = logs | selectattr('security_metrics.decision', 'equalto', 'DENY') | list | length %}
-                <div class="stat-n deny">{{ deny_count }}</div>
-                <div class="stat-l">{{ t.dash_stat_deny }}</div>
+                {% set teacher_count = all_users | selectattr('role', 'equalto', 'teacher') | list | length %}
+                <div class="stat-n">{{ teacher_count }}</div>
+                <div class="stat-l">{{ t.admin_users_stat_teachers }}</div>
             </div>
             <div class="stat">
-                {% set susp_count = logs | selectattr('incident_response.suspicious_flag', 'equalto', true) | list |
-                length %}
-                <div class="stat-n warn">{{ susp_count }}</div>
-                <div class="stat-l">{{ t.dash_stat_suspicious }}</div>
+                {% set student_count = all_users | selectattr('role', 'equalto', 'student') | list | length %}
+                <div class="stat-n">{{ student_count }}</div>
+                <div class="stat-l">{{ t.admin_users_stat_students }}</div>
             </div>
         </div>
 
         <div class="two-col">
             <div class="dash-card">
-                <div class="section-label">{{ t.dash_label_log }}</div>
+                <div class="section-label">{{ t.admin_users_label_create }}</div>
+
+                {% if error %}
+                <div class="form-msg error">{{ error }}</div>
+                {% endif %}
+                {% if success %}
+                <div class="form-msg success">{{ success }}</div>
+                {% endif %}
+                {% if sys_config_permission != "FULL" %}
+                <div class="form-msg locked">{{ t.admin_users_locked_notice }}</div>
+                {% endif %}
+
+                <form action="{{ url_for('admin_users_create') }}" method="POST">
+                    <div class="zt-field" style="margin-bottom: 14px;">
+                        <label class="zt-label">{{ t.admin_users_lbl_username }}</label>
+                        <input type="text" name="new_username" class="zt-input" placeholder="e.g. teacher2" required {%
+                            if sys_config_permission !="FULL" %}disabled{% endif %}>
+                    </div>
+
+                    <div class="zt-field" style="margin-bottom: 14px;">
+                        <label class="zt-label">{{ t.admin_users_lbl_password }}</label>
+                        <input type="password" name="new_password" class="zt-input" placeholder="••••••••" required {%
+                            if sys_config_permission !="FULL" %}disabled{% endif %}>
+                        <div class="pwd-hint">{{ t.admin_users_pwd_requirements }}</div>
+                    </div>
+
+                    <div class="zt-field" style="margin-bottom: 18px;">
+                        <label class="zt-label">{{ t.admin_users_lbl_role }}</label>
+                        <select name="new_role" class="zt-select" {% if sys_config_permission !="FULL" %}disabled{%
+                            endif %}>
+                            <option value="admin">{{ t.admin_users_opt_role_admin }}</option>
+                            <option value="teacher">{{ t.admin_users_opt_role_teacher }}</option>
+                            <option value="student">{{ t.admin_users_opt_role_student }}</option>
+                            <option value="guest">{{ t.admin_users_opt_role_guest }}</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="zt-btn" {% if sys_config_permission !="FULL" %}disabled{% endif %}>
+                        {{ t.admin_users_btn_create }}
+                    </button>
+                </form>
+            </div>
+
+            <div class="dash-card">
+                <div class="section-label">{{ t.admin_users_label_list }}</div>
                 <div style="overflow-x: auto;">
                     <table class="log-table">
                         <thead>
                             <tr>
-                                <th style="width: 16%;">{{ t.dash_th_time }}</th>
-                                <th style="width: 14%;">{{ t.dash_th_user }}</th>
-                                <th style="width: 12%;">{{ t.dash_th_role }}</th>
-                                <th style="width: 16%;">{{ t.dash_th_device }}</th>
-                                <th style="width: 14%;">{{ t.dash_th_network }}</th>
-                                <th style="width: 9%;">{{ t.dash_th_vpn }}</th>
-                                <th style="width: 9%;">MFA</th>
-                                <th style="width: 10%;">{{ t.dash_th_decision }}</th>
+                                <th style="width: 8%;">ID</th>
+                                <th style="width: 24%;">{{ t.dash_th_user }}</th>
+                                <th style="width: 16%;">{{ t.dash_th_role }}</th>
+                                <th style="width: 14%;">MFA</th>
+                                <th style="width: 38%;">{{ t.admin_users_th_actions }}</th>
                             </tr>
                         </thead>
-                        <tbody id="logs-tbody">
-                            {% if logs %}
-                            {% for log in logs[:8] %}
-                            <tr {% if log.incident_response.suspicious_flag
-                                %}style="background: rgba(225, 110, 110, 0.05); font-weight: 500;" {% endif %}>
-                                <td>{{ log.timestamp[:19].replace('T', ' ') }}</td>
-                                <td><strong>{{ log.username }}</strong></td>
-                                <td><span class="role-pill">{{ log.role | uppercase }}</span></td>
-                    
+                        <tbody>
+                            {% if all_users %}
+                            {% for u in all_users %}
+                            <tr>
+                                <td style="font-family: 'IBM Plex Mono', monospace; color: var(--text-muted);">{{ u.id
+                                    }}</td>
+                                <td><strong>{{ u.username }}</strong></td>
+                                <td><span class="role-pill">{{ u.role | uppercase }}</span></td>
                                 <td>
-                                    {% if log.context.device == 'managed' %}
-                                    {{ t.device_txt_managed | replace('⚙️ ', '') }}
-                                    {% elif log.context.device == 'unmanaged' %}
-                                    {{ t.device_txt_unmanaged | replace('📱 ', '') }}
+                                    {% if u.mfa_configured %}
+                                    <span class="mfa-yes">{{ t.opt_mfa_yes }}</span>
                                     {% else %}
-                                    {{ log.context.device }}
+                                    <span class="mfa-no">{{ t.opt_mfa_no }}</span>
                                     {% endif %}
                                 </td>
-                    
                                 <td>
-                                    {% if log.context.network == 'school' %}
-                                    {{ t.net_txt_school | replace('🏫 ', '') }}
-                                    {% elif log.context.network == 'home' %}
-                                    {{ t.net_txt_home | replace('🏠 ', '') }}
-                                    {% elif log.context.network == 'public' %}
-                                    {{ t.net_txt_public | replace('🌐 ', '') }}
-                                    {% else %}
-                                    {{ log.context.network }}
-                                    {% endif %}
-                                </td>
-                    
-                                <td>
-                                    {% if log.context.vpn == 'yes' %}
-                                    {{ t.vpn_txt_yes | replace('🔒 ', '') }}
-                                    {% else %}
-                                    {{ t.vpn_txt_no | replace('🔓 ', '') }}
-                                    {% endif %}
-                                </td>
-                    
-                                <td>
-                                    {% if log.context.mfa == 'yes' or log.context.mfa == true %}
-                                    {{ t.opt_mfa_yes if t.opt_mfa_yes else 'ON' }}
-                                    {% else %}
-                                    {{ t.opt_mfa_no if t.opt_mfa_no else 'OFF' }}
-                                    {% endif %}
-                                </td>
-                    
-                                <td>
-                                    {% if log.security_metrics.decision == 'ALLOW' %}
-                                    <span class="pill pill-allow">ALLOW</span>
-                                    {% elif log.security_metrics.decision == 'LIMITED' %}
-                                    <span class="pill pill-restricted">LIMITED</span>
-                                    {% else %}
-                                    <span class="pill pill-deny">DENY</span>
-                                    {% endif %}
+                                    <div class="actions-cell">
+                                        <button type="button" class="action-btn" onclick="togglePwdForm('{{ u.id }}')"
+                                            {% if sys_config_permission !="FULL" %}disabled{% endif %}>
+                                            {{ t.admin_users_btn_change_pwd }}
+                                        </button>
+
+                                        <form action="{{ url_for('admin_users_delete') }}" method="POST"
+                                            style="display:inline;"
+                                            onsubmit="return confirm('{{ t.admin_users_confirm_delete }} {{ u.username }}?');">
+                                            <input type="hidden" name="user_id" value="{{ u.id }}">
+                                            <button type="submit" class="action-btn danger" {% if sys_config_permission
+                                                !="FULL" %}disabled{% endif %}>
+                                                {{ t.admin_users_btn_delete }}
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <form id="pwd-form-{{ u.id }}" class="inline-pwd-form"
+                                        action="{{ url_for('admin_users_change_password') }}" method="POST">
+                                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                                        <input type="password" name="change_password" class="zt-input inline-pwd-input"
+                                            placeholder="{{ t.admin_users_lbl_new_password }}" required {% if
+                                            sys_config_permission !="FULL" %}disabled{% endif %}>
+                                        <button type="submit" class="zt-btn inline-pwd-save" {% if sys_config_permission
+                                            !="FULL" %}disabled{% endif %}>
+                                            {{ t.admin_users_btn_save_pwd }}
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                             {% endfor %}
                             {% else %}
                             <tr>
-                                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px; font-style: italic;">
-                                    {{ t.dash_log_empty }}
+                                <td colspan="5"
+                                    style="text-align: center; color: var(--text-muted); padding: 30px; font-style: italic;">
+                                    {{ t.admin_users_table_empty }}
                                 </td>
                             </tr>
                             {% endif %}
                         </tbody>
                     </table>
                 </div>
-            </div>
-
-            <div class="dash-card">
-                <div class="section-label">{{ t.dash_label_activity }}</div>
-                <div class="activity-box" id="activity-container">
-                    {% set anomalies = logs | selectattr('incident_response.suspicious_flag', 'equalto', true) | list %}
-                    {% if anomalies %}
-                    {% for anom in anomalies[:5] %}
-                    <div class="activity-row">
-                        {% set is_deny = anom.security_metrics.decision == 'DENY' %}
-                        <div class="activity-icon {% if is_deny %}deny{% else %}warn{% endif %}">
-                            {% if is_deny %}✕{% else %}⚠️{% endif %}
-                        </div>
-                        <div class="activity-text">
-                            {% set raw_reason = anom.security_metrics.reason %}
-                            <strong>
-                                {% if lang == 'uk' and raw_reason in t.reasons %}
-                                {{ t.reasons[raw_reason] }}
-                                {% else %}
-                                {{ raw_reason }}
-                                {% endif %}
-                            </strong>
-                            <span class="sep">·</span> {{ t.dash_subject }}: <strong>{{ anom.username }}</strong>
-                        </div>
-                        <div class="activity-time">{{ anom.timestamp[11:16] }}</div>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <div
-                        style="text-align: center; color: var(--text-muted); padding: 40px; font-size: 13px; font-style: italic;">
-                        {{ t.dash_anomalies_empty }}
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <div class="dash-card">
-            <div class="section-label" style="margin-bottom:16px;">{{ t.dash_label_breakdown }}</div>
-            <div style="display:flex; flex-direction:column; gap:14px;" id="breakdown-container">
-
-                {% set dev_denied = logs | selectattr('context.device', 'equalto', 'unmanaged') |
-                selectattr('security_metrics.decision', 'equalto', 'DENY') | list | length %}
-                {% set dev_percent = ((dev_denied / logs|length) * 100)|round(1) if logs|length > 0 else 0 %}
-                <div>
-                    <div
-                        style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; color:var(--text-muted);">
-                        <span>{{ t.dash_breakdown_byod }}</span>
-                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ dev_denied }} {{
-                            t.dash_text_requests }}</span>
-                    </div>
-                    <div
-                        style="height:6px; background:var(--bg-main); border-radius:3px; border: 1px solid var(--border-primary);">
-                        <div
-                            style="width: {{ dev_percent }}%; height: 100%; background:var(--color-deny); border-radius:3px;">
-                        </div>
-                    </div>
-                </div>
-
-                {% set net_denied = logs | selectattr('context.network', 'equalto', 'public') |
-                selectattr('security_metrics.decision', 'equalto', 'DENY') | list | length %}
-                {% set net_percent = ((net_denied / logs|length) * 100)|round(1) if logs|length > 0 else 0 %}
-                <div>
-                    <div
-                        style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; color:var(--text-muted);">
-                        <span>{{ t.dash_breakdown_net }}</span>
-                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ net_denied }} {{
-                            t.dash_text_requests }}</span>
-                    </div>
-                    <div
-                        style="height:6px; background:var(--bg-main); border-radius:3px; border: 1px solid var(--border-primary);">
-                        <div
-                            style="width: {{ net_percent }}%; height: 100%; background:var(--color-deny); border-radius:3px;">
-                        </div>
-                    </div>
-                </div>
-
-                {% set cred_denied = logs | selectattr('security_metrics.reason', 'equalto', 'Invalid credentials') |
-                list | length %}
-                {% set cred_percent = ((cred_denied / logs|length) * 100)|round(1) if logs|length > 0 else 0 %}
-                <div>
-                    <div
-                        style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; color:var(--text-muted);">
-                        <span>{{ t.dash_breakdown_cred }}</span>
-                        <span style="font-family:'IBM Plex Mono',monospace; font-weight: 500;">{{ cred_denied }} {{
-                            t.dash_text_requests }}</span>
-                    </div>
-                    <div
-                        style="height:6px; background:var(--bg-main); border-radius:3px; border: 1px solid var(--border-primary);">
-                        <div
-                            style="width: {{ cred_percent }}%; height: 100%; background:var(--color-limited); border-radius:3px;">
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
 
@@ -509,7 +485,6 @@
     </div>
 
     <script>
-        // 1. Перемикач теми оформлення (світла/темна)
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
         const savedTheme = localStorage.getItem('theme') || 'auto';
@@ -528,18 +503,14 @@
             localStorage.setItem('theme', newTheme);
         });
 
-        // 2. ФУНКЦІЯ РОЗГОРТАННЯ ФОРМИ ЗМІНИ ПАРОЛЯ
+        // Перемикач inline-форми зміни пароля для конкретного рядка користувача
         function togglePwdForm(userId) {
-            const form = document.getElementById(`pwd-form-${userId}`);
-            if (form) {
-                // Перемикаємо клас 'visible', який робить display: flex
-                form.classList.toggle('visible');
-
-                // Якщо форму відкрили — автоматично фокусуємося на полі вводу нового пароля
-                if (form.classList.contains('visible')) {
-                    const input = form.querySelector('.inline-pwd-input');
-                    if (input) input.focus();
-                }
+            const formEl = document.getElementById('pwd-form-' + userId);
+            if (!formEl) return;
+            formEl.classList.toggle('visible');
+            if (formEl.classList.contains('visible')) {
+                const input = formEl.querySelector('input[name="change_password"]');
+                if (input) input.focus();
             }
         }
     </script>
