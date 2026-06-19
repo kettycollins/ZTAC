@@ -321,23 +321,23 @@
         });
 
         // ────────────────────────────────────────────────────────────
-            // Перемикач видимості пароля (Показати/Приховати)
-            // ────────────────────────────────────────────────────────────
-            const passwordInput = document.getElementById('password-input');
-            const passwordToggle = document.getElementById('password-toggle');
+        // Перемикач видимості пароля (Показати/Приховати)
+        // ────────────────────────────────────────────────────────────
+        const passwordInput = document.getElementById('password-input');
+        const passwordToggle = document.getElementById('password-toggle');
 
-            passwordToggle.addEventListener('click', function () {
-                // Перемикаємо тип поля
-                if (passwordInput.type === 'password') {
-                    passwordInput.type = 'text';
-                    this.textContent = '🙈'; // Змінюємо іконку на заплющені очі
-                    this.style.color = 'var(--accent)'; // Підсвічуємо акцентним кольором
-                } else {
-                    passwordInput.type = 'password';
-                    this.textContent = '👁️'; // Повертаємо звичайне око
-                    this.style.color = 'var(--text-muted)';
-                }
-            });
+        passwordToggle.addEventListener('click', function () {
+            // Перемикаємо тип поля
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                this.textContent = '🙈'; // Змінюємо іконку на заплющені очі
+                this.style.color = 'var(--accent)'; // Підсвічуємо акцентним кольором
+            } else {
+                passwordInput.type = 'password';
+                this.textContent = '👁️'; // Повертаємо звичайне око
+                this.style.color = 'var(--text-muted)';
+            }
+        });
 
 
         // ────────────────────────────────────────────────────────────
