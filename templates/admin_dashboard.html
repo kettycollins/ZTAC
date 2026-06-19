@@ -509,6 +509,7 @@
     </div>
 
     <script>
+        // Перемикач теми оформлення
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
         const savedTheme = localStorage.getItem('theme') || 'auto';
@@ -526,6 +527,23 @@
             htmlEl.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
         });
+
+        // ────────────────────────────────────────────────────────────
+        // ФОРМА ЗМІНИ ПАРОЛЯ (ДЛЯ КОЖНОГО КОРИСТУВАЧА)
+        // ────────────────────────────────────────────────────────────
+        function togglePwdForm(userId) {
+            const form = document.getElementById(`pwd-form-${userId}`);
+            if (form) {
+                // Перемикаємо клас 'visible', який змінює display з none на flex
+                form.classList.toggle('visible');
+
+                // Якщо форму відкрито, фокусуємося на полі введення
+                if (form.classList.contains('visible')) {
+                    const input = form.querySelector('.inline-pwd-input');
+                    if (input) input.focus();
+                }
+            }
+        }
     </script>
 </body>
 
