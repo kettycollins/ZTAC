@@ -5,8 +5,8 @@ def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
     """
     Динамічний рушій політик Zero Trust (Policy Decision Point) v8.0-cloud.
     100-бальна математична модель контексту:
-    - Device: Managed = 40, Unmanaged = 20
-    - Network: School = 40, Home = 20, Public = 10
+    - Device: Managed = 50, Unmanaged = 20
+    - Network: School = 50, Home = 20, Public = 10
     - Extra Security (WireGuard VPN або MFA): +20 балів (макс бонус = 20)
     """
     if not role:
@@ -32,8 +32,8 @@ def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
             )
 
     # 1. ОБЧИСЛЕННЯ TRUST SCORE
-    device_score = 40 if device == "managed" else 20
-    network_score = 40 if network == "school" else (20 if network == "home" else 10)
+    device_score = 50 if device == "managed" else 20
+    network_score = 50 if network == "school" else (20 if network == "home" else 10)
     extra_score = 20 if (vpn == "yes" or mfa_verified) else 0
 
     trust_score = device_score + network_score + extra_score
@@ -71,7 +71,6 @@ def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
                 permissions["admin_panel"] = "LIMITED"
                 permissions["sys_config"] = "LIMITED"
                 permissions["e_library"] = "LIMITED"
-
             if trust_score >= 50:
                 permissions["staff_panel"] = "READ_ONLY"
                 permissions["academic_ledger"] = "READ_ONLY"
