@@ -245,6 +245,69 @@
             color: var(--color-limited);
             border: 1px solid rgba(237, 137, 54, 0.3);
         }
+
+        .pwd-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            cursor: pointer;
+            padding: 3px 9px;
+            font-size: 10px;
+            background: transparent;
+            border: 1px solid var(--border-primary);
+            border-radius: 4px;
+            color: var(--text-main);
+            font-family: 'IBM Plex Mono', monospace;
+            text-decoration: none;
+        }
+
+        .action-btn:hover {
+            background: var(--bg-main);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .action-btn.danger {
+            border-color: var(--color-deny);
+            color: var(--color-deny);
+        }
+
+        .inline-pwd-form {
+            display: none;
+            margin-top: 8px;
+            gap: 6px;
+        }
+
+        .inline-pwd-form.visible {
+            display: flex;
+        }
+
+        .inline-pwd-input {
+            font-size: 12px;
+            padding: 6px 8px;
+            width: 140px;
+        }
+
+        .inline-pwd-save {
+            width: auto;
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 0;
+        }
     </style>
 </head>
 
@@ -319,6 +382,7 @@
                         <label class="zt-label">{{ t.admin_users_lbl_password }}</label>
                         <input type="password" name="new_password" class="zt-input" placeholder="••••••••" required {%
                             if sys_config_permission !="FULL" %}disabled{% endif %}>
+                        <div class="pwd-hint">{{ t.admin_users_pwd_requirements }}</div>
                     </div>
 
                     <div class="zt-field" style="margin-bottom: 18px;">
@@ -344,10 +408,11 @@
                     <table class="log-table">
                         <thead>
                             <tr>
-                                <th style="width: 10%;">ID</th>
-                                <th style="width: 35%;">{{ t.dash_th_user }}</th>
-                                <th style="width: 25%;">{{ t.dash_th_role }}</th>
-                                <th style="width: 30%;">MFA</th>
+                                <th style="width: 8%;">ID</th>
+                                <th style="width: 24%;">{{ t.dash_th_user }}</th>
+                                <th style="width: 16%;">{{ t.dash_th_role }}</th>
+                                <th style="width: 14%;">MFA</th>
+                                <th style="width: 38%;">{{ t.admin_users_th_actions }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -365,11 +430,41 @@
                                     <span class="mfa-no">{{ t.opt_mfa_no }}</span>
                                     {% endif %}
                                 </td>
+                                <td>
+                                    <div class="actions-cell">
+                                        <button type="button" class="action-btn" onclick="togglePwdForm('{{ u.id }}')"
+                                            {% if sys_config_permission !="FULL" %}disabled{% endif %}>
+                                            {{ t.admin_users_btn_change_pwd }}
+                                        </button>
+
+                                        <form action="{{ url_for('admin_users_delete') }}" method="POST"
+                                            style="display:inline;"
+                                            onsubmit="return confirm('{{ t.admin_users_confirm_delete }} {{ u.username }}?');">
+                                            <input type="hidden" name="user_id" value="{{ u.id }}">
+                                            <button type="submit" class="action-btn danger" {% if sys_config_permission
+                                                !="FULL" %}disabled{% endif %}>
+                                                {{ t.admin_users_btn_delete }}
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <form id="pwd-form-{{ u.id }}" class="inline-pwd-form"
+                                        action="{{ url_for('admin_users_change_password') }}" method="POST">
+                                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                                        <input type="password" name="change_password" class="zt-input inline-pwd-input"
+                                            placeholder="{{ t.admin_users_lbl_new_password }}" required {% if
+                                            sys_config_permission !="FULL" %}disabled{% endif %}>
+                                        <button type="submit" class="zt-btn inline-pwd-save" {% if sys_config_permission
+                                            !="FULL" %}disabled{% endif %}>
+                                            {{ t.admin_users_btn_save_pwd }}
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                             {% endfor %}
                             {% else %}
                             <tr>
-                                <td colspan="4"
+                                <td colspan="5"
                                     style="text-align: center; color: var(--text-muted); padding: 30px; font-style: italic;">
                                     {{ t.admin_users_table_empty }}
                                 </td>

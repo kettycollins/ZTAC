@@ -12,11 +12,12 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import generate_password_hash
 
 from config import Config
-from database import init_db, get_all_users, create_user
+from database import init_db, get_all_users, create_userget_user_by_id, update_user_password, delete_user_by_id, count_admins
 from authenticate import authenticate_user, verify_totp, get_or_create_totp_secret
 from policies import evaluate_access
 from logging_utils import log_event
 from translations import TRANSLATIONS
+from password_policy import validate_password
 
 app = Flask(__name__)
 app.jinja_env.filters["uppercase"] = lambda s: s.upper() if s else ""
@@ -393,12 +394,126 @@ def admin_users_create():
     if not new_username or not new_password or new_role not in ALLOWED_ROLES:
         error = TRANSLATIONS[lang]["admin_users_error_invalid"]
     else:
-        try:
-            hashed_password = generate_password_hash(new_password)
-            create_user(new_username, hashed_password, new_role)
-            success = TRANSLATIONS[lang]["admin_users_success"]
-        except Exception:
-            error = TRANSLATIONS[lang]["admin_users_error_duplicate"]
+        is_valid, reason_key = validate_password(new_password, new_username)
+        if not is_valid:
+            error = TRANSLATIONS[lang][reason_key]
+        else:
+            try:
+                hashed_password = generate_password_hash(new_password)
+                create_user(new_username, hashed_password, new_role)
+                success = TRANSLATIONS[lang]["admin_users_success"]
+            except Exception:
+                error = TRANSLATIONS[lang]["admin_users_error_duplicate"]
+
+    user_data = {"username": session.get("user"), "role": session.get("role")}
+    return render_template(
+        "admin_users.html",
+        user=user_data,
+        all_users=get_all_users(),
+        sys_config_permission=sys_config_permission,
+        error=error,
+        success=success,
+    )
+
+
+@app.route("/admin/users/change-password", methods=["POST"])
+def admin_users_change_password():
+    """Зміна пароля існуючого користувача"""
+    if "user" not in session or session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    device = detect_device_from_cert(request)
+    vpn_status = "yes" if detect_vpn_from_ip(request) else "no"
+    status, score, trust_level, reason, permissions = evaluate_access(
+        session.get("role"),
+        device,
+        session.get("network"),
+        vpn_status,
+        session.get("mfa_verified", False),
+    )
+    lang = session.get("lang", "uk")
+    sys_config_permission = permissions.get("sys_config", "DENY")
+
+    if sys_config_permission != "FULL":
+        return render_template(
+            "admin_users.html",
+            user={"username": session.get("user"), "role": session.get("role")},
+            all_users=get_all_users(),
+            sys_config_permission=sys_config_permission,
+            error=TRANSLATIONS[lang]["admin_users_error_low_trust"],
+        )
+
+    target_id = request.form.get("user_id")
+    new_password = request.form.get("change_password", "")
+    target_user = get_user_by_id(target_id) if target_id else None
+
+    error = None
+    success = None
+
+    if not target_user:
+        error = TRANSLATIONS[lang]["admin_users_error_not_found"]
+    else:
+        is_valid, reason_key = validate_password(new_password, target_user["username"])
+        if not is_valid:
+            error = TRANSLATIONS[lang][reason_key]
+        else:
+            hashed = generate_password_hash(new_password)
+            update_user_password(target_id, hashed)
+            success = TRANSLATIONS[lang]["admin_users_password_changed"]
+
+    user_data = {"username": session.get("user"), "role": session.get("role")}
+    return render_template(
+        "admin_users.html",
+        user=user_data,
+        all_users=get_all_users(),
+        sys_config_permission=sys_config_permission,
+        error=error,
+        success=success,
+    )
+
+
+@app.route("/admin/users/delete", methods=["POST"])
+def admin_users_delete():
+    """Видалення користувача"""
+    if "user" not in session or session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    device = detect_device_from_cert(request)
+    vpn_status = "yes" if detect_vpn_from_ip(request) else "no"
+    status, score, trust_level, reason, permissions = evaluate_access(
+        session.get("role"),
+        device,
+        session.get("network"),
+        vpn_status,
+        session.get("mfa_verified", False),
+    )
+    lang = session.get("lang", "uk")
+    sys_config_permission = permissions.get("sys_config", "DENY")
+
+    if sys_config_permission != "FULL":
+        return render_template(
+            "admin_users.html",
+            user={"username": session.get("user"), "role": session.get("role")},
+            all_users=get_all_users(),
+            sys_config_permission=sys_config_permission,
+            error=TRANSLATIONS[lang]["admin_users_error_low_trust"],
+        )
+
+    target_id = request.form.get("user_id")
+    target_user = get_user_by_id(target_id) if target_id else None
+
+    error = None
+    success = None
+
+    if not target_user:
+        error = TRANSLATIONS[lang]["admin_users_error_not_found"]
+    elif target_user["username"] == session.get("user"):
+        error = TRANSLATIONS[lang]["admin_users_error_self_delete"]
+    elif target_user["role"] == "admin" and count_admins() <= 1:
+        error = TRANSLATIONS[lang]["admin_users_error_last_admin"]
+    else:
+        delete_user_by_id(target_id)
+        success = TRANSLATIONS[lang]["admin_users_user_deleted"]
 
     user_data = {"username": session.get("user"), "role": session.get("role")}
     return render_template(
