@@ -509,7 +509,7 @@
     </div>
 
     <script>
-        // Перемикач теми оформлення
+        // 1. Перемикач теми оформлення (світла/темна)
         const toggleBtn = document.getElementById('theme-toggle');
         const htmlEl = document.documentElement;
         const savedTheme = localStorage.getItem('theme') || 'auto';
@@ -528,16 +528,14 @@
             localStorage.setItem('theme', newTheme);
         });
 
-        // ────────────────────────────────────────────────────────────
-        // ФОРМА ЗМІНИ ПАРОЛЯ (ДЛЯ КОЖНОГО КОРИСТУВАЧА)
-        // ────────────────────────────────────────────────────────────
+        // 2. ФУНКЦІЯ РОЗГОРТАННЯ ФОРМИ ЗМІНИ ПАРОЛЯ
         function togglePwdForm(userId) {
             const form = document.getElementById(`pwd-form-${userId}`);
             if (form) {
-                // Перемикаємо клас 'visible', який змінює display з none на flex
+                // Перемикаємо клас 'visible', який робить display: flex
                 form.classList.toggle('visible');
 
-                // Якщо форму відкрито, фокусуємося на полі введення
+                // Якщо форму відкрили — автоматично фокусуємося на полі вводу нового пароля
                 if (form.classList.contains('visible')) {
                     const input = form.querySelector('.inline-pwd-input');
                     if (input) input.focus();
