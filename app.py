@@ -9,9 +9,10 @@ import qrcode
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.security import generate_password_hash
 
 from config import Config
-from database import init_db
+from database import init_db, get_all_users, create_user
 from authenticate import authenticate_user, verify_totp, get_or_create_totp_secret
 from policies import evaluate_access
 from logging_utils import log_event
@@ -319,6 +320,56 @@ def admin_dashboard():
 
     user_data = {"username": session.get("user"), "role": session.get("role")}
     return render_template("admin_dashboard.html", user=user_data, logs=logs)
+
+ALLOWED_ROLES = ["admin", "teacher", "student", "guest"]
+
+
+@app.route("/admin/users")
+def admin_users():
+    """Сторінка управління користувачами: список + форма створення"""
+    if "user" not in session or session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    user_data = {"username": session.get("user"), "role": session.get("role")}
+    return render_template(
+        "admin_users.html",
+        user=user_data,
+        all_users=get_all_users(),
+    )
+
+
+@app.route("/admin/users/create", methods=["POST"])
+def admin_users_create():
+    """Обробка форми створення нового користувача"""
+    if "user" not in session or session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    lang = session.get("lang", "uk")
+    new_username = request.form.get("new_username", "").strip()
+    new_password = request.form.get("new_password", "")
+    new_role = request.form.get("new_role", "")
+
+    error = None
+    success = None
+
+    if not new_username or not new_password or new_role not in ALLOWED_ROLES:
+        error = TRANSLATIONS[lang]["admin_users_error_invalid"]
+    else:
+        try:
+            hashed_password = generate_password_hash(new_password)
+            create_user(new_username, hashed_password, new_role)
+            success = TRANSLATIONS[lang]["admin_users_success"]
+        except Exception:
+            error = TRANSLATIONS[lang]["admin_users_error_duplicate"]
+
+    user_data = {"username": session.get("user"), "role": session.get("role")}
+    return render_template(
+        "admin_users.html",
+        user=user_data,
+        all_users=get_all_users(),
+        error=error,
+        success=success,
+    )
 
 
 @app.route("/logout")

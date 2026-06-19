@@ -1,25 +1,43 @@
 import sqlite3
-import pyotp
+from werkzeug.security import check_password_hash
 from database import get_db_connection
 
 
-
 def authenticate_user(username, password):
-    """Шукає користувача у вашій базі даних users.db (Захист від SQLi)."""
+    """
+    Шукає користувача у вашій базі даних users.db (Захист від SQLi).
+    Підтримує і нові хешовані паролі (werkzeug), і старі прості демо-паролі —
+    щоб не треба було мігрувати вже існуючих admin1/teacher1/student1/guest1.
+    """
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT username, role FROM users WHERE username = ? AND password = ?",
-            (username, password),
+            "SELECT username, password, role FROM users WHERE username = ?",
+            (username,),
         )
         user_row = cursor.fetchone()
         conn.close()
-        if user_row:
+
+        if not user_row:
+            return None
+
+        stored_password = user_row["password"]
+
+        # Хешовані паролі (нові, створені через адмін-форму) завжди мають ці префікси
+        if stored_password.startswith(("pbkdf2:", "scrypt:")):
+            password_valid = check_password_hash(stored_password, password)
+        else:
+            # Старі демо-акаунти — звичайне порівняння рядків
+            password_valid = stored_password == password
+
+        if password_valid:
             return {"username": user_row["username"], "role": user_row["role"]}
+
     except sqlite3.OperationalError as e:
         print(f"[ERROR] Помилка підключення до таблиці 'users': {e}")
         return None
+
     return None
 
 

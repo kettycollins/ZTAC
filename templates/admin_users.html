@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" data-theme="auto">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t.admin_users_page_title }} | Zero Trust Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+        body {
+            padding: 0;
+            margin: 0;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+
+        .dash {
+            font-family: 'IBM Plex Sans', sans-serif;
+            padding: 2rem 0;
+        }
+
+        .dash-hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.75rem;
+        }
+
+        .dash-title {
+            font-size: 16px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .dash-now {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+            margin-top: 4px;
+        }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 14px 16px;
+        }
+
+        .stat-n {
+            font-size: 26px;
+            font-weight: 500;
+            color: var(--text-main);
+            line-height: 1;
+        }
+
+        .stat-l {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-primary);
+            padding-bottom: 6px;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .log-table th {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 0 12px 8px 0;
+            text-align: left;
+            font-family: 'IBM Plex Mono', monospace;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .log-table td {
+            font-size: 13px;
+            padding: 10px 12px 10px 0;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-primary);
+            vertical-align: middle;
+        }
+
+        .log-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .pill {
+            display: inline-block;
+            font-size: 10px;
+            font-family: 'IBM Plex Mono', monospace;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .pill-allow {
+            background: var(--color-allow-bg);
+            color: var(--color-allow);
+            border: 1px solid rgba(56, 109, 17, 0.3);
+        }
+
+        .pill-deny {
+            background: var(--color-deny-bg);
+            color: var(--color-deny);
+            border: 1px solid rgba(229, 62, 62, 0.3);
+        }
+
+        .role-pill {
+            font-size: 11px;
+            background: var(--bg-main);
+            border: 1px solid var(--border-primary);
+            border-radius: 3px;
+            padding: 2px 6px;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 760px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .dash-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+
+        .sep {
+            margin: 0 4px;
+            color: var(--border-secondary);
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: 1px solid var(--border-primary);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .lang-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--border-secondary);
+        }
+
+        .form-msg {
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .form-msg.error {
+            background: var(--color-deny-bg);
+            color: var(--color-deny);
+            border: 1px solid rgba(229, 62, 62, 0.3);
+        }
+
+        .form-msg.success {
+            background: var(--color-allow-bg);
+            color: var(--color-allow);
+            border: 1px solid rgba(56, 109, 17, 0.3);
+        }
+
+        .mfa-yes {
+            color: var(--color-allow);
+            font-weight: 500;
+        }
+
+        .mfa-no {
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="zt-wrap dash" style="max-width: 1150px; margin: 0 auto; padding: 0 20px;">
+
+        <div class="dash-hdr">
+            <div>
+                <div class="dash-title">{{ t.admin_users_page_title }}</div>
+                <div class="dash-now">
+                    {{ t.dash_operator }}: <strong>{{ user.username }}</strong>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                {% if lang == 'uk' %}
+                <a href="{{ url_for('set_language', lang_code='en') }}" class="lang-btn">🇬🇧 EN</a>
+                {% else %}
+                <a href="{{ url_for('set_language', lang_code='uk') }}" class="lang-btn">🇺🇦 UA</a>
+                {% endif %}
+                <button id="theme-toggle" class="theme-btn" type="button" style="padding: 6px 10px;">🌓</button>
+                <a href="{{ url_for('admin_dashboard') }}" class="zt-badge" style="text-decoration: none;">{{
+                    t.admin_users_btn_back_dashboard }}</a>
+            </div>
+        </div>
+
+        <div class="zt-divider" style="margin: 0 0 1.5rem 0; width: 100%;"></div>
+
+        <div class="stat-row">
+            <div class="stat">
+                <div class="stat-n">{{ all_users|length }}</div>
+                <div class="stat-l">{{ t.admin_users_stat_total }}</div>
+            </div>
+            <div class="stat">
+                {% set admin_count = all_users | selectattr('role', 'equalto', 'admin') | list | length %}
+                <div class="stat-n">{{ admin_count }}</div>
+                <div class="stat-l">{{ t.admin_users_stat_admins }}</div>
+            </div>
+            <div class="stat">
+                {% set teacher_count = all_users | selectattr('role', 'equalto', 'teacher') | list | length %}
+                <div class="stat-n">{{ teacher_count }}</div>
+                <div class="stat-l">{{ t.admin_users_stat_teachers }}</div>
+            </div>
+            <div class="stat">
+                {% set student_count = all_users | selectattr('role', 'equalto', 'student') | list | length %}
+                <div class="stat-n">{{ student_count }}</div>
+                <div class="stat-l">{{ t.admin_users_stat_students }}</div>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="dash-card">
+                <div class="section-label">{{ t.admin_users_label_create }}</div>
+
+                {% if error %}
+                <div class="form-msg error">{{ error }}</div>
+                {% endif %}
+                {% if success %}
+                <div class="form-msg success">{{ success }}</div>
+                {% endif %}
+
+                <form action="{{ url_for('admin_users_create') }}" method="POST">
+                    <div class="zt-field" style="margin-bottom: 14px;">
+                        <label class="zt-label">{{ t.admin_users_lbl_username }}</label>
+                        <input type="text" name="new_username" class="zt-input" placeholder="e.g. teacher2" required>
+                    </div>
+
+                    <div class="zt-field" style="margin-bottom: 14px;">
+                        <label class="zt-label">{{ t.admin_users_lbl_password }}</label>
+                        <input type="password" name="new_password" class="zt-input" placeholder="••••••••" required>
+                    </div>
+
+                    <div class="zt-field" style="margin-bottom: 18px;">
+                        <label class="zt-label">{{ t.admin_users_lbl_role }}</label>
+                        <select name="new_role" class="zt-select">
+                            <option value="admin">{{ t.admin_users_opt_role_admin }}</option>
+                            <option value="teacher">{{ t.admin_users_opt_role_teacher }}</option>
+                            <option value="student">{{ t.admin_users_opt_role_student }}</option>
+                            <option value="guest">{{ t.admin_users_opt_role_guest }}</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="zt-btn">{{ t.admin_users_btn_create }}</button>
+                </form>
+            </div>
+
+            <div class="dash-card">
+                <div class="section-label">{{ t.admin_users_label_list }}</div>
+                <div style="overflow-x: auto;">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 10%;">ID</th>
+                                <th style="width: 35%;">{{ t.dash_th_user }}</th>
+                                <th style="width: 25%;">{{ t.dash_th_role }}</th>
+                                <th style="width: 30%;">MFA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if all_users %}
+                            {% for u in all_users %}
+                            <tr>
+                                <td style="font-family: 'IBM Plex Mono', monospace; color: var(--text-muted);">{{ u.id
+                                    }}</td>
+                                <td><strong>{{ u.username }}</strong></td>
+                                <td><span class="role-pill">{{ u.role | uppercase }}</span></td>
+                                <td>
+                                    {% if u.mfa_configured %}
+                                    <span class="mfa-yes">{{ t.opt_mfa_yes }}</span>
+                                    {% else %}
+                                    <span class="mfa-no">{{ t.opt_mfa_no }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="4"
+                                    style="text-align: center; color: var(--text-muted); padding: 30px; font-style: italic;">
+                                    {{ t.admin_users_table_empty }}
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; text-align: center;">
+            <a href="{{ url_for('logout') }}" class="zt-btn"
+                style="background: transparent; border: 1px solid var(--border-secondary); color: var(--text-main); text-decoration: none; display: inline-block; width: auto; padding: 10px 24px;">
+                {{ t.dash_btn_logout }}
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const toggleBtn = document.getElementById('theme-toggle');
+        const htmlEl = document.documentElement;
+        const savedTheme = localStorage.getItem('theme') || 'auto';
+        htmlEl.setAttribute('data-theme', savedTheme);
+
+        toggleBtn.addEventListener('click', () => {
+            const currentTheme = htmlEl.getAttribute('data-theme');
+            let newTheme = 'light';
+            if (currentTheme === 'light') newTheme = 'dark';
+            else if (currentTheme === 'dark') newTheme = 'light';
+            else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                newTheme = prefersDark ? 'light' : 'dark';
+            }
+            htmlEl.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+    </script>
+</body>
+
+</html>

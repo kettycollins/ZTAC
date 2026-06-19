@@ -234,7 +234,7 @@
                     <div>
                         <div class="res-meta"><span>⚙ Secure Node</span><span>🌐 Internal Net</span></div>
                         <div class="res-action {% if permissions.admin_panel == 'DENY' %}locked-btn{% endif %}">
-                            {% if permissions.admin_panel in ['FULL', 'LIMITED'] %}<a href="{{ url_for('admin_dashboard') }}">{{ t.res_an_action }}</a>
+                            {% if permissions.admin_panel in ['FULL', 'LIMITED'] %}<a href="{{ url_for('admin_users') }}">{{ t.res_an_action }}</a>
                             {% elif permissions.admin_panel == 'READ_ONLY' %}<a href="{{ url_for('admin_dashboard') }}">Перегляд SIEM 👁️</a>
                             {% else %}{{ t.lock_deny }}{% endif %}
                         </div>

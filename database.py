@@ -40,7 +40,6 @@ def init_db():
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
         # Для admin1 жорстко прописуємо базовий secret: JBSWY3DPEHPK3PXP
-        # Ти можеш ввести його в додаток Google Authenticator вручну або через QR
         test_users = [
             ("admin1", "admin123", "admin", "JBSWY3DPEHPK3PXP"),
             ("teacher1", "teacher123", "teacher", None),
@@ -64,3 +63,46 @@ def init_db():
     conn.commit()
     conn.close()
     print("[DATABASE] Ініціалізацію підсистеми збереження даних завершено.")
+
+
+def get_all_users():
+    """
+    Повертає список усіх користувачів для адмін-сторінки управління.
+    mfa_configured = True, якщо для користувача вже згенеровано TOTP-секрет.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, role, totp_secret FROM users ORDER BY id ASC")
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {
+            "id": row["id"],
+            "username": row["username"],
+            "role": row["role"],
+            "mfa_configured": bool(row["totp_secret"]),
+        }
+        for row in rows
+    ]
+
+
+def create_user(username, password_hash, role):
+    """
+    Додає нового користувача до бази даних.
+    password_hash має бути вже хешований (через werkzeug.security.generate_password_hash)
+    до виклику цієї функції — сама функція хешуванням не займається.
+
+    Піднімає sqlite3.IntegrityError, якщо username вже зайнятий
+    (поле UNIQUE у схемі таблиці) — обробку винятку робить виклична сторона.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+            (username, password_hash, role),
+        )
+        conn.commit()
+    finally:
+        conn.close()
