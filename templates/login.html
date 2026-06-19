@@ -219,8 +219,16 @@
 
                     <div class="zt-field">
                         <label class="zt-label">{{ t.lbl_password }}</label>
-                        <input type="password" name="password" class="zt-input" placeholder="••••••••" required>
+                        <div style="position: relative; width: 100%;">
+                            <input type="password" name="password" id="password-input" class="zt-input" placeholder="••••••••" required
+                                style="padding-right: 40px; width: 100%; box-sizing: border-box;">
+                            <button type="button" id="password-toggle"
+                                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 4px; display: flex; align-items: center; justify-content: center; user-select: none;">
+                                👁️
+                            </button>
+                        </div>
                     </div>
+
 
                     <div class="zt-field">
                         <label class="zt-label">{{ t.lbl_device }}</label>
@@ -311,6 +319,26 @@
             htmlEl.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
         });
+
+        // ────────────────────────────────────────────────────────────
+            // Перемикач видимості пароля (Показати/Приховати)
+            // ────────────────────────────────────────────────────────────
+            const passwordInput = document.getElementById('password-input');
+            const passwordToggle = document.getElementById('password-toggle');
+
+            passwordToggle.addEventListener('click', function () {
+                // Перемикаємо тип поля
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    this.textContent = '🙈'; // Змінюємо іконку на заплющені очі
+                    this.style.color = 'var(--accent)'; // Підсвічуємо акцентним кольором
+                } else {
+                    passwordInput.type = 'password';
+                    this.textContent = '👁️'; // Повертаємо звичайне око
+                    this.style.color = 'var(--text-muted)';
+                }
+            });
+
 
         // ────────────────────────────────────────────────────────────
         // MFA: єдиний елемент контексту, яким керує сам користувач
