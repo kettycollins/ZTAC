@@ -12,7 +12,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import generate_password_hash
 
 from config import Config
-from database import init_db, get_all_users, create_userget_user_by_id, update_user_password, delete_user_by_id, count_admins
+from database import init_db, get_all_users, create_user, get_user_by_id, update_user_password, delete_user_by_id, count_admins
 from authenticate import authenticate_user, verify_totp, get_or_create_totp_secret
 from policies import evaluate_access
 from logging_utils import log_event
