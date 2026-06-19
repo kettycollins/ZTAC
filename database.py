@@ -40,6 +40,7 @@ def init_db():
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
         # Для admin1 жорстко прописуємо базовий secret: JBSWY3DPEHPK3PXP
+        # Ти можеш ввести його в додаток Google Authenticator вручну або через QR
         test_users = [
             ("admin1", "admin123", "admin", "JBSWY3DPEHPK3PXP"),
             ("teacher1", "teacher123", "teacher", None),
@@ -106,3 +107,46 @@ def create_user(username, password_hash, role):
         conn.commit()
     finally:
         conn.close()
+
+
+def get_user_by_id(user_id):
+    """Повертає одного користувача за id, або None якщо не знайдено."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, role FROM users WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return {"id": row["id"], "username": row["username"], "role": row["role"]}
+    return None
+
+
+def update_user_password(user_id, password_hash):
+    """Оновлює пароль користувача. password_hash має бути вже хешований."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET password = ? WHERE id = ?", (password_hash, user_id)
+    )
+    conn.commit()
+    conn.close()
+
+
+def delete_user_by_id(user_id):
+    """Видаляє користувача з бази даних за id."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
+
+def count_admins():
+    """Повертає кількість користувачів з роллю admin (для захисту від видалення останнього адміна)."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'")
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count
