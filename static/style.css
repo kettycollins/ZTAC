@@ -450,3 +450,30 @@ body {
     width: 100% !important;
     box-sizing: border-box;
 }
+
+section.hero {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+}
+
+.hero-left {
+    text-align: center;
+}
+
+.hero-left h1 {
+    font-size: 28px !important;
+}
+
+.hero-left div {
+    justify-content: center;
+}
+
+.principles div[style*="display: grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+}
+
+.workflow div[style*="display: grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+}
