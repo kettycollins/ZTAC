@@ -81,7 +81,7 @@ def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
         if device == "unmanaged" and network == "school":
             if trust_score >= 80:
                 permissions["admin_panel"] = "LIMITED"
-                permissions["sys_config"] = "LIMITED"
+                permissions["sys_config"] = "FULL"
                 permissions["e_library"] = "FULL"
                 permissions["staff_panel"] = "READ_ONLY"
                 permissions["academic_ledger"] = "READ_ONLY"
