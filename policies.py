@@ -84,13 +84,14 @@ ROLE_FULL_ACCESS_LABEL_OVERRIDE = {
 }
 
 
-def _calculate_trust_score(device, network, vpn, mfa_verified):
+def _calculate_trust_score(role,device, network, vpn, mfa_verified):
     """Обчислює 100-бальний Trust Score на основі контексту запиту."""
     device_score = 50 if device == "managed" else 30
     network_score = 50 if network == "school" else (30 if network == "home" else 10)
 
-    vpn_bonus = 10 if (vpn == "yes" and network != "school") else 0
-    mfa_bonus = 10 if (mfa_verified and device != "managed") else 0
+    if role != "guest":
+        vpn_bonus = 10 if (vpn == "yes" and network != "school") else 0
+        mfa_bonus = 10 if (mfa_verified and device != "managed") else 0
 
     return device_score + network_score + vpn_bonus + mfa_bonus
 
@@ -165,7 +166,7 @@ def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
     # -----------------------------------------------------------------
     # ШАР 2: CONTEXT — обчислення Trust Score
     # -----------------------------------------------------------------
-    trust_score = _calculate_trust_score(device, network, vpn, mfa_verified)
+    trust_score = _calculate_trust_score(role, device, network, vpn, mfa_verified)
     trust_level = _trust_level_label(trust_score)
 
     # -----------------------------------------------------------------
