@@ -1,7 +1,7 @@
 import sqlite3
+import pyotp
 from werkzeug.security import check_password_hash
 from database import get_db_connection
-
 
 def authenticate_user(username, password):
     """
