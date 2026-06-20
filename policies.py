@@ -1,157 +1,209 @@
-# policies.py
+"""
+Zero Trust Policy Decision Point (PDP) v9.0 — Risk-Based Access Control.
+
+Архітектура (три послідовні шари):
+
+  ШАР 0 — Жорсткий периметр гостя: поза school network гість не заходить
+          у систему взагалі, до будь-яких обчислень довіри.
+
+  ШАР 1 — IDENTITY GATE: чи ця роль взагалі має право торкатися ресурсу
+          (рольові межі — teacher ніколи не бачить student_hub, і навпаки).
+
+  ШАР 2 — CONTEXT: динамічний 100-бальний Trust Score контексту запиту.
+
+  ШАР 3 — RESOURCE SENSITIVITY: рівень чутливості ресурсу визначає,
+          який саме Trust Score потрібен для FULL / READ_ONLY / LIMITED / DENY.
+
+Trust Score (макс. 100):
+  Device:  managed = 50  /  unmanaged (BYOD) = 30
+  Network: school  = 50  /  home = 30  /  public = 10
+  VPN:     +10, лише якщо network != school
+           (підтягує мережу до стелі School, але не перевищує її:
+            30+10=40 < 50, 10+10=20 < 50 — clamp не потрібен математично)
+  MFA:     +10, лише якщо device != managed
+           (підтягує пристрій до стелі Managed, але не перевищує її:
+            30+10=40 < 50 — clamp не потрібен математично)
+
+Resource Sensitivity:
+  critical → admin_users (створення/видалення/паролі користувачів)
+  high     → admin_panel (SIEM-дашборд, логи безпеки)
+  medium   → staff_panel, academic_ledger, student_hub
+  low      → submissions, e_library, public_res (DMZ — нечутливі дані)
+"""
+
+# ---------------------------------------------------------------------------
+# КОНФІГУРАЦІЯ: рівень чутливості кожного ресурсу
+# ---------------------------------------------------------------------------
+RESOURCE_SENSITIVITY = {
+    "admin_users":     "critical",
+    "admin_panel":     "high",
+    "staff_panel":     "medium",
+    "academic_ledger": "medium",
+    "student_hub":     "medium",
+    "submissions":     "low",
+    "e_library":       "low",
+    "public_res":      "low",
+}
+
+ALL_RESOURCES = list(RESOURCE_SENSITIVITY.keys())
+
+# ---------------------------------------------------------------------------
+# КОНФІГУРАЦІЯ: які ресурси кожна роль взагалі може торкатися (IDENTITY GATE)
+# ---------------------------------------------------------------------------
+ROLE_ELIGIBLE_RESOURCES = {
+    "admin": {
+        "admin_users", "admin_panel",
+        "staff_panel", "academic_ledger", "student_hub",  # аудит, не власні
+        "submissions", "e_library", "public_res",
+    },
+    "teacher": {
+        "staff_panel", "academic_ledger",
+        "submissions", "e_library", "public_res",
+    },
+    "student": {
+        "student_hub",
+        "submissions", "e_library", "public_res",
+    },
+    "guest": {
+        "public_res", "e_library",
+    },
+}
+
+# Ресурси, які роль бачить ЛИШЕ в режимі аудиту (READ_ONLY-стеля,
+# незалежно від того, що дав би загальний sensitivity-розрахунок).
+# Приклад: admin може лише ПЕРЕГЛЯДАТИ кабінет вчителя/учня, ніколи не редагувати.
+ROLE_AUDIT_ONLY_RESOURCES = {
+    "admin": {"staff_panel", "academic_ledger", "student_hub"},
+}
+
+# Ресурси, де "повний" функціональний доступ ролі має змістовнішу власну назву
+# замість голого FULL (зберігаємо семантику з попередньої версії політик).
+ROLE_FULL_ACCESS_LABEL_OVERRIDE = {
+    ("teacher", "submissions"): "REVIEW_ONLY",
+    ("student", "submissions"): "SUBMIT_ONLY",
+}
+
+
+def _calculate_trust_score(device, network, vpn, mfa_verified):
+    """Обчислює 100-бальний Trust Score на основі контексту запиту."""
+    device_score = 50 if device == "managed" else 30
+    network_score = 50 if network == "school" else (30 if network == "home" else 10)
+
+    vpn_bonus = 10 if (vpn == "yes" and network != "school") else 0
+    mfa_bonus = 10 if (mfa_verified and device != "managed") else 0
+
+    return device_score + network_score + vpn_bonus + mfa_bonus
+
+
+def _trust_level_label(trust_score):
+    """
+    Узагальнена 3-рівнева мітка для банера вердикту (denied.html).
+    Пороги узгоджені з 6-смуговою таблицею нижче: 90+ охоплює найвищі дві
+    смуги, 60-89 — середні дві, нижче 60 — найслабші дві.
+    """
+    if trust_score >= 90:
+        return "Trusted"
+    elif trust_score >= 60:
+        return "Medium Risk"
+    else:
+        return "High Risk"
+
+
+def _access_level_for_tier(tier, trust_score):
+    """
+    Універсальний рушій: для рівня чутливості ресурсу (critical/high/medium/low)
+    і поточного Trust Score визначає БАЗОВИЙ рівень доступу
+    (до застосування рольових накладок типу audit-only чи REVIEW_ONLY).
+
+    Low-tier ресурси (DMZ) лишаються FULL за будь-якого Trust Score —
+    вони за визначенням нечутливі, тож не мають сенсу обмежуватись
+    навіть при мінімальній довірі (інакше Trust Score 40 матиме БІЛЬШЕ
+    доступу, ніж Trust Score 45 — нелогічний "провал" у таблиці).
+    """
+    if tier == "low":
+        return "FULL"
+
+    if trust_score == 100:
+        return "FULL"
+
+    if trust_score >= 90:
+        return "FULL" if tier in ("high", "medium") else "READ_ONLY"  # critical
+
+    if trust_score >= 70:
+        return "FULL" if tier == "medium" else "READ_ONLY"  # critical, high
+
+    if trust_score >= 60:
+        return "FULL" if tier == "medium" else "DENY"  # critical, high
+
+    if trust_score >= 41:
+        return "LIMITED" if tier == "medium" else "DENY"  # critical, high
+
+    # trust_score <= 40
+    return "DENY"  # critical, high, medium (low вже оброблено вище)
 
 
 def evaluate_access(role, device, network, vpn="no", mfa_verified=False):
     """
-    Динамічний рушій політик Zero Trust (Policy Decision Point) v8.0-cloud.
-    100-бальна математична модель контексту:
-    - Device: Managed = 50, Unmanaged = 20
-    - Network: School = 50, Home = 20, Public = 10
-    - Extra Security (WireGuard VPN або MFA): +20 балів (макс бонус = 20)
+    Zero Trust Policy Decision Point v9.0 — Risk-Based Access Control.
+    Повертає (status, trust_score, trust_level, reason_key, permissions).
     """
     if not role:
         role = "guest"
 
-    if role == "guest":
-        if network != "school":
-            return (
-                "DENY",
-                0,
-                "High Risk",
-                "Guest role restriction: access allowed only within school network",
-                {
-                    "admin_panel": "DENY",
-                    "sys_config": "DENY",
-                    "staff_panel": "DENY",
-                    "academic_ledger": "DENY",
-                    "student_hub": "DENY",
-                    "submissions": "DENY",
-                    "e_library": "DENY",
-                    "public_res": "DENY",
-                },
-            )
-
-    # 1. ОБЧИСЛЕННЯ TRUST SCORE
-    device_score = 50 if device == "managed" else 20
-    network_score = 50 if network == "school" else (20 if network == "home" else 10)
-    extra_score = 20 if (vpn == "yes" or mfa_verified) else 0
-
-    trust_score = device_score + network_score + extra_score
-
-    if trust_score >= 80:
-        trust_level = "Trusted"
-    elif 50 <= trust_score <= 79:
-        trust_level = "Medium Risk"
-    else:
-        trust_level = "High Risk"
-
-    # 2. ІНІЦІАЛІЗАЦІЯ МАТРИЦІ ДОЗВОЛІВ
-    permissions = {
-        "admin_panel": "DENY",
-        "sys_config": "DENY",
-        "staff_panel": "DENY",
-        "academic_ledger": "DENY",
-        "student_hub": "DENY",
-        "submissions": "DENY",
-        "e_library": "DENY",
-        "public_res": "DENY",
-    }
-
-    if trust_score >= 40:
-        permissions["public_res"] = "FULL"
-
-    # 3.2 Роль: ADMIN
-    if role == "admin":
-        if device == "managed":
-            if trust_score >= 80:
-                permissions["admin_panel"] = "FULL"
-                permissions["sys_config"] = "FULL"
-                permissions["e_library"] = "FULL"
-            elif 50 <= trust_score <= 79:
-                permissions["admin_panel"] = "LIMITED"
-                permissions["sys_config"] = "LIMITED"
-                permissions["e_library"] = "LIMITED"
-            if trust_score >= 50:
-                permissions["staff_panel"] = "READ_ONLY"
-                permissions["academic_ledger"] = "READ_ONLY"
-                permissions["student_hub"] = "READ_ONLY"
-                permissions["submissions"] = "READ_ONLY"
-
-        # BYOD-правило: якщо адмін на unmanaged у школі + увімкнув WireGuard або здав MFA -> отримав 80 балів!
-        if device == "unmanaged" and network == "school":
-            if trust_score >= 80:
-                permissions["admin_panel"] = "LIMITED"
-                permissions["sys_config"] = "FULL"
-                permissions["e_library"] = "FULL"
-                permissions["staff_panel"] = "READ_ONLY"
-                permissions["academic_ledger"] = "READ_ONLY"
-                permissions["student_hub"] = "READ_ONLY"
-                permissions["submissions"] = "READ_ONLY"
-            elif 50 <= trust_score <= 79:
-                permissions["admin_panel"] = "DENY"
-                permissions["sys_config"] = "DENY"
-                permissions["e_library"] = "LIMITED"
-
-    # 3.3 Роль: TEACHER
-    if role == "teacher":
-        if trust_score >= 80:
-            permissions["staff_panel"] = "FULL"
-            permissions["academic_ledger"] = "FULL"
-        elif 50 <= trust_score <= 79:
-            permissions["staff_panel"] = "LIMITED"
-            permissions["academic_ledger"] = "LIMITED"
-
-        if trust_score >= 50:
-            permissions["e_library"] = "FULL"
-        else:
-            permissions["e_library"] = "LIMITED"
-
-        if trust_score >= 50:
-            permissions["submissions"] = "REVIEW_ONLY"
-
-    # 3.4 Роль: STUDENT
-    if role == "student":
-        if trust_score >= 50:
-            permissions["student_hub"] = "FULL"
-            permissions["e_library"] = "FULL"
-            permissions["submissions"] = "SUBMIT_ONLY"
-        else:
-            permissions["student_hub"] = "LIMITED"
-            permissions["e_library"] = "LIMITED"
-            permissions["submissions"] = "DENY"
-
-    # 3.5 Роль: GUEST
-    if role == "guest" and network == "school":
-        permissions["public_res"] = "FULL"
-        permissions["e_library"] = "LIMITED"
-
-    # 4. PEP VERDICT
-    if (
-        role == "admin"
-        and device == "unmanaged"
-        and network != "school"
-        and not mfa_verified
-    ):
+    # -----------------------------------------------------------------
+    # ШАР 0: Жорсткий периметр гостя
+    # -----------------------------------------------------------------
+    if role == "guest" and network != "school":
         return (
             "DENY",
-            trust_score,
+            0,
             "High Risk",
-            "Admin limited access: Low Trust Level restriction",
-            permissions,
+            "Guest role restriction: access allowed only within school network",
+            {resource: "DENY" for resource in ALL_RESOURCES},
         )
 
-    if trust_score < 40 and role not in ["student", "teacher"]:
-        return ("DENY", trust_score, trust_level, "Guest role restriction", permissions)
+    # -----------------------------------------------------------------
+    # ШАР 2: CONTEXT — обчислення Trust Score
+    # -----------------------------------------------------------------
+    trust_score = _calculate_trust_score(device, network, vpn, mfa_verified)
+    trust_level = _trust_level_label(trust_score)
 
-    # Залізобетонні мовні ключі, які 100% є у твому translations.py
-    if trust_level in ["Approve", "Trusted"]:
+    # -----------------------------------------------------------------
+    # ШАР 1 + 3: IDENTITY GATE (які ресурси роль бачить) поєднано з
+    #            RESOURCE SENSITIVITY (який рівень доступу дає Trust Score)
+    # -----------------------------------------------------------------
+    permissions = {resource: "DENY" for resource in ALL_RESOURCES}
+    eligible = ROLE_ELIGIBLE_RESOURCES.get(role, set())
+    audit_only = ROLE_AUDIT_ONLY_RESOURCES.get(role, set())
+
+    for resource in eligible:
+        tier = RESOURCE_SENSITIVITY[resource]
+        level = _access_level_for_tier(tier, trust_score)
+
+        if resource in audit_only:
+            # Аудит-ресурс: стеля READ_ONLY, навіть якщо tier дав би FULL/LIMITED
+            level = "READ_ONLY" if level in ("FULL", "READ_ONLY", "LIMITED") else "DENY"
+        else:
+            override_label = ROLE_FULL_ACCESS_LABEL_OVERRIDE.get((role, resource))
+            if level == "FULL" and override_label:
+                level = override_label
+
+        permissions[resource] = level
+
+    # Гостьова e_library — спеціальний виняток: завжди LIMITED, ніколи FULL
+    if role == "guest" and "e_library" in permissions:
+        if permissions["e_library"] != "DENY":
+            permissions["e_library"] = "LIMITED"
+
+    # -----------------------------------------------------------------
+    # ШАР 4: PEP VERDICT — формування ключа причини для перекладу
+    # -----------------------------------------------------------------
+    if trust_level == "Trusted":
         reason_key = (
             "Admin authorized" if role == "admin" else f"{role.capitalize()} authorized"
         )
     elif trust_level == "Medium Risk":
-        reason_key = (
-            f"{role.capitalize()} limited access: Medium Trust Level restriction"
-        )
+        reason_key = f"{role.capitalize()} limited access: Medium Trust Level restriction"
     else:
         reason_key = f"{role.capitalize()} limited access: Low Trust Level restriction"
 

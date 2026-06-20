@@ -350,7 +350,7 @@ def admin_users():
         "admin_users.html",
         user=user_data,
         all_users=get_all_users(),
-        sys_config_permission=permissions.get("sys_config", "DENY"),
+        sys_config_permission=permissions.get("admin_users", "DENY"),
     )
 
 
@@ -372,7 +372,7 @@ def admin_users_create():
     )
 
     lang = session.get("lang", "uk")
-    sys_config_permission = permissions.get("sys_config", "DENY")
+    sys_config_permission = permissions.get("admin_users", "DENY")
 
     # Захист на бекенді: навіть якщо хтось обійде вимкнену кнопку через DevTools,
     # створення дозволено лише при sys_config = FULL (Trust Score >= 80)
@@ -433,7 +433,7 @@ def admin_users_change_password():
         session.get("mfa_verified", False),
     )
     lang = session.get("lang", "uk")
-    sys_config_permission = permissions.get("sys_config", "DENY")
+    sys_config_permission = permissions.get("admin_users", "DENY")
 
     if sys_config_permission != "FULL":
         return render_template(
@@ -489,7 +489,7 @@ def admin_users_delete():
         session.get("mfa_verified", False),
     )
     lang = session.get("lang", "uk")
-    sys_config_permission = permissions.get("sys_config", "DENY")
+    sys_config_permission = permissions.get("admin_users", "DENY")
 
     if sys_config_permission != "FULL":
         return render_template(
