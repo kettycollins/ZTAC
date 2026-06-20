@@ -430,28 +430,36 @@ body {
 
 @media (max-width: 600px) {
 
-    /* Перетворюємо двоколонкову сітку форми на одноколонкову */
-    .zt-grid {
-        grid-template-columns: 1fr !important;
-        gap: 12px;
+    /* 1. На сторінці логіну контейнер з оком має position: relative, обмежуємо його */
+    .zt-field div[style*="position: relative"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
-    /* Змушуємо поля, які мали розтягуватися на 2 колонки, займати всю ширину */
-    .zt-field.full,
-    .zt-field {
-        grid-column: span 1 !important;
+    /* 2. Примусово вкорочуємо інпут пароля, щоб він враховував padding кнопки ока */
+    #password-input,
+    #new-password-input {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
-}
 
-/* Захист від вилізання інпутів із кнопками-іконками (око, повзунки) */
-.pwd-field-wrapper,
-.zt-field div {
-    box-sizing: border-box;
-}
+    /* 3. Контейнер MFA (vpn-toggle-container) вилазить, бо має фіксований padding або ширину */
+    .vpn-toggle-container,
+    #mfa-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        height: auto !important;
+        /* дозволяємо тексту пакуватися, якщо мало місця */
+        padding: 10px 12px !important;
+    }
 
-.zt-input,
-.zt-select {
-    width: 100% !important;
-    box-sizing: border-box;
-    /* Змушує браузер рахувати padding ВСЕРЕДИНІ 100% ширини */
+    /* 4. Фікс для внутрішньої сітки, щоб картка не розширювалася */
+    .zt-card {
+        padding: 20px 15px !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
 }
