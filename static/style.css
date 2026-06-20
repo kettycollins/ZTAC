@@ -430,36 +430,23 @@ body {
 
 @media (max-width: 600px) {
 
-    /* 1. На сторінці логіну контейнер з оком має position: relative, обмежуємо його */
-    .zt-field div[style*="position: relative"] {
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
+    .zt-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
     }
 
-    /* 2. Примусово вкорочуємо інпут пароля, щоб він враховував padding кнопки ока */
-    #password-input,
-    #new-password-input {
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
+    .zt-field {
+        grid-column: span 1 !important;
     }
+}
 
-    /* 3. Контейнер MFA (vpn-toggle-container) вилазить, бо має фіксований padding або ширину */
-    .vpn-toggle-container,
-    #mfa-container {
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        height: auto !important;
-        /* дозволяємо тексту пакуватися, якщо мало місця */
-        padding: 10px 12px !important;
-    }
+.pwd-field-wrapper,
+.zt-field div {
+    box-sizing: border-box;
+}
 
-    /* 4. Фікс для внутрішньої сітки, щоб картка не розширювалася */
-    .zt-card {
-        padding: 20px 15px !important;
-        overflow: hidden !important;
-        box-sizing: border-box !important;
-    }
+.zt-input,
+.zt-select {
+    width: 100% !important;
+    box-sizing: border-box;
 }
