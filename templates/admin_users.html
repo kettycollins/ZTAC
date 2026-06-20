@@ -402,6 +402,11 @@
                 <div class="stat-n">{{ student_count }}</div>
                 <div class="stat-l">{{ t.admin_users_stat_students }}</div>
             </div>
+            <div class="stat">
+                {% set guest_count = all_users | selectattr('role', 'equalto', 'guest') | list | length %}
+                <div class="stat-n">{{ guest_count }}</div>
+                <div class="stat-l">{{ t.admin_users_stat_guests }}</div>
+            </div>
         </div>
 
         <div class="two-col">
