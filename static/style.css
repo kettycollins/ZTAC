@@ -427,3 +427,31 @@ body {
 .zt-resource-title.text-muted {
     color: var(--text-muted);
 }
+
+@media (max-width: 600px) {
+
+    /* Перетворюємо двоколонкову сітку форми на одноколонкову */
+    .zt-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+
+    /* Змушуємо поля, які мали розтягуватися на 2 колонки, займати всю ширину */
+    .zt-field.full,
+    .zt-field {
+        grid-column: span 1 !important;
+    }
+}
+
+/* Захист від вилізання інпутів із кнопками-іконками (око, повзунки) */
+.pwd-field-wrapper,
+.zt-field div {
+    box-sizing: border-box;
+}
+
+.zt-input,
+.zt-select {
+    width: 100% !important;
+    box-sizing: border-box;
+    /* Змушує браузер рахувати padding ВСЕРЕДИНІ 100% ширини */
+}
