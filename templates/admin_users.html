@@ -308,6 +308,53 @@
             font-size: 12px;
             margin: 0;
         }
+
+        .pwd-field-wrapper {
+            position: relative;
+        }
+
+        .pwd-toggle-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            line-height: 1;
+            padding: 2px 4px;
+            color: var(--text-muted);
+        }
+
+        .pwd-toggle-btn:hover {
+            color: var(--text-main);
+        }
+
+        .pwd-toggle-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
+        .pwd-toggle-btn-inline {
+            background: none;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 6px 8px;
+            color: var(--text-muted);
+            border: 1px solid var(--border-primary);
+            border-radius: 4px;
+        }
+
+        .pwd-toggle-btn-inline:hover {
+            color: var(--text-main);
+            background: var(--bg-main);
+        }
+
+        .pwd-toggle-btn-inline:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
     </style>
 </head>
 
@@ -380,8 +427,14 @@
 
                     <div class="zt-field" style="margin-bottom: 14px;">
                         <label class="zt-label">{{ t.admin_users_lbl_password }}</label>
-                        <input type="password" name="new_password" class="zt-input" placeholder="••••••••" required {%
-                            if sys_config_permission !="FULL" %}disabled{% endif %}>
+                        <div class="pwd-field-wrapper">
+                            <input type="password" name="new_password" id="new-password-input" class="zt-input"
+                                placeholder="••••••••" required style="padding-right: 38px;" {% if sys_config_permission
+                                !="FULL" %}disabled{% endif %}>
+                            <button type="button" class="pwd-toggle-btn"
+                                onclick="togglePasswordVisibility('new-password-input', this)" {% if
+                                sys_config_permission !="FULL" %}disabled{% endif %}>👁</button>
+                        </div>
                         <div class="pwd-hint">{{ t.admin_users_pwd_requirements }}</div>
                     </div>
 
@@ -451,9 +504,13 @@
                                     <form id="pwd-form-{{ u.id }}" class="inline-pwd-form"
                                         action="{{ url_for('admin_users_change_password') }}" method="POST">
                                         <input type="hidden" name="user_id" value="{{ u.id }}">
-                                        <input type="password" name="change_password" class="zt-input inline-pwd-input"
+                                        <input type="password" name="change_password" id="change-pwd-input-{{ u.id }}"
+                                            class="zt-input inline-pwd-input"
                                             placeholder="{{ t.admin_users_lbl_new_password }}" required {% if
                                             sys_config_permission !="FULL" %}disabled{% endif %}>
+                                        <button type="button" class="pwd-toggle-btn-inline"
+                                            onclick="togglePasswordVisibility('change-pwd-input-{{ u.id }}', this)" {%
+                                            if sys_config_permission !="FULL" %}disabled{% endif %}>👁</button>
                                         <button type="submit" class="zt-btn inline-pwd-save" {% if sys_config_permission
                                             !="FULL" %}disabled{% endif %}>
                                             {{ t.admin_users_btn_save_pwd }}
@@ -511,6 +568,19 @@
             if (formEl.classList.contains('visible')) {
                 const input = formEl.querySelector('input[name="change_password"]');
                 if (input) input.focus();
+            }
+        }
+
+        // Перемикач видимості пароля (👁 / 🙈) — спільний для форми створення і зміни пароля
+        function togglePasswordVisibility(inputId, btnEl) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btnEl.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btnEl.textContent = '👁';
             }
         }
     </script>
