@@ -502,6 +502,17 @@
             htmlEl.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
         });
+
+        // Перемикач inline-форми зміни пароля для конкретного рядка користувача
+        function togglePwdForm(userId) {
+            const formEl = document.getElementById('pwd-form-' + userId);
+            if (!formEl) return;
+            formEl.classList.toggle('visible');
+            if (formEl.classList.contains('visible')) {
+                const input = formEl.querySelector('input[name="change_password"]');
+                if (input) input.focus();
+            }
+        }
     </script>
 </body>
 
