@@ -438,7 +438,6 @@ body {
     .zt-field {
         grid-column: span 1 !important;
     }
-}
 
     .pwd-field-wrapper,
     .zt-field div {
@@ -477,3 +476,4 @@ body {
         grid-template-columns: 1fr !important;
         gap: 20px !important;
     }
+}
