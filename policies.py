@@ -133,7 +133,7 @@ def _access_level_for_tier(tier, trust_score):
     if trust_score >= 70:
         return "FULL" if tier == "medium" else "LIMITED"  # critical, high
 
-    if trust_score >= 60:
+    if trust_score >= 61:
         return "FULL" if tier == "medium" else "DENY"  # critical, high
 
     if trust_score >= 41:
