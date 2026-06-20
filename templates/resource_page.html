@@ -241,13 +241,17 @@
                     </div>
                 </div>
 
-                <div class="res-card {% if permissions.sys_config == 'DENY' %}locked{% endif %}">
+                <div class="res-card {% if permissions.admin_users == 'DENY' %}locked{% endif %}">
                     <div>
                         <div class="res-card-top">
                             <div class="res-icon" style="background: #FCEBEB; color: #791f1f;">⚙️</div>
                             <div style="display: flex; gap: 4px;">
-                                {% if permissions.sys_config == 'LIMITED' %}<span class="zt-badge" style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️ LIMITED ACCESS</span>
-                                {% elif permissions.sys_config == 'DENY' %}<span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No Access</span>{% endif %}
+                                {% if permissions.admin_users == 'LIMITED' %}<span class="zt-badge"
+                                    style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️
+                                    LIMITED ACCESS</span>
+                                {% elif permissions.admin_users == 'DENY' %}<span class="zt-badge"
+                                    style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No
+                                    Access</span>{% endif %}
                             </div>
                         </div>
                         <div class="res-name">{{ t.res_it_name }}</div>
@@ -255,9 +259,10 @@
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Core Infrastructure</span><span>🌐 Internal Net</span></div>
-                        <div class="res-action {% if permissions.sys_config == 'DENY' %}locked-btn{% endif %}">
-                            {% if permissions.sys_config == 'FULL' %}<a href="{{ url_for('admin_users') }}">{{ t.res_it_action }}</a>
-                            {% elif permissions.sys_config == 'LIMITED' %}<a href="{{ url_for('admin_users') }}">Конфігурація (View Only) 👁️</a>
+                        <div class="res-action {% if permissions.admin_users == 'DENY' %}locked-btn{% endif %}">
+                            {% if permissions.admin_users == 'FULL' %}<a href="{{ url_for('admin_users') }}">{{ t.res_it_action }}</a>
+                            {% elif permissions.admin_users == 'LIMITED' %}<a href="{{ url_for('admin_users') }}">Конфігурація (View
+                                Only) 👁️</a>
                             {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
