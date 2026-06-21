@@ -215,6 +215,13 @@ def decision_page():
         session.get("mfa_verified", False),
     )
 
+    if status == "DENY":
+        view_decision = "DENY"
+    elif trust_level == "Medium Risk":
+        view_decision = "LIMITED"
+    else:
+        view_decision = "ALLOW"
+
     user_data = {
         "username": session.get("user"),
         "role": session.get("role"),
@@ -226,7 +233,7 @@ def decision_page():
 
     return render_template(
         "denied.html",
-        decision="ALLOW",
+        decision=view_decision,
         score=score,
         trust_level=trust_level,
         reason=reason,
