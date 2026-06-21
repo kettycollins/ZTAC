@@ -103,7 +103,7 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        network = request.form.get("network")  # залишається ручним вибором
+        network = request.form.get("network", "").strip().lower()
 
         want_mfa = request.form.get("want_mfa", "no")
         otp_code = request.form.get("otp_code", "").strip()
