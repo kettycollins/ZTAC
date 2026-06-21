@@ -260,6 +260,24 @@ def resource_page():
         session.get("mfa_verified", False),
     )
 
+    if status == "DENY":
+        user_data = {
+            "username": session.get("user"),
+            "role": session.get("role"),
+            "device": session.get("device"),
+            "network": session.get("network"),
+            "vpn": session.get("vpn"),
+            "mfa": session.get("mfa_verified", False),
+        }
+        return render_template(
+            "denied.html",
+            decision="DENY",
+            score=score,
+            trust_level=trust_level,
+            reason=reason,
+            user=user_data,
+        )
+
     user_data = {"username": session["user"], "role": session.get("role")}
 
     return render_template(
