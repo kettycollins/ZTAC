@@ -261,8 +261,7 @@
                         <div class="res-meta"><span>⚙ Core Infrastructure</span><span>🌐 Internal Net</span></div>
                         <div class="res-action {% if permissions.admin_users == 'DENY' %}locked-btn{% endif %}">
                             {% if permissions.admin_users == 'FULL' %}<a href="{{ url_for('admin_users') }}">{{ t.res_it_action }}</a>
-                            {% elif permissions.admin_users == 'LIMITED' %}<a href="{{ url_for('admin_users') }}">Конфігурація (View
-                                Only) 👁️</a>
+                            {% elif permissions.admin_users == 'LIMITED' %}<a href="{{ url_for('admin_users') }}">{{ t.res_it_audit }}</a>
                             {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
