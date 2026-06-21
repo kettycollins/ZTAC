@@ -346,33 +346,31 @@
                         <div class="res-action {% if permissions.student_hub == 'DENY' %}locked-btn{% endif %}">
                             {% if permissions.student_hub in ['FULL', 'LIMITED', 'READ_ONLY'] %}
                             <a href="{{ url_for('notice_student') }}">
-                                {% if permissions.student_hub == 'LIMITED' %}Перегляд профілю 👁️{% elif permissions.student_hub == 'READ_ONLY' %}{{ t.res_all_audit }}{% else %}{{ t.res_sp_action }}{% endif %}
+                                {% if permissions.student_hub == 'LIMITED' %}{{t.res_sp_audit}}]{% elif permissions.student_hub == 'READ_ONLY' %}{{ t.res_all_audit }}{% else %}{{ t.res_sp_action }}{% endif %}
                             </a>
                             {% else %}{{ t.lock_deny }}{% endif %}
                         </div>
                     </div>
                 </div>
 
-                <div class="res-card {% if permissions.student_hub == 'DENY' %}locked{% endif %}">
+                <div class="res-card {% if permissions.submissions == 'DENY' %}locked{% endif %}">
                     <div>
                         <div class="res-card-top">
                             <div class="res-icon" style="background: #EAF3DE; color: #27500a;">📥</div>
                             <div style="display: flex; gap: 4px;">
-                                {% if permissions.student_hub == 'LIMITED' %}<span class="zt-badge" style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️ LIMITED ACCESS</span>
-                                {% elif permissions.student_hub == 'DENY' %}<span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No Access</span>{% endif %}
+                                {% if permissions.submissions == 'LIMITED' %}<span class="zt-badge" style="border-color: var(--color-limited); color: var(--color-limited); font-size: 9px; padding: 1px 4px;">👁️ LIMITED ACCESS</span>
+                                {% elif permissions.submissions == 'DENY' %}<span class="zt-badge" style="border-color: var(--color-deny); color: var(--color-deny); font-size: 9px; padding: 1px 4px;">No Access</span>{% endif %}
                             </div>
                         </div>
                         <div class="res-name">{{ t.res_dl_name }}</div>
-                        <div class="res-desc">
-                            {% if lang == 'uk' %}Завантаження виконаних домашніх завдань, лабораторних та самостійних робіт.{% else %}Uploading completed homework, lab reports, and independent assignments.{% endif %}
-                        </div>
+                        <div class="res-desc">{{t.res_dl_desc}}</div>
                     </div>
                     <div>
                         <div class="res-meta"><span>⚙ Knowledge Nodes</span><span>🌐 Distribution Layer</span></div>
-                        <div class="res-action {% if permissions.student_hub == 'DENY' %}locked-btn{% endif %}">
-                            {% if permissions.student_hub in ['FULL', 'LIMITED', 'READ_ONLY'] %}
+                        <div class="res-action {% if permissions.submissions == 'DENY' %}locked-btn{% endif %}">
+                            {% if permissions.submissions in ['FULL', 'LIMITED', 'READ_ONLY', 'SUBMIT_ONLY', 'REVIEW_ONLY'] %}
                             <a href="{{ url_for('notice_student') }}">
-                                {% if permissions.student_hub == 'LIMITED' %}Перегляд ДЗ 👁️{% else %}{{ t.res_dl_action }}{% endif %}
+                                {% if permissions.submissions == 'LIMITED' %}{{ t.res_dl_audit }}{% else %}{{ t.res_dl_action }}{% endif %}
                             </a>
                             {% else %}{{ t.lock_deny }}{% endif %}
                         </div>

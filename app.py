@@ -553,6 +553,7 @@ def api_logs():
 # Роути для сторінок-заглушок (Notice Pages)
 @app.route("/resources/teacher")
 def notice_teacher():
+    
     if "user" not in session:
         return redirect(url_for("login"))
     user_data = {"username": session.get("user"), "role": session.get("role")}
