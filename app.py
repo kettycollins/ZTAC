@@ -65,15 +65,31 @@ def detect_vpn_from_ip(req):
 # ЗАХИСТ ВІД ВИКОРИСТАННЯ ВИДАЛЕНИХ КОРИСТУВАЧІВ (після видалення акаунта, сесія стає недійсною)
 # =============================================================================
 
-# Рядки 52-62
+
 def _is_active_session_user_valid():
-    """Перевіряє, чи існує користувач із сесії в БД (захист від використання видалених акаунтів)."""
+    """
+    Перевіряє, чи існує користувач із сесії в БД та чи збігається його роль
+    (Захист від Session Immutability — миттєва інвалідація при зміні ролі).
+    """
     if "user" in session:
         all_users = get_all_users()
-        user_exists = any(u["username"] == session["user"] for u in all_users)
-        if not user_exists:
+
+        # Шукаємо в базі користувача з таким самим ім'ям
+        db_user = next((u for u in all_users if u["username"] == session["user"]), None)
+
+        # 1. Якщо користувача взагалі видалили з бази
+        if not db_user:
             session.clear()
             return False
+
+        # 2. Якщо адмін змінив роль користувача в БД
+        if db_user["role"] != session.get("role"):
+            print(
+                f"[ZTAC SECURITY] Виявлено невідповідність ролі для {session['user']}. Сесію скинуто."
+            )
+            session.clear()
+            return False
+
     return True
 
 
