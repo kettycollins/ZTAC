@@ -61,6 +61,21 @@ def detect_vpn_from_ip(req):
         client_ip = client_ip.split(",")[0].strip()
     return client_ip == VPN_GATEWAY_PUBLIC_IP
 
+# =============================================================================
+# ЗАХИСТ ВІД ВИКОРИСТАННЯ ВИДАЛЕНИХ КОРИСТУВАЧІВ (після видалення акаунта, сесія стає недійсною)
+# =============================================================================
+
+# Рядки 52-62
+def _is_active_session_user_valid():
+    """Перевіряє, чи існує користувач із сесії в БД (захист від використання видалених акаунтів)."""
+    if "user" in session:
+        all_users = get_all_users()
+        user_exists = any(u["username"] == session["user"] for u in all_users)
+        if not user_exists:
+            session.clear()
+            return False
+    return True
+
 
 # =============================================================================
 # ОПЦІЙНИЙ MFA (TOTP) — користувач сам вмикає тоглер на сторінці логіну
@@ -208,6 +223,9 @@ def decision_page():
     """Проміжний екран вердикту PDP перед переходом до інфраструктури"""
     if "user" not in session:
         return redirect(url_for("login"))
+    """Миттєва інвалідація сесії, якщо користувача видалено"""
+    if not _is_active_session_user_valid():
+        return redirect(url_for("login"))
 
     # ДИНАМІЧНИЙ ПЕРЕРАХУНОК: пристрій і VPN перевіряються живим запитом (continuous verification),
     # мережа — ручний вибір, MFA — підтверджується одноразово при логіні
@@ -254,6 +272,9 @@ def decision_page():
 def resource_page():
     """Головний екран об'єктів інфраструктури з гранульованими картками"""
     if "user" not in session:
+        return redirect(url_for("login"))
+    """Миттєва інвалідація сесії, якщо користувача видалено"""
+    if not _is_active_session_user_valid():
         return redirect(url_for("login"))
 
     device = detect_device_from_cert(request)
