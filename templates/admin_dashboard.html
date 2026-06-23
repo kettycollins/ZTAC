@@ -337,8 +337,8 @@
                         <tbody id="logs-tbody">
                             {% if logs %}
                             {% for log in logs[:8] %}
-                            <tr {% if log.incident_response.suspicious_flag
-                                %}style="background: rgba(225, 110, 110, 0.05); font-weight: 500;" {% endif %}>
+                            <tr {% if log.incident_response.suspicious_flag %} style="background: rgba(225, 110, 110, 0.05); font-weight: 500;" {%
+                                elif log.event_type == 'ADMIN_OP' %} style="background: rgba(49, 130, 206, 0.04);" {% endif %}>
                                 <td>{{ log.timestamp[:19].replace('T', ' ') }}</td>
                                 <td><strong>{{ log.username }}</strong></td>
                                 <td><span class="role-pill">{{ log.role | uppercase }}</span></td>
@@ -386,6 +386,20 @@
                                     <span class="pill pill-allow">ALLOW</span>
                                     {% elif log.security_metrics.decision == 'LIMITED' %}
                                     <span class="pill pill-restricted">LIMITED</span>
+                                    {% else %}
+                                    <span class="pill pill-deny">DENY</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if log.event_type == 'ADMIN_OP' %}
+                                    <span class="pill" style="background:rgba(49,130,206,0.12); color:var(--accent); border:1px solid var(--accent);">
+                                        ADMIN OP
+                                    </span>
+                                    {% elif log.event_type == 'UNAUTH_ACCESS' %}
+                                    <span class="pill pill-deny">UNAUTH</span>
+                                    {% elif log.security_metrics.decision == 'ALLOW' %}
+                                    <span class="pill pill-allow">ALLOW</span>
                                     {% else %}
                                     <span class="pill pill-deny">DENY</span>
                                     {% endif %}

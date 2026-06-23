@@ -16,7 +16,7 @@ from config import Config
 from database import init_db, get_all_users, create_user, get_user_by_id, update_user_password, delete_user_by_id, count_admins
 from authenticate import authenticate_user, verify_totp, get_or_create_totp_secret
 from policies import evaluate_access
-from logging_utils import log_event
+from logging_utils import log_event, log_admin_operation, log_unauthorized_access
 from translations import TRANSLATIONS
 from password_policy import validate_password
 
@@ -150,7 +150,7 @@ def login():
                         "DENY",
                         score,
                         reason,
-                        mfa_verified,
+                        permissions=permissions,
                     )
 
                     user_data = {
@@ -172,7 +172,16 @@ def login():
 
                 # Якщо перевірку пройдено (ACCESS_GRANTED), логуємо ALLOW і йдемо далі
                 log_event(
-                    username, user["role"], device_status, network, vpn_status, "ALLOW", score, reason, mfa_verified
+                    username, 
+                    user["role"], 
+                    device_status, 
+                    network, 
+                    vpn_status, 
+                    "ALLOW", 
+                    score, 
+                    reason, 
+                    mfa_verified,
+                    permissions=permissions,
                 )
                 return redirect(url_for("decision_page"))
 
@@ -333,6 +342,16 @@ def set_language(lang_code):
 def admin_dashboard():
     """Екран моніторингу безпеки (SIEM) для адміністратора"""
     if "user" not in session or session.get("role") != "admin":
+        log_unauthorized_access(
+            username=session.get("user", "anonymous"),
+            role=session.get("role", "anonymous"),
+            attempted_url="/admin/dashboard",
+            required_role="admin",
+            device=session.get("device"),
+            network=session.get("network"),
+            vpn=session.get("vpn"),
+            mfa=session.get("mfa_verified", False),
+        )
         return redirect(url_for("login"))
 
     log_file_path = "logs/access_logs.json"
@@ -355,6 +374,16 @@ ALLOWED_ROLES = ["admin", "teacher", "student", "guest"]
 def admin_users():
     """Сторінка управління користувачами: список + форма створення"""
     if "user" not in session or session.get("role") != "admin":
+        log_unauthorized_access(
+            username=session.get("user", "anonymous"),
+            role=session.get("role", "anonymous"),
+            attempted_url="/admin/users",
+            required_role="admin",
+            device=session.get("device"),
+            network=session.get("network"),
+            vpn=session.get("vpn"),
+            mfa=session.get("mfa_verified", False),
+        )
         return redirect(url_for("login"))
 
     device = detect_device_from_cert(request)
@@ -428,6 +457,17 @@ def admin_users_create():
                 hashed_password = generate_password_hash(new_password)
                 create_user(new_username, hashed_password, new_role)
                 success = TRANSLATIONS[lang]["admin_users_success"]
+                log_admin_operation(
+                    admin_username=session.get("user"),
+                    operation="create_user",
+                    target_username=new_username,
+                    target_role=new_role,
+                    success=True,
+                    device=session.get("device"),
+                    network=session.get("network"),
+                    vpn=session.get("vpn"),
+                    mfa=session.get("mfa_verified", False),
+                )
             except Exception:
                 error = TRANSLATIONS[lang]["admin_users_error_duplicate"]
 
@@ -486,6 +526,17 @@ def admin_users_change_password():
             hashed = generate_password_hash(new_password)
             update_user_password(target_id, hashed)
             success = TRANSLATIONS[lang]["admin_users_password_changed"]
+            log_admin_operation(
+                admin_username=session.get("user"),
+                operation="change_password",
+                target_username=target_user["username"],
+                target_role=target_user["role"],
+                success=True,
+                device=session.get("device"),
+                network=session.get("network"),
+                vpn=session.get("vpn"),
+                mfa=session.get("mfa_verified", False),
+            )
 
     user_data = {"username": session.get("user"), "role": session.get("role")}
     return render_template(
@@ -540,6 +591,17 @@ def admin_users_delete():
     else:
         delete_user_by_id(target_id)
         success = TRANSLATIONS[lang]["admin_users_user_deleted"]
+        log_admin_operation(
+            admin_username=session.get("user"),
+            operation="delete_user",
+            target_username=target_user["username"],
+            target_role=target_user["role"],
+            success=True,
+            device=session.get("device"),
+            network=session.get("network"),
+            vpn=session.get("vpn"),
+            mfa=session.get("mfa_verified", False),
+        )
 
     user_data = {"username": session.get("user"), "role": session.get("role")}
     return render_template(
