@@ -374,6 +374,9 @@ def admin_dashboard():
             mfa=session.get("mfa_verified", False),
         )
         return redirect(url_for("login"))
+    """Миттєва інвалідація сесії, якщо користувача видалено"""
+    if not _is_active_session_user_valid():
+        return redirect(url_for("login"))
 
     log_file_path = "logs/access_logs.json"
     logs = []
@@ -405,6 +408,10 @@ def admin_users():
             vpn=session.get("vpn"),
             mfa=session.get("mfa_verified", False),
         )
+        return redirect(url_for("login"))
+
+    """Миттєва інвалідація сесії, якщо користувача видалено"""
+    if not _is_active_session_user_valid():
         return redirect(url_for("login"))
 
     device = detect_device_from_cert(request)
@@ -661,25 +668,39 @@ def api_logs():
 # Роути для сторінок-заглушок (Notice Pages)
 @app.route("/resources/teacher")
 def notice_teacher():
-    
+    """Проміжний екран вердикту PDP перед переходом до інфраструктури"""
     if "user" not in session:
         return redirect(url_for("login"))
+    """Миттєва інвалідація сесії, якщо користувача видалено"""
+    if not _is_active_session_user_valid():
+        return redirect(url_for("login"))
+
     user_data = {"username": session.get("user"), "role": session.get("role")}
     return render_template("notice_teacher.html", user=user_data)
 
 
 @app.route("/resources/student")
 def notice_student():
+    """Проміжний екран вердикту PDP перед переходом до інфраструктури"""
     if "user" not in session:
         return redirect(url_for("login"))
+    """Миттєва інвалідація сесії, якщо користувача видалено"""
+    if not _is_active_session_user_valid():
+        return redirect(url_for("login"))
+
     user_data = {"username": session.get("user"), "role": session.get("role")}
     return render_template("notice_student.html", user=user_data)
 
 
 @app.route("/resources/guest")
 def notice_guest():
+    """Проміжний екран вердикту PDP перед переходом до інфраструктури"""
     if "user" not in session:
         return redirect(url_for("login"))
+    """Миттєва інвалідація сесії, якщо користувача видалено"""
+    if not _is_active_session_user_valid():
+        return redirect(url_for("login"))
+
     user_data = {"username": session.get("user"), "role": session.get("role")}
     return render_template("notice_guest.html", user=user_data)
 
