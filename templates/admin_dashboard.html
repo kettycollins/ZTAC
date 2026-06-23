@@ -381,15 +381,6 @@
                                     {% endif %}
                                 </td>
 
-                                <td>
-                                    {% if log.security_metrics.decision == 'ALLOW' %}
-                                    <span class="pill pill-allow">ALLOW</span>
-                                    {% elif log.security_metrics.decision == 'LIMITED' %}
-                                    <span class="pill pill-restricted">LIMITED</span>
-                                    {% else %}
-                                    <span class="pill pill-deny">DENY</span>
-                                    {% endif %}
-                                </td>
 
                                 <td>
                                     {% if log.event_type == 'ADMIN_OP' %}
